@@ -44,8 +44,7 @@ export default function Hero() {
         <img
           src="/imagemain.png"
           alt="Modern home interior"
-          // fill
-          className="object-cover"
+          className="object-fill w-full h-full"
           //quality={100}
         />
       </motion.div>
