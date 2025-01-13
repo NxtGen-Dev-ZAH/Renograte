@@ -3,7 +3,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 //import Image from "next/image";
-import { ChevronDown, Search, Home, TrendingUp } from "lucide-react";
+import { ChevronDown, Search, Home, TrendingUp, Link } from "lucide-react";
 
 export default function Hero() {
   const { scrollY } = useScroll();
@@ -80,20 +80,24 @@ export default function Hero() {
             variants={fadeInUpVariants}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <motion.button
-              className="px-8 py-4 bg-white text-[#0C71C3] rounded-lg font-semibold text-lg hover:bg-[#0C71C3] hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              Explore Properties
-            </motion.button>
-            <motion.button
-              className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              How It Works
-            </motion.button>
+            <Link href="/properties">
+              <motion.button
+                className="px-8 py-4 bg-white text-[#0C71C3] rounded-lg font-semibold text-lg hover:bg-[#0C71C3] hover:text-white transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Explore Properties
+              </motion.button>
+            </Link>
+            <Link href="/about">
+              <motion.button
+                className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                How It Works
+              </motion.button>
+            </Link>
           </motion.div>
 
           <motion.div
