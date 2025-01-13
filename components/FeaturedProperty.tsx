@@ -24,7 +24,7 @@ export default function FeaturedProperty() {
           onHoverEnd={() => setIsHovered(false)}
         >
           <img
-            src="/featuredproperty.png"
+            src="/featured.png"
             alt="Featured Property"
             // width={1200}
             // height={600}

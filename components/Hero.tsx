@@ -45,7 +45,7 @@ export default function Hero() {
           src="/hero3.png"
           alt="Modern home interior"
           // fill
-          style={{ objectFit: "cover" }}
+          className="object-cover"
           //quality={100}
         />
       </motion.div>
