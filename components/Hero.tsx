@@ -42,7 +42,7 @@ export default function Hero() {
         animate={{ y: 100 }} // Example animation
       >
         <img
-          src="/hero3.png"
+          src="/imagemain.png"
           alt="Modern home interior"
           // fill
           className="object-cover"
