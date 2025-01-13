@@ -2,7 +2,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-import Image from "next/image";
+//import Image from "next/image";
 import { ChevronDown, Search, Home, TrendingUp } from "lucide-react";
 
 export default function Hero() {
@@ -41,12 +41,12 @@ export default function Hero() {
         initial={{ y: 0 }} // Ensure it starts visible
         animate={{ y: 100 }} // Example animation
       >
-        <Image
-          src="/hero3.jpg"
+        <img
+          src="/hero3.png"
           alt="Modern home interior"
-          fill
+          // fill
           style={{ objectFit: "cover" }}
-          quality={100}
+          //quality={100}
         />
       </motion.div>
 

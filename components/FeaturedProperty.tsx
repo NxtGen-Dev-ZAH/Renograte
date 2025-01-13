@@ -2,7 +2,7 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import Image from "next/image";
+// import Image from "next/image";
 
 export default function FeaturedProperty() {
   const [isHovered, setIsHovered] = useState(false);
@@ -23,11 +23,11 @@ export default function FeaturedProperty() {
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
         >
-          <Image
-            src="/featuredproperty.jpg"
+          <img
+            src="/featuredproperty.png"
             alt="Featured Property"
-            width={1200}
-            height={600}
+            // width={1200}
+            // height={600}
             className="w-full h-[600px] object-cover"
           />
 

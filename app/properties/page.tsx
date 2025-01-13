@@ -110,11 +110,11 @@ export default function PropertiesPage() {
             className="overflow-hidden hover:shadow-lg transition-shadow"
           >
             <CardHeader className="p-0">
-              <Image
+              <img
                 src={property.image}
                 alt={property.title}
-                width={500}
-                height={300}
+                // width={500}
+                // height={300}
                 className="w-full h-48 object-cover"
               />
             </CardHeader>
