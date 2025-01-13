@@ -80,20 +80,24 @@ export default function Hero() {
             variants={fadeInUpVariants}
             className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
           >
-            <motion.button
-              className="px-8 py-4 bg-white text-[#0C71C3] rounded-lg font-semibold text-lg hover:bg-[#0C71C3] hover:text-white transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link href="/properties">Explore Properties</Link>
-            </motion.button>
-            <motion.button
-              className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link href="/about">How It Works</Link>
-            </motion.button>
+            <Link href="/properties">
+              <motion.a
+                className="px-8 py-4 bg-white text-[#0C71C3] rounded-lg font-semibold text-lg hover:bg-[#0C71C3] hover:text-white transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Explore Properties
+              </motion.a>
+            </Link>
+            <Link href="/about">
+              <motion.a
+                className="px-8 py-4 border-2 border-white text-white rounded-lg font-semibold text-lg hover:bg-white/10 transition-colors"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                How It Works
+              </motion.a>
+            </Link>
           </motion.div>
 
           <motion.div
