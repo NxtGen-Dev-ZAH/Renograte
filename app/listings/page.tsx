@@ -20,6 +20,7 @@ interface Listing {
   title: string;
   price: number;
   renovationPotential: number;
+  afterrenovatedallowance: number;
   location: string;
   type: string;
   status: string;
@@ -38,6 +39,7 @@ export default function ListingsPage() {
       title: "Charming Victorian Home",
       price: 550000,
       renovationPotential: 150000,
+      afterrenovatedallowance: 720000,
       location: "Historic District, Downtown",
       type: "Single Family",
       status: "Active",
@@ -55,6 +57,7 @@ export default function ListingsPage() {
       title: "Mid-Century Modern Ranch",
       price: 425000,
       renovationPotential: 75000,
+      afterrenovatedallowance: 520000,
       location: "Sunset Hills",
       type: "Ranch",
       status: "Active",
@@ -72,6 +75,7 @@ export default function ListingsPage() {
       title: "Urban Townhouse",
       price: 675000,
       renovationPotential: 100000,
+      afterrenovatedallowance: 788000,
       location: "City Center",
       type: "Townhouse",
       status: "Active",
@@ -91,10 +95,10 @@ export default function ListingsPage() {
       {/* Header Section */}
       <div className="text-center mb-12 mt-10">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          Current Listings
+          Renograte Listings
         </h1>
         <p className="text-xl text-gray-600">
-          Discover properties with exceptional renovation potential
+          Explore listings with approved renovation allowances
         </p>
       </div>
 
@@ -163,16 +167,25 @@ export default function ListingsPage() {
                       ${listing.price.toLocaleString()}
                     </p>
                   </div>
+                  <div className="flex justify-center items-end space-x-4">
+                    <div>
+                      <p className="text-sm text-gray-500">
+                        Renovation Potential
+                      </p>
+                      <p className="text-lg font-bold text-cyan-600">
+                        ${listing.renovationPotential.toLocaleString()}
+                      </p>
+                    </div>
 
-                  <div>
-                    <p className="text-sm text-gray-500">
-                      Renovation Potential
-                    </p>
-                    <p className="text-lg font-bold text-cyan-600">
-                      ${listing.renovationPotential.toLocaleString()}
-                    </p>
+                    <div>
+                      <p className="text-sm text-gray-500">
+                        After Renovated Allowance
+                      </p>
+                      <p className="text-lg font-bold text-blue-600">
+                        ${listing.afterrenovatedallowance.toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-
                   <div className="flex flex-wrap gap-2">
                     {listing.features.map((feature, index) => (
                       <Badge key={index} variant="secondary">

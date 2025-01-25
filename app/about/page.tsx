@@ -128,6 +128,93 @@ export default function AboutPage() {
         </div>
       </div>
 
+      {/* Seller vs Buyer Section */}
+      <div className="mb-16 bg-gray-50 py-16 px-4 sm:px-6 lg:px-8">
+        <h2 className="text-4xl font-extrabold text-center text-transparent bg-clip-text bg-gradient-to-r from-black to-[#0C71C3] mb-12 tracking-tight">
+          Seller Pay At Closing Or Buyer Pay At Closing
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Seller Financing Card */}
+          <div className="bg-white border-2 border-red-100 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 overflow-hidden">
+            <div className="bg-gradient-to-r from-red-50 to-red-100 p-6 border-b border-red-200">
+              <h3 className="text-3xl font-bold text-red-800 mb-2">
+                Seller Financing
+                <span className="text-sm text-red-600 block mt-1 font-medium">
+                  High-Risk Approach
+                </span>
+              </h3>
+            </div>
+            <div className="p-6">
+              <p className="text-lg text-red-700 mb-6 italic border-l-4 border-red-500 pl-4">
+                RENOVATE TO SELL CAN BE VERY RISKY!
+              </p>
+              <ul className="space-y-4 text-gray-700">
+                {[
+                  "Seller must pay renovations out of pocket or at closing, hoping to recoup investment.",
+                  "Renovations limited to specific Buyer's taste, narrowing buyer pool.",
+                  "No flexibility to customize renovations to prospective Buyer's needs.",
+                  "Agent and Seller gamble on receiving top dollar for renovated home.",
+                ].map((item, index) => (
+                  <li key={index} className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-red-500 mr-3 mt-1 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 10l-2.293 2.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Renograte Card */}
+          <div className="bg-white border-2 border-green-100 rounded-xl shadow-2xl hover:shadow-3xl transition-all duration-300 ease-in-out transform hover:-translate-y-2 overflow-hidden">
+            <div className="bg-gradient-to-r from-green-50 to-green-100 p-6 border-b border-green-200">
+              <h3 className="text-3xl font-bold text-green-800 mb-2">
+                Renograte®
+                <span className="text-sm text-green-600 block mt-1 font-medium">
+                  Low-Risk Solution
+                </span>
+              </h3>
+            </div>
+            <div className="p-6">
+              <p className="text-lg text-green-700 mb-6 italic border-l-4 border-green-500 pl-4">
+                HOW DOES RENOGRATE® LOWER RISK?
+              </p>
+              <ul className="space-y-4 text-gray-700">
+                {[
+                  "No out-of-pocket expense for Seller or Buyer, creating a win-win transaction.",
+                  "Seller avoids renovation hassles and can list home as-is.",
+                  "Buyer can customize renovations to specific needs.",
+                  "Buyer agrees to pay Seller the After Renovated Value (ARV) of the home.",
+                ].map((item, index) => (
+                  <li key={index} className="flex items-start">
+                    <svg
+                      className="w-5 h-5 text-green-500 mr-3 mt-1 flex-shrink-0"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 1.414L10.586 10l-2.293 2.293a1 1 0 101.414 1.414l3-3a1 1 0 000-1.414z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
       {/* Case Study */}
       <Card className="mb-16 bg-gradient-to-r from-cyan-50 to-blue-50">
         <CardContent className="p-8">
