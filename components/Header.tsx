@@ -57,13 +57,13 @@ export default function Header() {
                 </Link>
               </li>
               <Link href="/" className="flex items-center">
-                <img
+                <Image
                   src="/logo.png"
                   alt="Renograte Logo"
-                  // width={290}
-                  // height={50}
+                  width={300}
+                  height={50}
                   className="h-10"
-//                  quality={100}
+                  quality={100}
                 />
               </Link>
               <li>

@@ -1,7 +1,8 @@
-//PropertyListings.tsx
+// PropertyListings.tsx
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 const properties = [
   {
@@ -11,6 +12,8 @@ const properties = [
     price: 350000,
     renovationAllowance: 50000,
     image: "/home1.png",
+    width: 795, // Replace with actual width
+    height: 499, // Replace with actual height
   },
   {
     id: 2,
@@ -19,6 +22,8 @@ const properties = [
     price: 275000,
     renovationAllowance: 35000,
     image: "/villabung.png",
+    width: 826, // Replace with actual width
+    height: 523, // Replace with actual height
   },
   {
     id: 3,
@@ -27,6 +32,8 @@ const properties = [
     price: 450000,
     renovationAllowance: 65000,
     image: "/home2.png",
+    width: 817, // Replace with actual width
+    height: 513, // Replace with actual height
   },
 ];
 
@@ -34,7 +41,7 @@ export default function PropertyListings() {
   const [hoveredId, setHoveredId] = useState<number | null>(null);
 
   return (
-    <section className="py-20 bg-gray-50  w-screen">
+    <section className="py-20 bg-gray-50 w-screen">
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-6 text-gray-800">
           Renovation Allowance Listings
@@ -56,9 +63,11 @@ export default function PropertyListings() {
               onHoverEnd={() => setHoveredId(null)}
             >
               <div className="relative">
-                <img
+                <Image
                   src={property.image}
                   alt={property.title}
+                  width={property.width}
+                  height={property.height}
                   className="w-full h-48 object-cover"
                 />
                 <motion.div

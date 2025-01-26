@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -143,10 +144,12 @@ export default function ListingsPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-2">
               <div className="relative">
-                <img
+                <Image
                   src={listing.image}
                   alt={listing.title}
-                  className="w-full h-full object-cover"
+                  layout="fill"
+                  objectFit="cover"
+                  className="rounded-lg"
                 />
                 <Badge className="absolute top-4 left-4 bg-[#0C71C3]">
                   {listing.status}

@@ -2,7 +2,7 @@
 "use client";
 import { useState } from "react";
 import { motion } from "framer-motion";
-// import Image from "next/image";
+import Image from "next/image";
 
 export default function FeaturedProperty() {
   const [isHovered, setIsHovered] = useState(false);
@@ -10,7 +10,7 @@ export default function FeaturedProperty() {
   return (
     <section className="py-20 bg-white  w-screen">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-black via-[#0C71C3] to-black mx-auto">
           Featured Property of the Month
         </h2>
 
@@ -23,11 +23,11 @@ export default function FeaturedProperty() {
           onHoverStart={() => setIsHovered(true)}
           onHoverEnd={() => setIsHovered(false)}
         >
-          <img
+          <Image
             src="/featured.png"
             alt="Featured Property"
-            // width={1200}
-            // height={600}
+            width={1200}
+            height={600}
             className="w-full h-[600px] object-cover"
           />
 

@@ -110,11 +110,11 @@ export default function PropertiesPage() {
             className="overflow-hidden hover:shadow-lg transition-shadow"
           >
             <CardHeader className="p-0">
-              <img
+              <Image
                 src={property.image}
                 alt={property.title}
-                // width={500}
-                // height={300}
+                width={500}
+                height={300}
                 className="w-full h-48 object-cover"
               />
             </CardHeader>
@@ -166,7 +166,7 @@ export default function PropertiesPage() {
 
       {/* Call to Action */}
       <div className="mt-16 text-center">
-        <p className="text-gray-600 mb-4">Don't see what you're looking for?</p>
+        <p className="text-gray-600 mb-4">Don&apos;t see what you&apos;re looking for?</p>
         <Button
           variant="outline"
           className="border-[#0C71C3] text-[#0C71C3] hover:bg-[#0C71C3] hover:text-white"

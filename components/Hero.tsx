@@ -2,7 +2,7 @@
 "use client";
 
 import { motion, useScroll, useTransform } from "framer-motion";
-//import Image from "next/image";
+import Image from "next/image";
 import { ChevronDown, Search, Home, TrendingUp, Link } from "lucide-react";
 
 export default function Hero() {
@@ -99,10 +99,12 @@ export default function Hero() {
         className="relative w-full md:w-1/2 h-full flex items-center justify-center"
         style={{ y }}
       >
-        <img
+        <Image
           src="/imagemain.png"
           alt="Modern home interior"
-          className="object-cover w-full h-full rounded-tl-3xl "
+          width={1366}
+          height={768}
+          className="rounded-tl-3xl object-cover w-full h-full"
         />
 
         {/* Feature Boxes */}

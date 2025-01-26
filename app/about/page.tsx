@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Users, Target, Rocket } from "lucide-react";
-// import Image from "next/image";
+import Image from "next/image";
 
 export default function AboutPage() {
   const values = [
@@ -88,11 +88,18 @@ export default function AboutPage() {
               </div>
             </div>
             <div className="relative">
-              <img
+              {/* <img
                 src="/about.png"
                 alt="Mission illustration"
                 // width={500}
                 // height={300}
+                className="rounded-lg shadow-lg"
+              /> */}
+              <Image
+                src="/about.png"
+                alt="Mission illustration"
+                width={500}
+                height={300}
                 className="rounded-lg shadow-lg"
               />
               <div className="absolute -bottom-4 -right-4 bg-white p-4 rounded-lg shadow-lg">
@@ -265,7 +272,7 @@ export default function AboutPage() {
             <Card key={index}>
               <CardContent className="p-6">
                 <p className="text-lg text-gray-600 italic mb-6">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </p>
                 <div className="flex items-center">
                   <div>
