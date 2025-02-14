@@ -4,7 +4,7 @@ const nextConfig = {
     domains: ['your-image-domains'],
   },
   experimental: {
-    optimizeCss: true,
+    // optimizeCss: true,
     optimizePackageImports: ['@mui/material', '@mui/icons-material'],
   },
   compiler: {
