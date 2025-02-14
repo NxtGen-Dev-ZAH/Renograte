@@ -1,4 +1,3 @@
-// app/features/page.tsx
 "use client";
 
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
@@ -12,7 +11,12 @@ import {
   MessageSquare,
   PieChart,
   Target,
+  GraduationCap,
+  Briefcase,
+  Network,
+  Cpu,
 } from "lucide-react";
+import TrialDialog from "@/components/TrialDialog";
 
 export default function FeaturesPage() {
   const mainFeatures = [
@@ -67,6 +71,30 @@ export default function FeaturesPage() {
       description: "Advanced tools to capture and nurture qualified leads",
       icon: Target,
     },
+    {
+      title: "Renograte University",
+      description:
+        "Access a comprehensive learning hub featuring courses, webinars, and interactive content designed to enhance your expertise in integrating renovations with real estate transactions.",
+      icon: GraduationCap,
+    },
+    {
+      title: "Renograte Marketing",
+      description:
+        "Enhance your visibility with advanced marketing strategies and materials tailored to attract and engage clients interested in renovation-inclusive real estate transactions.",
+      icon: Briefcase,
+    },
+    {
+      title: "Partnership Directory",
+      description:
+        "Build professional networks by connecting with a vetted network of contractors, financial experts, and other essential services.",
+      icon: Network,
+    },
+    {
+      title: "Renograte AI",
+      description:
+        "Use AI-driven tools for smart property analysis, renovation cost calculations, and transaction optimization.",
+      icon: Cpu,
+    },
   ];
 
   return (
@@ -115,9 +143,7 @@ export default function FeaturesPage() {
             integration, increase sales, and deliver exceptional value to your
             clients.
           </p>
-          <Button className="bg-[#0C71C3] hover:bg-[#0C71C3]/90">
-            Start Free Trial
-          </Button>
+          <TrialDialog />
         </div>
       </div>
 

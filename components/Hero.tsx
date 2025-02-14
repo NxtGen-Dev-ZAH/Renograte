@@ -48,16 +48,16 @@ export default function Hero() {
           className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-black"
           variants={fadeInUpVariants}
         >
-          Empowering Realtors to Deliver Value
+          Pre-Closing Buyer Renovations!
         </motion.h1>
 
         <motion.p
           className="text-base md:text-lg lg:text-xl mb-8 text-gray-600"
           variants={fadeInUpVariants}
         >
-          Buyers receive custom renovation allowances, sellers get top dollar
-          for their homes, and agents earn higher commissions with no upfront
-          costs.
+          Realtors add value and earn higher commissions, buyers receive custom
+          renovation allowances, and sellers get top dollar for their homes with
+          no upfront costs.
         </motion.p>
 
         <motion.div

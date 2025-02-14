@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   FaFacebookF,
   FaTwitter,
@@ -22,36 +23,36 @@ export default function Footer() {
             <h4 className="text-2xl font-semibold mb-4">Quick Links</h4>
             <ul className="space-y-2">
               <li>
-                <a
+                <Link
                   href="/properties"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                   Properties
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/renovations"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                   Renovations
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/market-analysis"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                   Market Analysis
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/about"
                   className="text-gray-400 hover:text-white transition duration-300"
                 >
                   About Us
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -75,30 +76,30 @@ export default function Footer() {
           <div>
             <h4 className="text-2xl font-semibold mb-4">Follow Us</h4>
             <div className="flex space-x-4">
-              <a
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-[#0C71C3] transition duration-300"
               >
                 <FaFacebookF size={20} />
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-[#0C71C3] transition duration-300"
               >
                 <FaTwitter size={20} />
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-[#0C71C3] transition duration-300"
               >
                 <FaLinkedinIn size={20} />
-              </a>
-              <a
+              </Link>
+              <Link
                 href="#"
                 className="text-gray-400 hover:text-[#0C71C3] transition duration-300"
               >
                 <FaInstagram size={20} />
-              </a>
+              </Link>
             </div>
           </div>
         </div>

@@ -149,8 +149,8 @@ export default function PropertiesPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Renovation Budget</p>
-                  <p className="text-lg font-bold text-cyan-600">
+                  <p className="text-sm text-gray-500">Renovation Allowance</p>
+                  <p className="text-lg font-bold text-cyan-600 text-center">
                     ${property.renovationBudget.toLocaleString()}
                   </p>
                 </div>
@@ -166,7 +166,9 @@ export default function PropertiesPage() {
 
       {/* Call to Action */}
       <div className="mt-16 text-center">
-        <p className="text-gray-600 mb-4">Don&apos;t see what you&apos;re looking for?</p>
+        <p className="text-gray-600 mb-4">
+          Don&apos;t see what you&apos;re looking for?
+        </p>
         <Button
           variant="outline"
           className="border-[#0C71C3] text-[#0C71C3] hover:bg-[#0C71C3] hover:text-white"

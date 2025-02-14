@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 
 const ModernFeaturePage: React.FC = () => {
   return (
@@ -42,12 +43,12 @@ const ModernFeaturePage: React.FC = () => {
             Renograte&reg; Preferred Agents increase their value and commission
             earnings.
           </p>
-          <a
+          <Link
             href="#"
             className="text-[#0C71C3] font-semibold hover:underline transition"
           >
             watch agent video
-          </a>
+          </Link>
         </div>
 
         {/* Card 2 */}
@@ -66,12 +67,12 @@ const ModernFeaturePage: React.FC = () => {
             Renograte&reg; Preferred Contractors access an exclusive network and
             pipeline of new clients.
           </p>
-          <a
+          <Link
             href="#"
             className="text-[#0C71C3] font-semibold hover:underline transition"
           >
             watch contractor video
-          </a>
+          </Link>
         </div>
 
         {/* Card 3 */}
@@ -90,12 +91,12 @@ const ModernFeaturePage: React.FC = () => {
             Renograte&reg; Sellers receive top dollar for their home, no
             pre-sale renovations required.
           </p>
-          <a
+          <Link
             href="#"
             className="text-[#0C71C3] font-semibold hover:underline transition"
           >
             watch seller video
-          </a>
+          </Link>
         </div>
 
         {/* Card 4 */}
@@ -114,12 +115,12 @@ const ModernFeaturePage: React.FC = () => {
             Renograte&reg; Buyers receive renovation allowances to custom
             renovate their future home.
           </p>
-          <a
+          <Link
             href="#"
             className="text-[#0C71C3] font-semibold hover:underline transition"
           >
             watch Buyer video
-          </a>
+          </Link>
         </div>
       </div>
     </div>
