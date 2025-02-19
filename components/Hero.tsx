@@ -3,7 +3,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
-import { ChevronDown, Search, Home, TrendingUp, Link } from "lucide-react";
+import { ChevronDown, Search, Home, TrendingUp } from "lucide-react";
 
 export default function Hero() {
   const { scrollY } = useScroll();
@@ -34,10 +34,10 @@ export default function Hero() {
   ];
 
   return (
-    <section className="relative w-screen min-h-screen flex flex-col md:flex-row items-center justify-between overflow-hidden">
+    <section className="relative w-screen min-h-screen flex flex-col md:flex-row items-center justify-between overflow-hidden bg-gradient-to-br from-white via-white to-cyan-50">
       {/* Left Side: Search and 'How It Works' Section */}
       <motion.div
-        className="flex flex-col justify-center items-start p-8 bg-white w-full md:w-1/2 rounded-tr-3xl z-20"
+        className="flex flex-col justify-center items-start p-8 bg-white/80 backdrop-blur-sm w-full md:w-1/2 rounded-tr-3xl z-20"
         initial="hidden"
         animate="visible"
         variants={{
@@ -70,7 +70,7 @@ export default function Hero() {
             className="px-4 py-3 border border-gray-300 rounded-lg w-full sm:w-3/4 md:w-2/4 lg:w-3/6 focus:outline-none focus:ring focus:ring-blue-300"
           />
           <motion.button
-            className="px-8 py-4 bg-blue-600 text-white rounded-lg font-semibold flex gap-2 hover:bg-blue-700 transition-colors "
+            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold flex gap-2 hover:from-blue-700 hover:to-cyan-700 transition-all duration-300 shadow-lg hover:shadow-xl"
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -108,7 +108,7 @@ export default function Hero() {
         />
 
         {/* Feature Boxes */}
-        <motion.div
+        {/* <motion.div
           className="absolute bottom-10 right-6 flex  gap-4 "
           variants={{ visible: { transition: { staggerChildren: 0.2 } } }}
         >
@@ -129,7 +129,7 @@ export default function Hero() {
               </p>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.div> */}
       </motion.div>
 
       {/* Scroll Indicator */}

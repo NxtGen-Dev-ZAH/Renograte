@@ -8,7 +8,8 @@ import Memberchat from "@/components/Memberchat";
 import ProfessionalChatbot from "@/components/Chaticon";
 import { Suspense } from "react";
 import Loading from "./loading";
-// import { Toaster } from "@/components/ui/toaster";
+import { AuthProvider } from "@/hooks/useAuth";
+import { Toaster } from "@/components/ui/toaster";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,17 +31,19 @@ export default function RootLayout({
       <body
         className={`${inter.className} text-black bg-white overflow-x-hidden`}
       >
-        <Header />
-        <Suspense fallback={<Loading />}>
-          <main>{children}</main>
-        </Suspense>
-        <Suspense>
-          <Calculator />
-          <Memberchat />
-          <ProfessionalChatbot />
-        </Suspense>
-        <Footer />
-        {/* <Toaster /> */}
+        <AuthProvider>
+          <Header />
+          <Suspense fallback={<Loading />}>
+            <main>{children}</main>
+          </Suspense>
+          <Suspense>
+            <Calculator />
+            <Memberchat />
+            <ProfessionalChatbot />
+          </Suspense>
+          <Footer />
+        </AuthProvider>
+        <Toaster />
       </body>
     </html>
   );

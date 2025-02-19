@@ -5,10 +5,14 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { ChevronDownIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isListingsOpen, setIsListingsOpen] = useState(false);
+  const { isAuthenticated, logout } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -20,8 +24,8 @@ export default function Header() {
 
   return (
     <motion.header
-      className={`fixed w-screen z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white shadow-md" : "bg-white/50 backdrop-blur-sm"
+      className={`fixed top-0 w-full z-50 transition-all duration-300 ${
+        isScrolled ? "bg-white/80 backdrop-blur-sm shadow-md" : "bg-white"
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -105,24 +109,48 @@ export default function Header() {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <Link href="/signup">
-              <motion.button
-                className="btn-primary px-6 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Sign Up
-              </motion.button>
-            </Link>
-            <Link href="/login">
-              <motion.button
-                className="text-black hover:text-[#0C71C3]"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                Log In
-              </motion.button>
-            </Link>
+            {isAuthenticated ? (
+              <>
+                <Link href="/dashboard">
+                  <motion.button
+                    className="btn-primary px-6 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Dashboard
+                  </motion.button>
+                </Link>
+                <motion.button
+                  className="text-black hover:text-[#0C71C3]"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={logout}
+                >
+                  Log Out
+                </motion.button>
+              </>
+            ) : (
+              <>
+                <Link href="/signup">
+                  <motion.button
+                    className="btn-primary px-6 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Sign Up
+                  </motion.button>
+                </Link>
+                <Link href="/login">
+                  <motion.button
+                    className="text-black hover:text-[#0C71C3]"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    Log In
+                  </motion.button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

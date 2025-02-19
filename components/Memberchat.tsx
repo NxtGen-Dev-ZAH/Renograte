@@ -12,6 +12,10 @@ import {
   Plus,
   Send,
   Bot,
+  Clock,
+  Image,
+  Paperclip,
+  Smile,
 } from "lucide-react";
 
 interface Message {

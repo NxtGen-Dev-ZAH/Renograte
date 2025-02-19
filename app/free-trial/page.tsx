@@ -39,7 +39,7 @@ export default function FreeTrial() {
         body: JSON.stringify(formData),
       });
 
-      const { clientSecret, customerId } = await response.json();
+      const { clientSecret, customerId } = await response.json(); // Used for Stripe setup
 
       // 2. Initialize Stripe
       // const stripe = await stripePromise;

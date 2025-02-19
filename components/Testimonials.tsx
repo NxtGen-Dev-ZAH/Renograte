@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { motion } from "framer-motion";
 
 const testimonials = [
@@ -22,38 +22,27 @@ const testimonials = [
 
 export default function Testimonials() {
   return (
-    <section className="py-20 bg-white  w-screen">
+    <section className="py-20 bg-gradient-to-b from-white to-gray-50 w-screen">
       <div className="container mx-auto px-4">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">
           What Our Clients Say
         </h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-          {testimonials.map((testimonial, index) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {testimonials.map((testimonial) => (
             <motion.div
               key={testimonial.id}
-              className="bg-gray-50 rounded-lg p-8 shadow-lg"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.2 }}
-              viewport={{ once: true }}
+              whileHover={{ y: -5 }}
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
             >
-              <div className="flex items-center mb-6">
-                {/* <img
-                  src={testimonial.image}
-                  alt={testimonial.name}
-                  className="w-16 h-16 rounded-full object-cover mr-4"
-                /> */}
-                <div>
-                  <h3 className="font-semibold text-lg text-gray-800">
+              <p className="text-gray-600 mb-4">{testimonial.content}</p>
+              <div className="flex items-center">
+                <div className="ml-4">
+                  <p className="font-semibold text-gray-800">
                     {testimonial.name}
-                  </h3>
+                  </p>
                   <p className="text-[#0C71C3]">{testimonial.role}</p>
                 </div>
               </div>
-              <p className="text-gray-600 leading-relaxed">
-                {testimonial.content}
-              </p>
             </motion.div>
           ))}
         </div>

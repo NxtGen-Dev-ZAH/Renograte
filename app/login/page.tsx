@@ -7,13 +7,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 
 // Zod schema for validation
@@ -22,89 +23,110 @@ const schema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters long"),
 });
 
+type FormData = z.infer<typeof schema>;
+
 const LoginModal = () => {
   const router = useRouter();
-  const [loginCompleted, setLoginCompleted] = useState(false);
+  const { login } = useAuth();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (data: any) => {
-    console.log("Form Data:", data);
-    // You can add logic to handle the login here, e.g., API call
-    setLoginCompleted(true);
-    router.back();
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true);
+      await login(data.email, data.password);
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to Renograte!",
+      });
+      router.push("/dashboard");
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-lg shadow-lg p-8 max-w-md w-full">
-        <Dialog defaultOpen onOpenChange={() => router.back()}>
-          <DialogContent className="sm:max-w-[425px] ">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-center">
-                Login
-              </DialogTitle>
-              <DialogDescription className="text-center text-gray-600">
-                Please enter your email and password to log in.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="email" className="font-semibold">
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Enter your email"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    {...register("email")}
-                  />
-                  {errors.email && (
-                    <span className="text-red-500 text-sm">
-                      {errors.email.message?.toString()}
-                    </span>
-                  )}
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className="font-semibold">
-                    Password
-                  </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    className="w-full border border-gray-300 rounded-md p-2"
-                    {...register("password")}
-                  />
-                  {errors.password && (
-                    <span className="text-red-500 text-sm">
-                      {errors.password.message?.toString()}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
-                >
-                  Login
-                </Button>
-              </DialogFooter>
-              {loginCompleted && (
-                <p className="text-center text-green-500">Login completed</p>
+      <Dialog defaultOpen onOpenChange={() => router.back()}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              Login to Renograte
+            </DialogTitle>
+            <DialogDescription className="text-center text-gray-600">
+              Enter your credentials to access your account
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Enter your email"
+                {...register("email")}
+                className={errors.email ? "border-red-500" : ""}
+              />
+              {errors.email && (
+                <p className="text-red-500 text-sm">{errors.email.message}</p>
               )}
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                {...register("password")}
+                className={errors.password ? "border-red-500" : ""}
+              />
+              {errors.password && (
+                <p className="text-red-500 text-sm">
+                  {errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90"
+              disabled={isLoading}
+            >
+              {isLoading ? "Logging in..." : "Login"}
+            </Button>
+
+            <div className="text-center text-sm text-gray-500">
+              <a
+                href="#"
+                className="text-[#0C71C3] hover:underline"
+                onClick={(e) => {
+                  e.preventDefault();
+                  router.push("/forgot-password");
+                }}
+              >
+                Forgot your password?
+              </a>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

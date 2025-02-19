@@ -115,14 +115,18 @@ export default function FeaturesPage() {
         {mainFeatures.map((feature, index) => (
           <Card
             key={index}
-            className="border-2 border-gray-100 hover:border-cyan-100 transition-all"
+            className="border-2 border-gray-100 hover:border-cyan-100 transition-all duration-300 hover:shadow-lg transform hover:-translate-y-1"
           >
             <CardHeader>
               <div className="flex items-center space-x-4">
-                <div className={`p-3 ${feature.color} rounded-lg`}>
+                <div
+                  className={`p-3 ${feature.color} rounded-lg transform transition-transform group-hover:scale-110`}
+                >
                   <feature.icon className="h-6 w-6 text-[#0C71C3]" />
                 </div>
-                <h3 className="text-xl font-semibold">{feature.title}</h3>
+                <h3 className="text-xl font-semibold group-hover:text-[#0C71C3] transition-colors">
+                  {feature.title}
+                </h3>
               </div>
             </CardHeader>
             <CardContent>

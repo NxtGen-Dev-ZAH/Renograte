@@ -203,13 +203,14 @@ export default function ProfessionalChatbot() {
           </div>
         </div>
         <div className="bg-gray-100 p-4 rounded-lg flex items-center space-x-4">
-          <FileText size={24} className="text-[#0C71C3]" />
+          <FileText size={32} className="text-[#0C71C3]" />
           <div>
             <h4 className="font-semibold text-[#0C71C3]">
-              Market Analysis Tools
+              Partnership Directory
             </h4>
             <p className="text-sm text-gray-600">
-              Guide to using our market analysis features
+              Connect with real estate agencies, contractors, and financial
+              institutions
             </p>
           </div>
         </div>

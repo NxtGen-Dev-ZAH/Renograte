@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -27,27 +28,61 @@ const schema = z
       .min(6, "Password must be at least 6 characters long"),
     phone: z
       .string()
-      .regex(/^\d{10}$/, "Phone number must be exactly 10 digits"),
+      .regex(
+        /^(\+\d{1,3}[-. ]?)?\(?([0-9]{3})\)?[-. ]?([0-9]{3})[-. ]?([0-9]{4})$/,
+        "Please enter a valid phone number"
+      ),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
     path: ["confirmPassword"],
   });
 
+type FormData = z.infer<typeof schema>;
+
 const SignUpModal = () => {
   const router = useRouter();
+  const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm({
+  } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
 
-  const onSubmit = (data:any) => {
-    console.log("Form Data:", data);
-    // You can add logic to handle the signup here, e.g., API call
-    router.back();
+  const onSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true);
+      const response = await fetch("http://localhost:8000/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Signup failed");
+      }
+
+      toast({
+        title: "Account Created",
+        description: "Please check your email to verify your account.",
+      });
+      router.back();
+    } catch (error) {
+      toast({
+        title: "Signup Failed",
+        description:
+          "There was an error creating your account. Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -154,9 +189,10 @@ const SignUpModal = () => {
               <DialogFooter>
                 <Button
                   type="submit"
-                  className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700"
+                  className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90"
+                  disabled={isLoading}
                 >
-                  Sign Up
+                  {isLoading ? "Creating Account..." : "Sign Up"}
                 </Button>
               </DialogFooter>
             </form>
