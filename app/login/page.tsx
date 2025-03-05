@@ -61,27 +61,27 @@ const LoginModal = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Dialog defaultOpen onOpenChange={() => router.back()}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95%] sm:w-[425px] max-w-lg mx-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center">
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
               Login to Renograte
             </DialogTitle>
-            <DialogDescription className="text-center text-gray-600">
+            <DialogDescription className="text-center text-gray-600 text-sm sm:text-base">
               Enter your credentials to access your account
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Enter your email"
                 {...register("email")}
-                className={errors.email ? "border-red-500" : ""}
+                className={`${errors.email ? "border-red-500" : ""} text-sm sm:text-base p-2 sm:p-3`}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>
@@ -106,13 +106,13 @@ const LoginModal = () => {
 
             <Button
               type="submit"
-              className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90"
+              className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90 text-sm sm:text-base p-2 sm:p-3"
               disabled={isLoading}
             >
               {isLoading ? "Logging in..." : "Login"}
             </Button>
 
-            <div className="text-center text-sm text-gray-500">
+            <div className="text-center text-xs sm:text-sm text-gray-500">
               <a
                 href="#"
                 className="text-[#0C71C3] hover:underline"

@@ -282,7 +282,7 @@ export default function MembersChat() {
             onClick={() => setIsOpen(true)}
             className="bg-gradient-to-r from-cyan-600 via-blue-700 to-cyan-600 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:shadow-xl hover:scale-105 hover:bg-gradient-to-l transition-all duration-300"
           >
-            <Users size={32} />
+            <Users size={24} className="sm:w-8 sm:h-8" />
           </button>
         ) : (
           <div className="flex space-x-4">

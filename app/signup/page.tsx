@@ -86,101 +86,101 @@ const SignUpModal = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-lg shadow-lg p-8 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+      <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-md">
         <Dialog defaultOpen onOpenChange={() => router.back()}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="w-[95%] sm:w-[425px] max-w-lg mx-auto p-4 sm:p-6">
             <DialogHeader>
-              <DialogTitle className="text-2xl font-bold text-center">
+              <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
                 Sign Up
               </DialogTitle>
-              <DialogDescription className="text-center text-gray-600">
+              <DialogDescription className="text-center text-gray-600 text-sm sm:text-base">
                 Please fill in the following fields to create a new account.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid gap-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
+              <div className="grid gap-3 sm:gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="name" className="font-semibold">
+                  <Label htmlFor="name" className="font-semibold text-sm sm:text-base">
                     Full Name
                   </Label>
                   <Input
                     id="name"
                     type="text"
                     placeholder="Enter your full name"
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
                     {...register("name")}
                   />
                   {errors.name && (
-                    <span className="text-red-500 text-sm">
+                    <span className="text-red-500 text-xs sm:text-sm">
                       {errors.name.message?.toString()}
                     </span>
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="email" className="font-semibold">
+                  <Label htmlFor="email" className="font-semibold text-sm sm:text-base">
                     Email
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
                     {...register("email")}
                   />
                   {errors.email && (
-                    <span className="text-red-500 text-sm">
+                    <span className="text-red-500 text-xs sm:text-sm">
                       {errors.email.message?.toString()}
                     </span>
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="password" className="font-semibold">
+                  <Label htmlFor="password" className="font-semibold text-sm sm:text-base">
                     Password
                   </Label>
                   <Input
                     id="password"
                     type="password"
                     placeholder="Enter your password"
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
                     {...register("password")}
                   />
                   {errors.password && (
-                    <span className="text-red-500 text-sm">
+                    <span className="text-red-500 text-xs sm:text-sm">
                       {errors.password.message?.toString()}
                     </span>
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword" className="font-semibold">
+                  <Label htmlFor="confirmPassword" className="font-semibold text-sm sm:text-base">
                     Confirm Password
                   </Label>
                   <Input
                     id="confirmPassword"
                     type="password"
                     placeholder="Re-enter your password"
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
                     {...register("confirmPassword")}
                   />
                   {errors.confirmPassword && (
-                    <span className="text-red-500 text-sm">
+                    <span className="text-red-500 text-xs sm:text-sm">
                       {errors.confirmPassword.message?.toString()}
                     </span>
                   )}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="phone" className="font-semibold">
+                  <Label htmlFor="phone" className="font-semibold text-sm sm:text-base">
                     Phone Number
                   </Label>
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="Enter your phone number"
-                    className="w-full border border-gray-300 rounded-md p-2"
+                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
                     {...register("phone")}
                   />
                   {errors.phone && (
-                    <span className="text-red-500 text-sm">
+                    <span className="text-red-500 text-xs sm:text-sm">
                       {errors.phone.message?.toString()}
                     </span>
                   )}
@@ -189,7 +189,7 @@ const SignUpModal = () => {
               <DialogFooter>
                 <Button
                   type="submit"
-                  className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90"
+                  className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90 text-sm sm:text-base p-2 sm:p-3"
                   disabled={isLoading}
                 >
                   {isLoading ? "Creating Account..." : "Sign Up"}

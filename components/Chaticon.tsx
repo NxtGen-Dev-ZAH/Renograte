@@ -92,7 +92,7 @@ export default function ProfessionalChatbot() {
   };
   const renderChatSection = () => (
     <>
-      <div className="h-72 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+      <div className="h-[50vh] sm:h-72 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar">
         {messages.map((message, index) => (
           <div
             key={index}
@@ -101,15 +101,19 @@ export default function ProfessionalChatbot() {
             }`}
           >
             <div
-              className={`flex items-start space-x-2 max-w-3/4 p-3 rounded-lg ${
+              className={`flex items-start space-x-2 max-w-[85%] sm:max-w-3/4 p-2 sm:p-3 rounded-lg ${
                 message.sender === "user"
                   ? "bg-cyan-100 text-blue-800"
                   : "bg-gray-100 text-gray-800"
               }`}
             >
-              {message.sender === "bot" && <Bot size={20} className="mt-1" />}
-              {message.sender === "user" && <User size={20} className="mt-1" />}
-              <p>{message.text}</p>
+              {message.sender === "bot" && (
+                <Bot size={16} className="mt-1 sm:w-5 sm:h-5" />
+              )}
+              {message.sender === "user" && (
+                <User size={16} className="mt-1 sm:w-5 sm:h-5" />
+              )}
+              <p className="text-sm sm:text-base">{message.text}</p>
             </div>
           </div>
         ))}
@@ -122,14 +126,14 @@ export default function ProfessionalChatbot() {
         )}
         <div ref={messagesEndRef} />
       </div>
-      <div className="p-3 border-t">
+      <div className="p-3 sm:p-4 border-t">
         <div className="flex items-center space-x-2">
           <input
             type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             placeholder="Type your message..."
-            className="flex-grow p-2 border rounded-lg text-black focus:outline-none focus:ring-2 focus:ring-cyan-600"
+            className="flex-grow p-2 text-sm sm:text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-600"
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
           />
 
@@ -138,7 +142,7 @@ export default function ProfessionalChatbot() {
             className="bg-cyan-600 text-white p-2 rounded-lg hover:bg-cyan-700 transition-colors"
             disabled={isLoading}
           >
-            <Send size={20} />
+            <Send size={16} className="sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
@@ -146,36 +150,36 @@ export default function ProfessionalChatbot() {
   );
 
   const renderFAQSection = () => (
-    <div className="h-96 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-      <h3 className="font-semibold text-lg mb-2 text-[#0C71C3]">
+    <div className="h-[50vh] sm:h-96 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar">
+      <h3 className="font-semibold text-base sm:text-lg mb-2 text-[#0C71C3]">
         Frequently Asked Questions
       </h3>
       <div className="space-y-4">
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <h4 className="font-semibold mb-2 text-[#0C71C3]">
+        <div className="bg-gray-100 p-3 sm:p-4 rounded-lg">
+          <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
             What is RENOGRATE®?
           </h4>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             RENOGRATE® integrates renovations into real estate deals, letting
             buyers customize homes before closing and helping sellers sell as-is
             for premium prices. It empowers agents with unique tools.
           </p>
         </div>
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <h4 className="font-semibold mb-2 text-[#0C71C3]">
+        <div className="bg-gray-100 p-3 sm:p-4 rounded-lg">
+          <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
             How does RENOGRATE® benefit buyers?
           </h4>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             Buyers can customize homes pre-closing, creating personalized spaces
             without post-purchase renovations. There are no upfront costs, and
             all renovations are completed before closing.
           </p>
         </div>
-        <div className="bg-gray-100 p-4 rounded-lg">
-          <h4 className="font-semibold mb-2 text-[#0C71C3]">
+        <div className="bg-gray-100 p-3 sm:p-4 rounded-lg">
+          <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
             What advantages does RENOGRATE® offer to sellers?
           </h4>
-          <p className="text-sm text-gray-600">
+          <p className="text-xs sm:text-sm text-gray-600">
             Sellers can sell as-is at premium prices, avoiding upfront
             renovation costs while increasing their property's market appeal and
             potential sale price.
@@ -284,33 +288,33 @@ export default function ProfessionalChatbot() {
         {!isOpen ? (
           <button
             onClick={() => setIsOpen(true)}
-            className="bg-gradient-to-r from-cyan-600 via-blue-700 to-cyan-600 backdrop-blur-sm text-white p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 hover:bg-gradient-to-l transition-all duration-300"
+            className="bg-gradient-to-r from-cyan-600 via-blue-700 to-cyan-600 backdrop-blur-sm text-white p-2 sm:p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 hover:bg-gradient-to-l transition-all duration-300"
           >
-            <Bot size={32} />
+            <Bot size={24} className="sm:w-8 sm:h-8" />
           </button>
         ) : (
-          <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl w-80 sm:w-96 overflow-hidden border border-[#0C71C3]/20">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl w-[90vw] sm:w-80 md:w-96 overflow-hidden border border-[#0C71C3]/20">
             <div className="bg-cyan-600 backdrop-blur-sm text-white p-2 flex justify-between items-center">
-              <h2 className="text-xl font-semibold">Renograte Support</h2>
+              <h2 className="text-base sm:text-xl font-semibold">Renograte Support</h2>
               <div className="flex space-x-2">
                 <button
                   onClick={() => setIsOpen(false)}
                   className="hover:bg-[#0C71C3] p-1 rounded transition-colors"
                 >
-                  <Minimize2 size={20} />
+                  <Minimize2 size={16} className="sm:w-5 sm:h-5" />
                 </button>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="hover:bg-[#0C71C3] p-1 rounded transition-colors"
                 >
-                  <X size={20} />
+                  <X size={16} className="sm:w-5 sm:h-5" />
                 </button>
               </div>
             </div>
-            <div className="flex border-b">
+            <div className="flex border-b text-xs sm:text-sm overflow-x-auto">
               <button
                 onClick={() => setActiveSection("chat")}
-                className={`flex-1 py-2 px-4 text-center text-black ${
+                className={`flex-1 py-2 px-2 sm:px-4 text-center whitespace-nowrap text-black ${
                   activeSection === "chat" ? "bg-gray-100 font-semibold" : ""
                 }`}
               >

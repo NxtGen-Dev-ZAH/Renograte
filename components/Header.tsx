@@ -4,13 +4,15 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isListingsOpen, setIsListingsOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileListingsOpen, setIsMobileListingsOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
   const router = useRouter();
 
@@ -20,6 +22,17 @@ export default function Header() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close mobile menu when screen size changes to desktop
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (
@@ -32,10 +45,33 @@ export default function Header() {
       transition={{ duration: 0.5 }}
     >
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div></div>
-          <nav className="hidden md:block">
-            <ul className="flex pl-16 space-x-8 text-base items-center">
+        <div className="flex items-center justify-center">
+          {/* Logo - centered on mobile, left-aligned on desktop */}
+          <div className="flex md:hidden items-center justify-center flex-1">
+            <Link href="/" className="flex items-center">
+              <Image
+                src="/logo.png"
+                alt="Renograte Logo"
+                width={200}
+                height={40}
+                className="h-8 w-auto"
+                quality={100}
+              />
+            </Link>
+          </div>
+
+          {/* Mobile menu button */}
+          <button 
+            className="md:hidden flex items-center text-gray-800"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+          >
+            {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex flex-1 justify-center">
+            <ul className="flex space-x-8 text-base items-center">
               <li
                 className="relative group"
                 onMouseEnter={() => setIsListingsOpen(true)}
@@ -85,7 +121,7 @@ export default function Header() {
                   alt="Renograte Logo"
                   width={300}
                   height={50}
-                  className="h-10"
+                  className="h-10 w-auto"
                   quality={100}
                 />
               </Link>
@@ -108,7 +144,8 @@ export default function Header() {
             </ul>
           </nav>
 
-          <div className="flex items-center space-x-4">
+          {/* Desktop Auth Buttons */}
+          <div className="hidden md:flex items-center space-x-4 ml-auto">
             {isAuthenticated ? (
               <>
                 <Link href="/dashboard">
@@ -128,6 +165,7 @@ export default function Header() {
                 >
                   Log Out
                 </motion.button>
+                
               </>
             ) : (
               <>
@@ -153,6 +191,116 @@ export default function Header() {
             )}
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <motion.div 
+            className="md:hidden mt-4 bg-white rounded-lg shadow-lg overflow-hidden"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <nav className="py-2">
+              <ul className="flex flex-col space-y-2">
+                <li className="px-4">
+                  <div 
+                    className="flex items-center justify-between py-2 text-gray-800"
+                    onClick={() => setIsMobileListingsOpen(!isMobileListingsOpen)}
+                  >
+                    <span>Listings</span>
+                    <ChevronDownIcon className={`h-4 w-4 transition-transform ${isMobileListingsOpen ? 'rotate-180' : ''}`} />
+                  </div>
+                  {isMobileListingsOpen && (
+                    <div className="pl-4 py-2 space-y-2 border-l-2 border-gray-200 ml-2">
+                      <Link
+                        href="/properties"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block py-1 text-gray-800 hover:text-[#0C71C3]"
+                      >
+                        Estimated Renovation Allowance
+                      </Link>
+                      <Link
+                        href="/listings"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block py-1 text-gray-800 hover:text-[#0C71C3]"
+                      >
+                        Renograte Listings
+                      </Link>
+                      <Link
+                        href="/listings/distressed-homes"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block py-1 text-gray-800 hover:text-[#0C71C3]"
+                      >
+                        Distressed Homes
+                      </Link>
+                    </div>
+                  )}
+                </li>
+                <li className="px-4 py-2">
+                  <Link
+                    href="/renogratefeature"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block text-gray-800 hover:text-[#0C71C3]"
+                  >
+                    Renograte Features
+                  </Link>
+                </li>
+                <li className="px-4 py-2">
+                  <Link
+                    href="/marketanalysis"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block text-gray-800 hover:text-[#0C71C3]"
+                  >
+                    Market Analysis
+                  </Link>
+                </li>
+                <li className="px-4 py-2">
+                  <Link
+                    href="/about"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="block text-gray-800 hover:text-[#0C71C3]"
+                  >
+                    About
+                  </Link>
+                </li>
+                <li className="px-4 py-2 border-t border-gray-100 mt-2 pt-4">
+                  {isAuthenticated ? (
+                    <div className="flex flex-col space-y-2">
+                      <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                        <button className="w-full px-4 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors">
+                          Dashboard
+                        </button>
+                      </Link>
+                      <button
+                        className="w-full px-4 py-2 text-black hover:text-[#0C71C3] text-center"
+                        onClick={() => {
+                          setIsMobileMenuOpen(false);
+                          logout();
+                        }}
+                      >
+                        Log Out
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col space-y-2">
+                      <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                        <button className="w-full px-4 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors">
+                          Sign Up
+                        </button>
+                      </Link>
+                      <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                        <button className="w-full px-4 py-2 text-black hover:text-[#0C71C3] text-center">
+                          Log In
+                        </button>
+                      </Link>
+                    </div>
+                  )}
+                </li>
+              </ul>
+            </nav>
+          </motion.div>
+        )}
       </div>
     </motion.header>
   );

@@ -6,15 +6,17 @@ import Testimonials from "@/components/Testimonials";
 import ModernFeaturePage from "@/components/About";
 
 
-// // Dynamic imports for heavy components
+// Dynamic imports for heavy components
 const HeroSection = dynamic(() => import("@/components/Hero"), {
-  loading: () => <div>Loading...</div>,
+  loading: () => <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-pulse text-gray-500">Loading...</div>
+  </div>,
   ssr: true,
 });
 
 export default function Home() {
   return (
-    <div className="relative min-h-screen w-screen">
+    <div className="relative min-h-screen w-full overflow-x-hidden">
       <div className="relative">
         <HeroSection />
         <FeaturedProperty />
@@ -22,7 +24,7 @@ export default function Home() {
         <MarketAnalysis />
         <ModernFeaturePage />
         <Testimonials />
-      </div>{" "}
+      </div>
     </div>
   );
 }
