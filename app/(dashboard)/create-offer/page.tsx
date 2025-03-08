@@ -128,7 +128,7 @@ export default function CreateOfferPage() {
               />
               {selectedDate && (
                 <p className="text-sm text-muted-foreground">
-                  Selected date: {new Date(selectedDate).toLocaleDateString()}
+                  Selected Date: {new Date(selectedDate).toLocaleDateString()}
                 </p>
               )}
             </div>
