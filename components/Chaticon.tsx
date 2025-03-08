@@ -10,7 +10,6 @@ import {
   User,
   Bot,
   FileText,
-  Clock,
 } from "lucide-react";
 import {
   CHAT_API_CONFIG,
@@ -50,12 +49,12 @@ export default function ProfessionalChatbot() {
     };
   }, []);
 
-  const handleQuickAction = (action: string) => {
-    setMessages([
-      ...messages,
-      { text: `You selected: ${action}`, sender: "bot" },
-    ]);
-  };
+  // const handleQuickAction = (action: string) => {
+  //   setMessages([
+  //     ...messages,
+  //     { text: `You selected: ${action}`, sender: "bot" },
+  //   ]);
+  // };
 
   const handleSend = async () => {
     if (!inputText.trim() || isLoading) return;
@@ -217,7 +216,7 @@ export default function ProfessionalChatbot() {
           </h4>
           <p className="text-xs sm:text-sm text-gray-600">
             Sellers can sell as-is at premium prices, avoiding upfront
-            renovation costs while increasing their property's market appeal and
+            renovation costs while increasing their property&apos;s market appeal and
             potential sale price.
           </p>
         </div>

@@ -1,20 +1,8 @@
 "use client";
-
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart, Users, Mail, Share2, Download, Plus, LineChart, TrendingUp } from "lucide-react";
+import { BarChart, Users, Download, Plus, LineChart, TrendingUp } from "lucide-react";
 
 const campaigns = [
   {
@@ -55,7 +43,7 @@ const marketingMaterials = [
 ];
 
 export default function MarketingPage() {
-  const [activeTab, setActiveTab] = useState("campaigns");
+  // const [activeTab, setActiveTab] = useState("campaigns");
 
   return (
     <div className="space-y-6">

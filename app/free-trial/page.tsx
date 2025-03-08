@@ -31,15 +31,15 @@ export default function FreeTrial() {
 
     try {
       // 1. Create customer and subscription in your backend
-      const response = await fetch("/api/create-trial-subscription", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
+      // const response = await fetch("/api/create-trial-subscription", {
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify(formData),
+      // });
 
-      const { clientSecret, customerId } = await response.json(); // Used for Stripe setup
+      // const { clientSecret, customerId } = await response.json(); // Used for Stripe setup
 
       // 2. Initialize Stripe
       // const stripe = await stripePromise;
@@ -179,7 +179,7 @@ export default function FreeTrial() {
                   /> */}
                 </div>
                 <p className="text-sm text-gray-500">
-                  Your card won't be charged until after the 90-day trial
+                  Your card won&apos;t be charged until after the 90-day trial
                   period.
                 </p>
               </div>

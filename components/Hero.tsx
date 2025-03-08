@@ -3,7 +3,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
-import { ChevronDown, Search, Home, TrendingUp } from "lucide-react";
+import { ChevronDown, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 
 export default function Hero() {

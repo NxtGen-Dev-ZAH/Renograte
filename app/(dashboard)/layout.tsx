@@ -17,6 +17,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 1024);
+      
       if (window.innerWidth < 1024) {
         setIsSidebarExpanded(false);
       }
@@ -33,7 +34,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={cn("min-h-screen bg-gray-50", isMobile ? "mobile-view" : "desktop-view")}>
       <DashboardHeader onMenuClick={() => setIsSidebarExpanded(!isSidebarExpanded)} />
       <div className="flex">
         <Sidebar 

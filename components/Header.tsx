@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import Image from "next/image";
 import { ChevronDownIcon, Menu, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRouter } from "next/navigation";
+// import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,7 +14,7 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileListingsOpen, setIsMobileListingsOpen] = useState(false);
   const { isAuthenticated, logout } = useAuth();
-  const router = useRouter();
+  // const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => {

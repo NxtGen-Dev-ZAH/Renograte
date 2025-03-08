@@ -26,7 +26,7 @@ export default function TrialDialog() {
         <DialogHeader>
           <DialogTitle>Start Your Free Trial</DialogTitle>
           <DialogDescription>
-            Choose how you'd like to proceed with your free trial of Renograte.
+            Choose how you&apos;d like to proceed with your free trial of Renograte.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 gap-4 py-4">

@@ -2,20 +2,12 @@
 
 import { useState, useEffect, useRef } from "react";
 import {
-  MessageSquare,
   Users,
-  User,
   Search,
-  Phone,
-  Video,
+
   X,
-  Plus,
   Send,
-  Bot,
-  Clock,
-  Image,
-  Paperclip,
-  Smile,
+ 
 } from "lucide-react";
 
 interface Message {

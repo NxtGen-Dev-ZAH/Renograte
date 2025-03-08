@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Search, Home, ArrowRight, Sparkles, DollarSign, Clock, Wrench } from "lucide-react";
+import { ArrowRight, DollarSign, Clock, Wrench } from "lucide-react";
 import Link from "next/link";
 
 export default function DistressedHomes() {
@@ -46,7 +46,7 @@ export default function DistressedHomes() {
               <span className="text-[#0C71C3]"> Profitable Sale</span>
             </h1>
             <p className="text-gray-600 text-base md:text-lg">
-              Don't let repair costs hold you back. With Renograte, sell your distressed property at market value while we handle all renovation aspects. Our unique pre-closing renovation program ensures maximum returns without any upfront costs.
+              Don&apos;t let repair costs hold you back. With Renograte, sell your distressed property at market value while we handle all renovation aspects. Our unique pre-closing renovation program ensures maximum returns without any upfront costs.
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/properties" className="w-full sm:w-auto">
@@ -98,7 +98,7 @@ export default function DistressedHomes() {
               Why Choose Renograte for Your Distressed Property?
             </h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              We transform the traditional home selling process by integrating renovations before closing, maximizing your property's value without any upfront costs.
+              We transform the traditional home selling process by integrating renovations before closing, maximizing your property&apos;s value without any upfront costs.
             </p>
           </motion.div>
 

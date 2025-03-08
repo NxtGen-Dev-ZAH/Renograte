@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -55,9 +56,11 @@ export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
           <div className="flex h-16 shrink-0 items-center">
             {isExpanded ? (
               <Link href="/" className="flex items-center">
-                <img 
-                  src="/logo.png" 
-                  alt="Renograte" 
+                <Image
+                  src="/logo.png"
+                  alt="Renograte Logo"
+                  width={200}
+                  height={40}
                   className="h-8 w-auto relative z-50"
                 />
               </Link>

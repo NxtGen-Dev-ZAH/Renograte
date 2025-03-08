@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DollarSign, Calendar, FileText } from "lucide-react";
+import { DollarSign } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
 
 export default function CreateOfferPage() {

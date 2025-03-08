@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+// import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ type FormData = z.infer<typeof schema>;
 
 const LoginModal = () => {
   const router = useRouter();
-  const { login } = useAuth();
+  // const { login } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,22 +41,24 @@ const LoginModal = () => {
 
   const onSubmit = async (data: FormData) => {
     // try {
-      setIsLoading(true);
-      // await login(data.email, data.password);
-      if(data.email === "info@renograte.com" && data.password === "123@reno456"){
-        toast({
-          title: "Login Successful",
-          description: "Welcome back to Renograte!",
-        });
-        router.push("/dashboard");
-      }
-      else{
-        toast({
-          title: "Login Failed",
-          description: "Please check your credentials and try again.",
-          variant: "destructive",
-        });
-      }
+    setIsLoading(true);
+    // await login(data.email, data.password);
+    if (
+      data.email === "info@renograte.com" &&
+      data.password === "123@Reno456"
+    ) {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to Renograte!",
+      });
+      router.push("/dashboard");
+    } else {
+      toast({
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
+    }
     //   toast({
     //     title: "Login Successful",
     //     description: "Welcome back to Renograte!",
@@ -89,13 +91,17 @@ const LoginModal = () => {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm sm:text-base">Email</Label>
+              <Label htmlFor="email" className="text-sm sm:text-base">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="Enter your email"
                 {...register("email")}
-                className={`${errors.email ? "border-red-500" : ""} text-sm sm:text-base p-2 sm:p-3`}
+                className={`${
+                  errors.email ? "border-red-500" : ""
+                } text-sm sm:text-base p-2 sm:p-3`}
               />
               {errors.email && (
                 <p className="text-red-500 text-sm">{errors.email.message}</p>

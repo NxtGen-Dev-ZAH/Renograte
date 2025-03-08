@@ -20,12 +20,12 @@ const data = [
 ];
 
 // Simplified shorter labels for mobile
-const mobileData = data.map(item => ({
-  ...item,
-  neighborhood: item.neighborhood === "Historic District" ? "Historic" :
-                item.neighborhood === "Waterfront" ? "Water" :
-                item.neighborhood === "Downtown" ? "DT" : "Sub"
-}));
+// const mobileData = data.map(item => ({
+//   ...item,
+//   neighborhood: item.neighborhood === "Historic District" ? "Historic" :
+//                 item.neighborhood === "Waterfront" ? "Water" :
+//                 item.neighborhood === "Downtown" ? "DT" : "Sub"
+// }));
 
 export default function MarketAnalysis() {
   const [isMobile, setIsMobile] = useState(false);

@@ -74,6 +74,7 @@ const SignUpModal = () => {
       });
       router.back();
     } catch (error) {
+      console.error(error);
       toast({
         title: "Signup Failed",
         description:

@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Home, DollarSign, Image as ImageIcon, CheckCircle } from "lucide-react";
+import { DollarSign, Image as ImageIcon, CheckCircle } from "lucide-react";
 
 const steps = [
   { id: 1, name: "Property Details" },
