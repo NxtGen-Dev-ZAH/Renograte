@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,9 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DollarSign } from "lucide-react";
-import { DatePicker } from "@/components/ui/date-picker";
+import { useState } from "react";
 
 export default function CreateOfferPage() {
+  const [selectedDate, setSelectedDate] = useState<string>("");
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedDate(e.target.value);
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -30,12 +42,17 @@ export default function CreateOfferPage() {
         <Card>
           <CardHeader>
             <CardTitle>Property Information</CardTitle>
-            <CardDescription>Enter the property details for the offer</CardDescription>
+            <CardDescription>
+              Enter the property details for the offer
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="propertyAddress">Property Address</Label>
-              <Input id="propertyAddress" placeholder="Enter property address" />
+              <Input
+                id="propertyAddress"
+                placeholder="Enter property address"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="propertyType">Property Type</Label>
@@ -55,10 +72,10 @@ export default function CreateOfferPage() {
               <Label htmlFor="listingPrice">Listing Price</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  id="listingPrice" 
-                  type="number" 
-                  min="0" 
+                <Input
+                  id="listingPrice"
+                  type="number"
+                  min="0"
                   className="pl-9"
                   placeholder="Enter listing price"
                 />
@@ -78,10 +95,10 @@ export default function CreateOfferPage() {
               <Label htmlFor="offerAmount">Offer Amount</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  id="offerAmount" 
-                  type="number" 
-                  min="0" 
+                <Input
+                  id="offerAmount"
+                  type="number"
+                  min="0"
                   className="pl-9"
                   placeholder="Enter offer amount"
                 />
@@ -91,18 +108,29 @@ export default function CreateOfferPage() {
               <Label htmlFor="earnestMoney">Earnest Money</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  id="earnestMoney" 
-                  type="number" 
-                  min="0" 
+                <Input
+                  id="earnestMoney"
+                  type="number"
+                  min="0"
                   className="pl-9"
                   placeholder="Enter earnest money amount"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Closing Date</Label>
-              <DatePicker />
+              <Label htmlFor="closingDate">Closing Date</Label>
+              <Input
+                type="date"
+                id="closingDate"
+                value={selectedDate}
+                onChange={handleDateChange}
+                className="w-full"
+              />
+              {selectedDate && (
+                <p className="text-sm text-muted-foreground">
+                  Selected date: {new Date(selectedDate).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -111,7 +139,9 @@ export default function CreateOfferPage() {
         <Card>
           <CardHeader>
             <CardTitle>Financing Information</CardTitle>
-            <CardDescription>Specify how the purchase will be financed</CardDescription>
+            <CardDescription>
+              Specify how the purchase will be financed
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -122,7 +152,9 @@ export default function CreateOfferPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="conventional">Conventional Loan</SelectItem>
+                  <SelectItem value="conventional">
+                    Conventional Loan
+                  </SelectItem>
                   <SelectItem value="fha">FHA Loan</SelectItem>
                   <SelectItem value="va">VA Loan</SelectItem>
                   <SelectItem value="owner">Owner Financing</SelectItem>
@@ -133,10 +165,10 @@ export default function CreateOfferPage() {
               <Label htmlFor="downPayment">Down Payment</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  id="downPayment" 
-                  type="number" 
-                  min="0" 
+                <Input
+                  id="downPayment"
+                  type="number"
+                  min="0"
                   className="pl-9"
                   placeholder="Enter down payment amount"
                 />
@@ -146,10 +178,10 @@ export default function CreateOfferPage() {
               <Label htmlFor="loanAmount">Loan Amount</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input 
-                  id="loanAmount" 
-                  type="number" 
-                  min="0" 
+                <Input
+                  id="loanAmount"
+                  type="number"
+                  min="0"
                   className="pl-9"
                   placeholder="Enter loan amount"
                 />
@@ -162,14 +194,16 @@ export default function CreateOfferPage() {
         <Card>
           <CardHeader>
             <CardTitle>Contingencies and Terms</CardTitle>
-            <CardDescription>Specify any conditions for the offer</CardDescription>
+            <CardDescription>
+              Specify any conditions for the offer
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="inspectionPeriod">Inspection Period (Days)</Label>
-              <Input 
-                id="inspectionPeriod" 
-                type="number" 
+              <Input
+                id="inspectionPeriod"
+                type="number"
                 min="0"
                 placeholder="Enter number of days"
               />
@@ -192,4 +226,4 @@ export default function CreateOfferPage() {
       </div>
     </div>
   );
-} 
+}
