@@ -12,18 +12,26 @@ import {
   FileText,
   Clock,
 } from "lucide-react";
+import {
+  CHAT_API_CONFIG,
+  ChatMessage,
+  ChatApiError,
+  fetchWithRetry
+} from '../lib/chat-config';
 
 export default function ProfessionalChatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("chat");
-  const [messages, setMessages] = useState([
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       text: "Welcome to Renograte support! How can I help you with your property renovation journey today?",
       sender: "bot",
     },
   ]);
   const [inputText, setInputText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -33,6 +41,15 @@ export default function ProfessionalChatbot() {
     scrollToBottom();
   }, [messages]);
 
+  useEffect(() => {
+    // Cleanup function to abort any ongoing requests when component unmounts
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
   const handleQuickAction = (action: string) => {
     setMessages([
       ...messages,
@@ -40,56 +57,75 @@ export default function ProfessionalChatbot() {
     ]);
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const handleSend = async () => {
-    if (inputText.trim()) {
-      setMessages((prev) => [...prev, { text: inputText, sender: "user" }]);
-      setInputText("");
-      setIsLoading(true);
-      try {
-        const response = await fetch("/api/chat", {
+    if (!inputText.trim() || isLoading) return;
+
+    // Abort any existing request
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const userMessage = inputText.trim();
+    setInputText("");
+    setMessages(prev => [...prev, { text: userMessage, sender: "user" }]);
+    setIsLoading(true);
+
+    // Create new abort controller for this request
+    abortControllerRef.current = new AbortController();
+
+    try {
+      const response = await fetchWithRetry(
+        `${CHAT_API_CONFIG.BASE_URL}${CHAT_API_CONFIG.ENDPOINTS.CHAT}`,
+        {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ query: inputText }),
-        });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+          body: JSON.stringify({ query: userMessage }),
+          signal: abortControllerRef.current.signal,
         }
-        if (!response.body) {
-          throw new Error("Response body is null");
-        }
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-        let fullText = "";
-        setMessages((prev) => [...prev, { text: "", sender: "bot" }]);
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const chunk = decoder.decode(value);
-          fullText += chunk;
-          setMessages((prev) => {
-            const newMessages = [...prev];
-            newMessages[newMessages.length - 1].text = fullText;
-            return newMessages;
-          });
-        }
-      } catch (error) {
-        console.error("Error:", error);
-        setMessages((prev) => [
-          ...prev,
-          {
-            text: "Sorry, I encountered an error. Please try again later.",
-            sender: "bot",
-          },
-        ]);
-      } finally {
-        setIsLoading(false);
+      );
+
+      if (!response.body) {
+        throw new ChatApiError("Response body is null");
       }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+
+      // Add empty bot message that will be updated with streaming content
+      setMessages(prev => [...prev, { text: "", sender: "bot" }]);
+
+      let fullText = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        fullText += chunk;
+
+        // Update the last bot message with accumulated text
+        setMessages(prev => {
+          const newMessages = [...prev];
+          newMessages[newMessages.length - 1].text = fullText;
+          return newMessages;
+        });
+      }
+    } catch (error) {
+      console.error("Chat error:", error);
+      const errorMessage = error instanceof ChatApiError
+        ? `Error: ${error.message}`
+        : error instanceof Error && error.name === 'AbortError'
+          ? "Message sending was cancelled"
+          : "Sorry, I encountered an error. Please try again later.";
+
+      setMessages(prev => [...prev, { text: errorMessage, sender: "bot" }]);
+    } finally {
+      setIsLoading(false);
+      abortControllerRef.current = null;
     }
   };
+
   const renderChatSection = () => (
     <>
       <div className="h-[50vh] sm:h-72 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar">

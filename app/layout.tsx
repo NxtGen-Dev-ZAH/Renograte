@@ -1,15 +1,9 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import Calculator from "@/components/Calculator";
-import Memberchat from "@/components/Memberchat";
-import ProfessionalChatbot from "@/components/Chaticon";
-import { Suspense } from "react";
-import Loading from "./loading";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "@/components/ui/toaster";
+import { RootLayoutContent } from "@/components/RootLayoutContent";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -28,22 +22,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body
-        className={`${inter.className} text-black bg-white overflow-x-hidden`}
-      >
+      <body className={`${inter.className} text-black bg-white overflow-x-hidden`}>
         <AuthProvider>
-          <Header />
-          <Suspense fallback={<Loading />}>
-            <main>{children}</main>
-          </Suspense>
-          <Suspense>
-            <Calculator />
-            <Memberchat />
-            <ProfessionalChatbot />
-          </Suspense>
-          <Footer />
+          <RootLayoutContent>{children}</RootLayoutContent>
+          <Toaster />
         </AuthProvider>
-        <Toaster />
       </body>
     </html>
   );

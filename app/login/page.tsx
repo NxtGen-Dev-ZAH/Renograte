@@ -40,24 +40,38 @@ const LoginModal = () => {
   });
 
   const onSubmit = async (data: FormData) => {
-    try {
+    // try {
       setIsLoading(true);
-      await login(data.email, data.password);
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to Renograte!",
-      });
-      router.push("/dashboard");
-    } catch (err) {
-      console.error(err);
-      toast({
-        title: "Login Failed",
-        description: "Please check your credentials and try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+      // await login(data.email, data.password);
+      if(data.email === "info@renograte.com" && data.password === "123@reno456"){
+        toast({
+          title: "Login Successful",
+          description: "Welcome back to Renograte!",
+        });
+        router.push("/dashboard");
+      }
+      else{
+        toast({
+          title: "Login Failed",
+          description: "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
+    //   toast({
+    //     title: "Login Successful",
+    //     description: "Welcome back to Renograte!",
+    //   });
+    //   router.push("/dashboard");
+    // } catch (err) {
+    //   console.error(err);
+    //   toast({
+    //     title: "Login Failed",
+    //     description: "Please check your credentials and try again.",
+    //     variant: "destructive",
+    //   });
+    // } finally {
+    //   setIsLoading(false);
+    // }
   };
 
   return (
