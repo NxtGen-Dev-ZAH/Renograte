@@ -6,7 +6,7 @@
     "fastapi-dev": "cd .. && python -m uvicorn Backend.app.main:app --reload ",
     "next-dev": "next dev",
     "dev": "concurrently \"npm run next-dev\" \"npm run fastapi-dev\"",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint"
   },
