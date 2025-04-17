@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Users,
   Search,
-
   X,
   Send,
- 
 } from "lucide-react";
 
 interface Message {
@@ -35,7 +34,9 @@ interface ChatType {
   id: string;
   type: "individual" | "group";
 }
+
 export default function MembersChat() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<
     "chats" | "contacts" | "groups"
@@ -45,6 +46,30 @@ export default function MembersChat() {
   const [inputText, setInputText] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Check membership status when component mounts or chat is opened
+  const checkMembership = async () => {
+    try {
+      // TODO: Replace with actual API call to check membership
+      const isMember = false; // This should be an API call to check membership status
+      
+      if (!isMember) {
+        router.push("/become-member");
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("Error checking membership:", error);
+      return false;
+    }
+  };
+
+  const handleChatOpen = async () => {
+    const canAccess = await checkMembership();
+    if (canAccess) {
+      setIsOpen(true);
+    }
+  };
 
   // Sample data
   const members: Member[] = [
@@ -271,7 +296,7 @@ export default function MembersChat() {
       <div className="fixed bottom-36 right-6 z-50">
         {!isOpen ? (
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={handleChatOpen}
             className="bg-gradient-to-r from-cyan-600 via-blue-700 to-cyan-600 backdrop-blur-sm text-white p-2 rounded-full shadow-lg hover:shadow-xl hover:scale-105 hover:bg-gradient-to-l transition-all duration-300"
           >
             <Users size={24} className="sm:w-8 sm:h-8" />

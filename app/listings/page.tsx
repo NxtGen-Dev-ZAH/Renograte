@@ -1,102 +1,197 @@
-// app/listings/page.tsx (continued)
 "use client";
 
-import { useState } from "react";
-import Image from "next/image";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { MapPin, Calendar } from "lucide-react";
+import { useState, useEffect } from 'react';
+import useRealtyFeedApi from '@/hooks/useRealtyFeedApi';
+import Image from 'next/image';
+import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import type { Property, Media } from '@/types/property';
+import React from 'react';
+import { 
+  PropertyType,
+  PropertyStatus,
+  getPropertyTypeDisplay,
+  getPropertyTypeWithSaleSuffix,
+  getPropertyTypeFilter,
+  isPropertyType
+} from '@/utils/propertyUtils';
+import { ErrorBoundary } from 'react-error-boundary';
 
-interface Listing {
-  id: number;
-  title: string;
-  price: number;
-  renovationPotential: number;
-  afterrenovatedallowance: number;
-  location: string;
-  type: string;
-  status: string;
-  daysListed: number;
-  image: string;
-  features: string[];
-  renovationHighlights: string[];
+const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+    </div>
+  )
+});
+
+const PropertyMapOverlay = dynamic(() => import('@/components/maps/PropertyMapOverlay'), {
+  ssr: false
+});
+
+interface PropertyResponse {
+  value: Property[];
+  '@odata.count'?: number;
+  '@odata.nextLink'?: string;
 }
 
-export default function ListingsPage() {
-  const [sortBy, setSortBy] = useState("newest");
+const ITEMS_PER_PAGE = 20;
 
-  const listings: Listing[] = [
-    {
-      id: 1,
-      title: "Charming Victorian Home",
-      price: 550000,
-      renovationPotential: 150000,
-      afterrenovatedallowance: 720000,
-      location: "Historic District, Downtown",
-      type: "Single Family",
-      status: "Active",
-      daysListed: 5,
-      image: "/property1.png",
-      features: ["4 Beds", "3 Baths", "2,800 sqft", "Built 1890"],
-      renovationHighlights: [
-        "Original hardwood floors",
-        "Period details",
-        "High ceilings",
-      ],
-    },
-    {
-      id: 2,
-      title: "Mid-Century Modern Ranch",
-      price: 425000,
-      renovationPotential: 75000,
-      afterrenovatedallowance: 520000,
-      location: "Sunset Hills",
-      type: "Ranch",
-      status: "Active",
-      daysListed: 3,
-      image: "/property2.png",
-      features: ["3 Beds", "2 Baths", "1,800 sqft", "Built 1962"],
-      renovationHighlights: [
-        "Open floor plan",
-        "Large windows",
-        "Original features",
-      ],
-    },
-    {
-      id: 3,
-      title: "Urban Townhouse",
-      price: 675000,
-      renovationPotential: 100000,
-      afterrenovatedallowance: 788000,
-      location: "City Center",
-      type: "Townhouse",
-      status: "Active",
-      daysListed: 7,
-      image: "/property3.png",
-      features: ["3 Beds", "2.5 Baths", "2,200 sqft", "Built 2000"],
-      renovationHighlights: [
-        "Modern kitchen",
-        "Rooftop potential",
-        "Basement unit",
-      ],
-    },
-  ];
+export default function PropertyListingsPage() {
+  const [query, setQuery] = useState<string | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [nextLink, setNextLink] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState('Active');
+  const [filterType, setFilterType] = useState('Residential');
+  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000000 });
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [showMapOverlay, setShowMapOverlay] = useState(false);
+  const [hoveredPropertyId, setHoveredPropertyId] = useState<string | undefined>(undefined);
+  const router = useRouter();
+
+  // Construct the initial query
+  const buildQuery = () => {
+    // Use getPropertyTypeFilter utility to handle different property types
+    const propertyTypeFilter = getPropertyTypeFilter(filterType);
+    
+    // Only include status in filter if it's not 'All'
+    const statusFilter = filterStatus === 'All' ? '' : `StandardStatus eq '${filterStatus}' and `;
+    
+    const filter = `${statusFilter}${propertyTypeFilter} and ListPrice ge ${priceRange.min} and ListPrice le ${priceRange.max}`;
+    
+    const select = [
+      'ListingKey',
+      'StandardStatus',
+      'PropertyType',
+      'PropertySubType',
+      'ListPrice',
+      'StreetNumber',
+      'StreetName', 
+      'City',
+      'StateOrProvince',
+      'PostalCode',
+      'BedroomsTotal',
+      'BathroomsTotalInteger',
+      'LivingArea',
+      'SubdivisionName',
+      'ListOfficeName',
+      'Latitude',
+      'Longitude',
+      'ModificationTimestamp',
+      'ListingContractDate'
+    ].join(',');
+    
+    const expand = "Media";
+    const orderby = "ModificationTimestamp desc";
+    
+    const resource = `Property?$filter=${filter}&$select=${select}&$expand=${expand}&$orderby=${orderby}&$top=${ITEMS_PER_PAGE}&$count=true`;
+    
+    // Log the query for debugging
+    console.log('Property Type:', propertyTypeFilter);
+    console.log('Full Query:', resource);
+    
+    setQuery(resource);
+  };
+
+  // Initial query build
+  useEffect(() => {
+    buildQuery();
+  }, [filterStatus, filterType, priceRange]);
+
+  // Add a refresh interval to fetch new data periodically
+  useEffect(() => {
+    const intervalId = setInterval(buildQuery, 5 * 60 * 1000); // Refresh every 7 minutes
+    return () => clearInterval(intervalId);
+  }, [filterStatus, filterType, priceRange]);
+
+  const { data, error, loading } = useRealtyFeedApi<PropertyResponse>(query);
+
+  // Process the API response and log any issues
+  useEffect(() => {
+    if (data && !loading) {
+      if (data.value) {
+        if (isLoadingMore) {
+          setProperties(prev => [...prev, ...data.value]);
+          setIsLoadingMore(false);
+        } else {
+          setProperties(data.value);
+        }
+        console.log(`Found ${data.value.length} properties`);
+        console.log('First property data:', data.value[0] || 'No properties found');
+      } else {
+        console.log('No properties found in response');
+      }
+      
+      if (data['@odata.count'] !== undefined) {
+        setTotalCount(data['@odata.count']);
+        console.log('Total count:', data['@odata.count']);
+      }
+      
+      setNextLink(data['@odata.nextLink'] || null);
+    }
+    
+    if (error) {
+      console.error('API Error:', error);
+      console.error('Current query:', query);
+    }
+  }, [data, loading, error, query]);
+
+  const loadMore = async () => {
+    if (nextLink && !isLoadingMore) {
+      setIsLoadingMore(true);
+      // Extract the query part from the nextLink
+      const queryPart = nextLink.split('/Property')[1];
+      setQuery(`Property${queryPart}`);
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+  
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', { 
+      style: 'currency', 
+      currency: 'USD',
+      maximumFractionDigits: 0 
+    }).format(price); 
+  };
+
+  const formatAddress = (property: Property) => {
+    const streetAddress = `${property.StreetNumber} ${property.StreetName}`;
+    const cityStateZip = `${property.City}, ${property.StateOrProvince} ${property.PostalCode}`;
+    return { streetAddress, cityStateZip };
+  };
+
+  // Handle filter changes
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterStatus(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterType(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const handlePriceChange = (type: 'min' | 'max', value: number) => {
+    setPriceRange(prev => ({
+      ...prev,
+      [type]: value
+    }));
+    setCurrentPage(1);
+  };
+
+  // Handle marker click on map
+  const handleMarkerClick = (propertyId: string) => {
+    router.push(`/listings/property/${propertyId}`);
+  };
 
   return (
-    <div className="w-full overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
-        {/* Header Section */}
-        <div className="text-center mb-4 sm:mb-6 mt-6 sm:mt-10">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-3 sm:mb-4">
+    <div className="container mx-auto px-4 py-8">
+        <div className="text-center mb-2 sm:mb-4 mt-6 sm:mt-10">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-3">
             Renograte Listings
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-gray-600">
@@ -160,149 +255,277 @@ export default function ListingsPage() {
             .
           </p>
         </div>
-
-        {/* Filters Section */}
-        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6 sm:mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <Input placeholder="Search locations..." className="w-full text-sm sm:text-base" />
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="text-sm sm:text-base">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Newest First</SelectItem>
-                <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                <SelectItem value="potential">Renovation Potential</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select>
-              <SelectTrigger className="text-sm sm:text-base">
-                <SelectValue placeholder="Property Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="single">Single Family</SelectItem>
-                <SelectItem value="townhouse">Townhouse</SelectItem>
-                <SelectItem value="condo">Condo</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button className="bg-[#0C71C3] hover:bg-[#0C71C3]/90 text-sm sm:text-base">
-              Apply Filters
-            </Button>
+      
+      {/* Filters */}
+      <div className="bg-gray-100 p-4 mb-8 rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Status</label>
+            <select 
+              value={filterStatus} 
+              
+              onChange={handleStatusChange}
+              className="w-full p-2 border rounded"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Active">Active</option>
+              <option value="Pending">Pending</option>
+              <option value="Sold">Sold</option>
+              <option value="Coming Soon">Coming Soon</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Property Type</label>
+            <select 
+              value={filterType} 
+              onChange={handleTypeChange}
+              className="w-full p-2 border rounded"
+            >
+              <option value="Residential">Residential</option>
+              <option value="Condominium">Condominium</option>
+              <option value="Townhouse">Townhouse</option>
+              <option value="Land">Land</option>
+              <option value="Commercial">Commercial</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Min Price</label>
+            <select 
+              value={priceRange.min} 
+              onChange={(e) => handlePriceChange('min', Number(e.target.value))}
+              className="w-full p-2 border rounded"
+            >
+              <option value="0">Any</option>
+              <option value="100000">$100,000</option>
+              <option value="200000">$200,000</option>
+              <option value="300000">$300,000</option>
+              <option value="500000">$500,000</option>
+              <option value="750000">$750,000</option>
+              <option value="1000000">$1,000,000</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium mb-1">Max Price</label>
+            <select 
+              value={priceRange.max} 
+              onChange={(e) => handlePriceChange('max', Number(e.target.value))}
+              className="w-full p-2 border rounded"
+            >
+              <option value="1000000">$1,000,000</option>
+              <option value="2000000">$2,000,000</option>
+              <option value="3000000">$3,000,000</option>
+              <option value="5000000">$5,000,000</option>
+              <option value="10000000">$10,000,000+</option>
+            </select>
           </div>
         </div>
-
-        {/* Listings Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-8">
-          {listings.map((listing) => (
-            <Card
-              key={listing.id}
-              className="overflow-hidden hover:shadow-lg transition-shadow"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2">
-                <div className="relative h-[200px] sm:h-[250px] md:h-full">
-                  <Image
-                    src={listing.image}
-                    alt={listing.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  />
-                  <Badge className="absolute top-2 left-2 bg-[#0C71C3] text-xs sm:text-sm">
-                    {listing.status}
-                  </Badge>
-                </div>
-
-                <CardContent className="p-4 sm:p-6">
-                  <h3 className="text-lg sm:text-xl font-semibold mb-2">{listing.title}</h3>
-                  <div className="flex items-center text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base">
-                    <MapPin className="h-4 w-4 mr-2 flex-shrink-0" />
-                    <span>{listing.location}</span>
-                  </div>
-
-                  <div className="space-y-3 sm:space-y-4">
-                    <div>
-                      <p className="text-xs sm:text-sm text-gray-500">Listed Price</p>
-                      <p className="text-base sm:text-lg font-bold text-[#0C71C3]">
-                        ${listing.price.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end space-y-2 sm:space-y-0 sm:space-x-4">
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          Renovation Potential
-                        </p>
-                        <p className="text-base sm:text-lg font-bold text-cyan-600">
-                          ${listing.renovationPotential.toLocaleString()}
-                        </p>
-                      </div>
-
-                      <div>
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          After Renovated Allowance
-                        </p>
-                        <p className="text-base sm:text-lg font-bold text-blue-600">
-                          ${listing.afterrenovatedallowance.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      {listing.features.map((feature, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs sm:text-sm">
-                          {feature}
-                        </Badge>
-                      ))}
-                    </div>
-
-                    <div>
-                      <p className="text-xs sm:text-sm font-medium mb-2">
-                        Renovation Highlights:
-                      </p>
-                      <ul className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        {listing.renovationHighlights.map((highlight, index) => (
-                          <li key={index}>• {highlight}</li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs sm:text-sm text-gray-500">
-                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 inline mr-1" />
-                        {listing.daysListed} days on market
-                      </span>
-                      <Button className="bg-[#0C71C3] hover:bg-[#0C71C3]/90 text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2">
-                        View Details
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </div>
-            </Card>
-          ))}
+      </div>
+      
+      {/* Loading State */}
+      {loading && !isLoadingMore && (
+        <div className="flex justify-center my-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
-
-        {/* Pagination */}
-        <div className="mt-6 sm:mt-8 flex justify-center">
-          <nav className="flex items-center space-x-2">
-            <Button variant="outline" className="w-16 sm:w-24 text-xs sm:text-sm">
-              Previous
-            </Button>
-            <Button variant="outline" className="w-8 sm:w-10 text-xs sm:text-sm">
-              1
-            </Button>
-            <Button variant="outline" className="w-8 sm:w-10 bg-[#0C71C3] text-white text-xs sm:text-sm">
-              2
-            </Button>
-            <Button variant="outline" className="w-8 sm:w-10 text-xs sm:text-sm">
-              3
-            </Button>
-            <Button variant="outline" className="w-16 sm:w-24 text-xs sm:text-sm">
-              Next
-            </Button>
-          </nav>
+      )}
+      
+      {/* Error State */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <p>{error}</p>
+        </div>
+      )}
+      
+      {/* Results Count */}
+      {!loading && properties.length > 0 && (
+        <div className="mb-4">
+          <p className="text-gray-600">
+            Showing {properties.length} of {totalCount} listings
+          </p>
+          
+        </div>    
+      )}
+      
+      {/* New Map and Property Grid Layout */}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Map on Left Side */}
+        <div className="lg:w-5/12 sticky top-20 h-[600px]">
+          {!loading && properties.length > 0 && (
+            <div className="h-full w-full rounded-lg overflow-hidden shadow-md">
+              <ErrorBoundary fallback={<div className="h-full w-full bg-gray-100 rounded-lg flex items-center justify-center">Error loading map</div>}>
+                <PropertyMap 
+                  properties={properties}
+                  height="100%"
+                  onMarkerClick={handleMarkerClick}
+                  highlightedPropertyId={hoveredPropertyId}
+                />
+              </ErrorBoundary>
+            </div>
+          )}
+        </div>
+        
+        {/* Property Grid on Right Side */}
+        <div className="lg:w-7/12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {properties.map((property, index) => {
+              const { streetAddress, cityStateZip } = formatAddress(property);
+              // Handle media regardless of whether we get all fields or just the ones we requested
+              const mainImage = property.Media?.length ? 
+                (property.Media.find((m: Media) => m.Order === 1)?.MediaURL || 
+                 property.Media[0].MediaURL || 
+                 property.Media[0].MediaURL || 
+                 null) : 
+                null;
+              
+              return (
+                <Link 
+                  href={`/listings/property/${property.ListingKey}`} 
+                  key={property.ListingKey}
+                  onMouseEnter={() => setHoveredPropertyId(property.ListingKey)}
+                  onMouseLeave={() => setHoveredPropertyId(undefined)}
+                >
+                  <div className={`border rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 ${hoveredPropertyId === property.ListingKey ? 'ring-2 ring-blue-500' : ''}`}>
+                    {/* Status Banner */}
+                    <div className="relative">
+                      <div className="absolute top-0 left-0 right-0 bg-blue-500 text-white py-1 px-4 z-10">
+                        {property.StandardStatus === 'Coming Soon' ? 'COMING SOON' : 'NEW LISTING'}
+                      </div>
+                      
+                      {/* Property Image */}
+                      <div className="h-60 relative">
+                        {mainImage ? (
+                          <Image 
+                            src={mainImage}
+                            alt={`${property.StreetNumber} ${property.StreetName}`}
+                            fill
+                            style={{ objectFit: 'cover' }}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            priority={index < 3}
+                            placeholder="blur"
+                            blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/4gHYSUNDX1BST0ZJTEUAAQEAAAHIAAAAAAQwAABtbnRyUkdCIFhZWiAH4AABAAEAAAAAAABhY3NwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAA9tYAAQAAAADTLQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAlkZXNjAAAA8AAAACRyWFlaAAABFAAAABRnWFlaAAABKAAAABRiWFlaAAABPAAAABR3dHB0AAABUAAAABRyVFJDAAABZAAAAChnVFJDAAABZAAAAChiVFJDAAABZAAAAChjcHJ0AAABjAAAADxtbHVjAAAAAAAAAAEAAAAMZW5VUwAAAAgAAAAcAHMAUgBHAEJYWVogAAAAAAAAb6IAADj1AAADkFhZWiAAAAAAAABimQAAt4UAABjaWFlaIAAAAAAAACSgAAAPhAAAts9YWVogAAAAAAAA9tYAAQAAAADTLXBhcmEAAAAAAAQAAAACZmYAAPKnAAANWQAAE9AAAApbAAAAAAAAAABtbHVjAAAAAAAAAAEAAAAMZW5VUwAAACAAAAAcAEcAbwBvAGcAbABlACAASQBuAGMALgAgADIAMAAxADb/2wBDABQODxIPDRQSEBIXFRQdHx4eHRoaHSQrJiEkKic0Ly4vLy4xOzw6Njs8OzFEREREREREREREREREREREREREREf/2wBDAR0XFyAeIB4gHh4gIiAdIB0gHR0dHSAdIB0gHiAdICAgICAgIB4eICAgICAgICAgICAgICAgICAgICAgICAgICAgICf/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAb/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
+                            loading={index < 3 ? undefined : "lazy"}
+                          />
+                        ) : (
+                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                            <p className="text-gray-500">No Image Available</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Property Details */}
+                    <div className="p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h2 className="text-2xl font-bold text-blue-800">{formatPrice(property.ListPrice)}</h2>
+                        <div className="flex items-center">
+                          <Image 
+                            src="/mlslogo.png" 
+                            alt="MLS Logo" 
+                            width={60} 
+                            height={20}
+                            priority
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="uppercase text-base text-green-500 mb-1">
+                        {(() => {
+                          // Pass both the property's type and the current filter type
+                          // This ensures condos are correctly displayed even if the API returns a different PropertyType
+                          return getPropertyTypeWithSaleSuffix(property.PropertyType, filterType);
+                        })()} 
+                      </div>
+                      <div className="uppercase text-sm text-white font-medium bg-blue-500 rounded-lg p-2 mb-2 w-fit">
+                        {property.StandardStatus}
+                      </div>
+                      
+                      <div className="flex items-center space-x-4 text-gray-700 mb-4 ">
+                        <h1 className="text-gray-800 font-bold bg-gray-100 rounded-lg p-2">{property.BedroomsTotal} BEDS</h1>
+                        <h1 className="text-gray-800 font-bold bg-gray-100 rounded-lg p-2 ">{property.BathroomsTotalInteger} BATHS</h1>
+                        <h1 className="text-gray-800 font-bold bg-gray-100 rounded-lg p-2">{property.LivingArea} SQFT</h1>
+                      </div>
+                      
+                      <div className="mb-1 text-gray-800 font-medium">{streetAddress}</div>
+                      <div className="mb-2 text-gray-800 font-medium">{cityStateZip}</div>
+                      
+                      {property.SubdivisionName && (
+                        <div className="text-gray-500 mb-4">{property.SubdivisionName} Subdivision</div>
+                      )}
+                      
+                      <div className="text-gray-500 text-sm">
+                        Listing courtesy of {property.ListOfficeName || 'Renograte'}
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+          
+          {/* Load More Button */}
+          {nextLink && !isLoadingMore && (
+            <div className="flex justify-center mt-8">
+              <button 
+                onClick={loadMore}
+                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-300"
+              >
+                Load More Properties
+              </button>
+            </div>
+          )}
+          
+          {/* Loading More Indicator */}
+          {isLoadingMore && (
+            <div className="flex justify-center mt-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          )}
         </div>
       </div>
+      
+      {/* No Results */}
+      {!loading && properties.length === 0 && (
+        <div className="text-center py-12 ">
+          <h3 className="text-xl font-medium text-gray-800 mb-2">No properties found</h3>
+          <p className="text-gray-600">Try adjusting your filters to see more results.</p>
+        </div>
+      )}
+      
+      {/* Map Overlay */}
+      {showMapOverlay && (
+        <PropertyMapOverlay
+          properties={properties}
+          onClose={() => setShowMapOverlay(false)}
+          onPropertySelect={(propertyId: string) => {
+            setShowMapOverlay(false);
+            router.push(`/listings/property/${propertyId}`);
+          }}
+          highlightedPropertyId={hoveredPropertyId}
+        />
+      )}
     </div>
   );
+}
+
+// ErrorBoundary component definition at the end of the file
+class ErrorBoundary extends React.Component<{ children: React.ReactNode, fallback: React.ReactNode }> {
+  state = { hasError: false };
+  
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("Map Error:", error, errorInfo);
+  }
+  
+  render() {
+    if (this.state.hasError) {
+      return this.props.fallback;
+    }
+    
+    return this.props.children;
+  }
 }

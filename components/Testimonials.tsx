@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 const testimonials = [
   {
     id: 1,
-    name: "John Doe",
+    name: "James Mateo ",
     role: "Homeowner",
     content:
       "Renograte helped me find the perfect fixer-upper and guided me through the renovation process. I couldn't be happier with my investment!",
@@ -12,7 +12,7 @@ const testimonials = [
   },
   {
     id: 2,
-    name: "Jane Smith",
+    name: "Michael Oliver ",
     role: "Real Estate Investor",
     content:
       "The market analysis tools provided by Renograte have been invaluable in identifying profitable renovation opportunities. Highly recommended!",

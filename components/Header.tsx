@@ -70,37 +70,38 @@ export default function Header() {
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex flex-1 justify-center">
-            <ul className="flex space-x-8 text-base items-center">
+          <nav className="hidden md:flex flex-1 items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+            {/* Navigation Items - Left Side */}
+            <ul className="flex items-center space-x-8 ">
               <li
                 className="relative group"
                 onMouseEnter={() => setIsListingsOpen(true)}
                 onMouseLeave={() => setIsListingsOpen(false)}
               >
-                <div className="flex items-center cursor-pointer text-gray-800 hover:text-[#0C71C3] hover:font-semibold transition duration-300">
+                <div className="flex items-center cursor-pointer text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 relative group">
                   Listings
-                  <ChevronDownIcon className="ml-1 h-4 w-4" />
+                  <ChevronDownIcon className="ml-1 h-4 w-4 transition-transform group-hover:rotate-180" />
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-green-400 to-cyan-400 group-hover:w-full transition-all duration-300"></span>
                 </div>
                 {isListingsOpen && (
                   <div
-                    className="absolute left-0 mt-0 w-64 bg-white shadow-lg rounded-md py-2 z-50 group-hover:block"
-                    style={{ top: "100%" }}
+                    className="absolute left-0 mt-0 w-64 bg-white shadow-lg rounded-md py-2 z-50 border border-gray-100"
                   >
                     <Link
                       href="/properties"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 hover:text-[#0C71C3]"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
                     >
                       Estimated Renovation Allowance
                     </Link>
                     <Link
                       href="/listings"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 hover:text-[#0C71C3]"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
                     >
                       Renograte Listings
                     </Link>
                     <Link
                       href="/listings/distressed-homes"
-                      className="block px-4 py-2 text-gray-800 hover:bg-gray-100 hover:text-[#0C71C3]"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
                     >
                       Distressed Homes
                     </Link>
@@ -110,35 +111,41 @@ export default function Header() {
               <li>
                 <Link
                   href="/renogratefeature"
-                  className="text-gray-800 hover:text-[#0C71C3] hover:font-semibold transition duration-300"
+                  className="text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 relative group whitespace-nowrap"
                 >
                   Renograte Features
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-green-400 to-cyan-400 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               </li>
-              <Link href="/" className="flex items-center">
+
+              {/* Logo - Center */}
+              <Link href="/" className="flex items-center mx-8 group">
                 <Image
                   src="/logo.png"
                   alt="Renograte Logo"
                   width={300}
                   height={50}
-                  className="h-10 w-auto"
+                  className="h-10 w-auto transform group-hover:scale-105 transition-transform duration-300"
                   quality={100}
                 />
               </Link>
+
               <li>
                 <Link
                   href="/marketanalysis"
-                  className="text-gray-800 hover:text-[#0C71C3] hover:font-semibold transition duration-300"
+                  className="text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 relative group whitespace-nowrap"
                 >
                   Market Analysis
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-green-400 to-cyan-400 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               </li>
               <li>
                 <Link
                   href="/about"
-                  className="text-gray-800 hover:text-[#0C71C3] hover:font-semibold transition duration-300"
+                  className="text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 relative group"
                 >
                   About
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-green-400 to-cyan-400 group-hover:w-full transition-all duration-300"></span>
                 </Link>
               </li>
             </ul>

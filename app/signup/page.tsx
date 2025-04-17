@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import Image from "next/image";
 import {
   Dialog,
   DialogContent,
@@ -16,11 +17,12 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaLock, FaPhone } from 'react-icons/fa';
 
 // Zod schema for validation
 const schema = z
   .object({
-    name: z.string().min(5, "Name is required"),
+    name: z.string().min(2, "Name is required"),
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters long"),
     confirmPassword: z
@@ -44,6 +46,8 @@ const SignUpModal = () => {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
@@ -53,9 +57,21 @@ const SignUpModal = () => {
     resolver: zodResolver(schema),
   });
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const toggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
+
   const onSubmit = async (data: FormData) => {
     try {
       setIsLoading(true);
+      
+      // Simulate API call for demo
+      // In production, uncomment and use actual API
+      /*
       const response = await fetch("http://localhost:8000/api/auth/signup", {
         method: "POST",
         headers: {
@@ -67,12 +83,16 @@ const SignUpModal = () => {
       if (!response.ok) {
         throw new Error("Signup failed");
       }
+      */
+      
+      // Simulate successful signup after 1.5 seconds
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       toast({
-        title: "Account Created",
+        title: "Account Created Successfully",
         description: "Please check your email to verify your account.",
       });
-      router.back();
+      router.push("/login");
     } catch (error) {
       console.error(error);
       toast({
@@ -87,119 +107,206 @@ const SignUpModal = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <div className="bg-white bg-opacity-50 backdrop-blur-lg rounded-lg shadow-lg p-4 sm:p-8 w-full max-w-md">
-        <Dialog defaultOpen onOpenChange={() => router.back()}>
-          <DialogContent className="w-[95%] sm:w-[425px] max-w-lg mx-auto p-4 sm:p-6">
-            <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
-                Sign Up
-              </DialogTitle>
-              <DialogDescription className="text-center text-gray-600 text-sm sm:text-base">
-                Please fill in the following fields to create a new account.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 sm:space-y-6">
-              <div className="grid gap-3 sm:gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name" className="font-semibold text-sm sm:text-base">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-cyan-100 p-4">
+      <Dialog defaultOpen onOpenChange={() => router.back()}>
+        <DialogContent className="w-[95%] sm:w-[450px] max-w-lg mx-auto p-0 overflow-hidden border-none shadow-2xl bg-gradient-to-tr from-gray-50 via-cyan-50 to-gray-50">
+          <div className="py-4 px-6">
+            <div className="flex justify-center mb-4 mt-4">
+              <Image 
+                src="/logo.png" 
+                alt="Renograte Logo" 
+                width={180}
+                height={40}
+                className="h-12 w-fit"
+              />
+            </div>
+            <DialogTitle className="text-xl sm:text-2xl font-bold text-center text-black">
+              Create Your Account
+            </DialogTitle>
+            <DialogDescription className="text-center text-black/90 text-sm sm:text-base">
+              Join Renograte and start transforming properties
+            </DialogDescription>
+          </div>
+          
+          <div className="p-6 py-0 pb-2">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-sm font-medium flex items-center gap-2">
+                    <FaUser className="text-[#0C71C3]" />
                     Full Name
                   </Label>
                   <Input
                     id="name"
                     type="text"
                     placeholder="Enter your full name"
-                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
+                    className={`${
+                      errors.name ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-[#0C71C3]"
+                    } text-sm rounded-md border-gray-300 p-3`}
                     {...register("name")}
                   />
                   {errors.name && (
-                    <span className="text-red-500 text-xs sm:text-sm">
-                      {errors.name.message?.toString()}
-                    </span>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.name.message}
+                    </p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="email" className="font-semibold text-sm sm:text-base">
-                    Email
+                
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm font-medium flex items-center gap-2">
+                    <FaEnvelope className="text-[#0C71C3]" />
+                    Email Address
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Enter your email"
-                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
+                    className={`${
+                      errors.email ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-[#0C71C3]"
+                    } text-sm rounded-md border-gray-300 p-3`}
                     {...register("email")}
                   />
                   {errors.email && (
-                    <span className="text-red-500 text-xs sm:text-sm">
-                      {errors.email.message?.toString()}
-                    </span>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.email.message}
+                    </p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="password" className="font-semibold text-sm sm:text-base">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm font-medium flex items-center gap-2">
+                    <FaLock className="text-[#0C71C3]" />
                     Password
                   </Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="Enter your password"
-                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
-                    {...register("password")}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Create a strong password"
+                      className={`${
+                        errors.password ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-[#0C71C3]"
+                      } pr-10 text-sm rounded-md border-gray-300 p-3`}
+                      {...register("password")}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={togglePasswordVisibility} 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                      aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                      {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                    </button>
+                  </div>
                   {errors.password && (
-                    <span className="text-red-500 text-xs sm:text-sm">
-                      {errors.password.message?.toString()}
-                    </span>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.password.message}
+                    </p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="confirmPassword" className="font-semibold text-sm sm:text-base">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword" className="text-sm font-medium flex items-center gap-2">
+                    <FaLock className="text-[#0C71C3]" />
                     Confirm Password
                   </Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="Re-enter your password"
-                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
-                    {...register("confirmPassword")}
-                  />
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="Confirm your password"
+                      className={`${
+                        errors.confirmPassword ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-[#0C71C3]"
+                      } pr-10 text-sm rounded-md border-gray-300 p-3`}
+                      {...register("confirmPassword")}
+                    />
+                    <button 
+                      type="button" 
+                      onClick={toggleConfirmPasswordVisibility} 
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                      aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                    >
+                      {showConfirmPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                    </button>
+                  </div>
                   {errors.confirmPassword && (
-                    <span className="text-red-500 text-xs sm:text-sm">
-                      {errors.confirmPassword.message?.toString()}
-                    </span>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.confirmPassword.message}
+                    </p>
                   )}
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="phone" className="font-semibold text-sm sm:text-base">
+                
+                <div className="space-y-2">
+                  <Label htmlFor="phone" className="text-sm font-medium flex items-center gap-2">
+                    <FaPhone className="text-[#0C71C3]" />
                     Phone Number
                   </Label>
                   <Input
                     id="phone"
                     type="tel"
                     placeholder="Enter your phone number"
-                    className="w-full border border-gray-300 rounded-md p-2 sm:p-3 text-sm sm:text-base"
+                    className={`${
+                      errors.phone ? "border-red-500 focus-visible:ring-red-500" : "focus-visible:ring-[#0C71C3]"
+                    } text-sm rounded-md border-gray-300 p-3`}
                     {...register("phone")}
                   />
                   {errors.phone && (
-                    <span className="text-red-500 text-xs sm:text-sm">
-                      {errors.phone.message?.toString()}
-                    </span>
+                    <p className="text-red-500 text-xs mt-1">
+                      {errors.phone.message}
+                    </p>
                   )}
                 </div>
               </div>
-              <DialogFooter>
+              
+              <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90 text-sm sm:text-base p-2 sm:p-3"
+                  className="w-full bg-[#0C71C3] hover:bg-[#0A5A9C] text-white font-medium py-2.5 rounded-md transition-all duration-200 shadow-md hover:shadow-lg"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Creating Account..." : "Sign Up"}
+                  {isLoading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      <span>Creating Account...</span>
+                    </div>
+                  ) : (
+                    "Create Account"
+                  )}
                 </Button>
-              </DialogFooter>
+              </div>
+              
+              <div className="text-center space-y-4 pt-1">
+                <div className="text-sm text-gray-600">
+                  Already have an account?{" "}
+                  <a
+                    href="#"
+                    className="text-[#0C71C3] hover:text-[#0A5A9C] font-medium hover:underline transition-colors"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/login");
+                    }}
+                  >
+                    Sign In
+                  </a>
+                </div>
+                
+                <p className="text-center text-xs text-gray-500 mt-4">
+                  By creating an account, you agree to our{" "}
+                  <a href="#" className="text-[#0C71C3] hover:underline">
+                    Terms of Service
+                  </a>{" "}
+                  and{" "}
+                  <a href="#" className="text-[#0C71C3] hover:underline">
+                    Privacy Policy
+                  </a>
+                </p>
+              </div>
             </form>
-          </DialogContent>
-        </Dialog>
-      </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

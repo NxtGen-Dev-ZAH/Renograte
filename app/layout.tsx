@@ -7,7 +7,7 @@ import { RootLayoutContent } from "@/components/RootLayoutContent";
 
 const inter = Inter({
   subsets: ["latin"],
-  display: "swap", // Optimize font loading
+  display: "swap", 
 });
 
 export const metadata: Metadata = {
