@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import type { Property, Media } from '@/types/property';
 import React from 'react';
+import { ErrorBoundary } from 'react-error-boundary';
 import { 
   PropertyType,
   PropertyStatus,
@@ -16,7 +17,6 @@ import {
   getPropertyTypeFilter,
   isPropertyType
 } from '@/utils/propertyUtils';
-import { ErrorBoundary } from 'react-error-boundary';
 
 const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
   ssr: false,
@@ -507,25 +507,4 @@ export default function PropertyListingsPage() {
       )}
     </div>
   );
-}
-
-// ErrorBoundary component definition at the end of the file
-class ErrorBoundary extends React.Component<{ children: React.ReactNode, fallback: React.ReactNode }> {
-  state = { hasError: false };
-  
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-  
-  componentDidCatch(error: any, errorInfo: any) {
-    console.error("Map Error:", error, errorInfo);
-  }
-  
-  render() {
-    if (this.state.hasError) {
-      return this.props.fallback;
-    }
-    
-    return this.props.children;
-  }
 }

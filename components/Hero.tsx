@@ -5,13 +5,16 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import Image from "next/image";
 import { ChevronDown, Search } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Hero() {
+  const router = useRouter();
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 200]);
   const scale = useTransform(scrollY, [0, 500], [1, 1.1]);
   const opacity = useTransform(scrollY, [0, 200], [1, 0]);
   const [isMobile, setIsMobile] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   useEffect(() => {
     const checkMobile = () => {
@@ -23,6 +26,13 @@ export default function Hero() {
     
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  const handleSearch = () => {
+    if (searchValue.trim()) {
+      // Navigate to the estimate page with the search value as a query parameter
+      router.push(`/estimate?address=${encodeURIComponent(searchValue)}`);
+    }
+  };
 
   const fadeInUpVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -90,6 +100,9 @@ export default function Hero() {
                 type="text"
                 placeholder="Enter property address"
                 className="px-4 py-3 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all duration-300 shadow-sm"
+                value={searchValue}
+                onChange={(e) => setSearchValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
               <div className="absolute inset-0 border border-gradient-blue opacity-50 rounded-lg pointer-events-none" />
             </div>
@@ -97,6 +110,7 @@ export default function Hero() {
               className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl text-base group overflow-hidden relative"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={handleSearch}
             >
               <span className="absolute inset-0 bg-gradient-to-r from-blue-700 to-cyan-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <Search className="w-5 h-5 relative z-10" />

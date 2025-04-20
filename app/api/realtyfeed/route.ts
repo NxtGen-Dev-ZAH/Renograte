@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
+// Token cache with expiration tracking
+interface TokenCache {
+  token: string;
+  expiry: number; // Unix timestamp
+}
+
+let tokenCache: TokenCache | null = null;
+const TOKEN_BUFFER = 60 * 1000; // 1 minute buffer before expiry
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
@@ -10,35 +19,59 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Resource parameter is required' }, { status: 400 });
     }
 
-    // Credentials and Configuration
-    const clientId = '73tu20hifqq79re29ts38j0upm';
-    const clientSecret = '7hai9jfvs9d6vfb1fsmom9hlir6osgn9cfurt7k391e8j16q95e';
-    const authenticationUrl = 'https://realtyfeed-sso.auth.us-east-1.amazoncognito.com/oauth2/token';
-    const apiUrl = 'https://api.realtyfeed.com/reso/odata/';
-    const apiKey = '4u8cqAAmGv1vD6QEfjfMz2odqMLUSp397rMnklb6';
-    const allowedOrigin = 'https://www.renograte.com';
+    // Get credentials from environment variables
+    const clientId = process.env.REALTYFEED_CLIENT_ID;
+    const clientSecret = process.env.REALTYFEED_CLIENT_SECRET;
+    const authenticationUrl = process.env.REALTYFEED_AUTH_URL || 'https://realtyfeed-sso.auth.us-east-1.amazoncognito.com/oauth2/token';
+    const apiUrl = process.env.REALTYFEED_API_URL || 'https://api.realtyfeed.com/reso/odata/';
+    const apiKey = process.env.REALTYFEED_API_KEY;
+    const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://www.renograte.com';
 
-    // Authentication
-    const formData = new URLSearchParams();
-    formData.append('grant_type', 'client_credentials');
-    formData.append('client_id', clientId);
-
-    const authResponse = await axios.post(authenticationUrl, formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Accept': '*/*',
-      },
-      auth: {
-        username: clientId,
-        password: clientSecret,
-      },
-    });
-
-    if (!authResponse.data.access_token) {
-      return NextResponse.json({ error: 'Failed to obtain authentication token' }, { status: 500 });
+    // Validate required credentials
+    if (!clientId || !clientSecret || !apiKey) {
+      console.error('Missing RealtyFeed API credentials');
+      return NextResponse.json(
+        { error: 'Server configuration error' },
+        { status: 500 }
+      );
     }
 
-    const token = authResponse.data.access_token;
+    // Use cached token if available and not expired
+    const now = Date.now();
+    let token: string;
+    
+    if (tokenCache && tokenCache.expiry > now + TOKEN_BUFFER) {
+      token = tokenCache.token;
+    } else {
+      // Authentication
+      const formData = new URLSearchParams();
+      formData.append('grant_type', 'client_credentials');
+      formData.append('client_id', clientId);
+
+      const authResponse = await axios.post(authenticationUrl, formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': '*/*',
+        },
+        auth: {
+          username: clientId,
+          password: clientSecret,
+        },
+      });
+
+      if (!authResponse.data.access_token) {
+        return NextResponse.json({ error: 'Failed to obtain authentication token' }, { status: 500 });
+      }
+
+      token = authResponse.data.access_token;
+      
+      // Cache the token with expiry time (default to 1 hour if not specified)
+      const expiresIn = authResponse.data.expires_in || 3600;
+      tokenCache = {
+        token,
+        expiry: now + (expiresIn * 1000)
+      };
+    }
 
     // Prepare API Request
     const [path, queryString] = resource.split('?');
@@ -81,30 +114,40 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Make API Request
-    const response = await axios.get(`${apiUrl}${path}?${params.toString()}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'x-api-key': apiKey,
-        'Origin': allowedOrigin,
-        'Referer': allowedOrigin,
-        'Accept': 'application/json'
-      },
-      timeout: 15000
-    });
+    // Make API Request with timeout and retry logic
+    const makeRequest = async (retries = 2): Promise<any> => {
+      try {
+        return await axios.get(`${apiUrl}${path}?${params.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-api-key': apiKey,
+            'Origin': allowedOrigin,
+            'Referer': allowedOrigin,
+            'Accept': 'application/json'
+          },
+          timeout: 10000 // Reduced timeout to 10s for faster error responses
+        });
+      } catch (error: any) {
+        // If token expired (401), invalidate cache and retry once
+        if (error.response?.status === 401 && tokenCache && retries > 0) {
+          tokenCache = null; // Force new token acquisition
+          return makeRequest(retries - 1); 
+        }
+        throw error;
+      }
+    };
+    
+    const response = await makeRequest();
 
-    // Log the response for debugging
-    console.log('RealtyFeed API Response:', {
-      status: response.status,
-      count: response.data['@odata.count'],
-      itemCount: response.data.value?.length,
-      firstItem: response.data.value?.[0],
-      timestamp: new Date().toISOString(),
-      modificationTimestamps: response.data.value?.slice(0, 3).map((item: any) => ({
-        listingKey: item.ListingKey,
-        modificationTimestamp: item.ModificationTimestamp
-      }))
-    });
+    // Only log minimal info in production
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('RealtyFeed API Response:', {
+        status: response.status,
+        count: response.data['@odata.count'],
+        itemCount: response.data.value?.length,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Return response with no-cache headers for our API endpoint
     return NextResponse.json(response.data, {
@@ -116,19 +159,13 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    // Enhanced error logging
+    // Enhanced error logging - with sensitive data redaction
     console.error('RealtyFeed API Error:', {
       message: error.message,
-      response: error.response?.data,
       status: error.response?.status,
       config: {
-        url: error.config?.url,
-        params: error.config?.params,
-        headers: {
-          ...error.config?.headers,
-          'Authorization': '[REDACTED]',
-          'x-api-key': '[REDACTED]'
-        }
+        url: error.config?.url ? new URL(error.config.url).pathname : undefined,
+        // Don't log query parameters which might contain sensitive info
       }
     });
 
@@ -136,9 +173,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         {
           error: `Failed to fetch from RealtyFeed: ${error.message}`,
-          details: error.response?.data || 'No response data from API',
-          status: error.response?.status,
-          query: error.config?.url?.split('?')[1] || ''  // Include the query for debugging
+          status: error.response?.status
+          // Don't include details or query in response
         },
         { 
           status: error.response?.status || 500,
@@ -154,7 +190,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'An unexpected error occurred',
-        details: error.message || 'Unknown error',
+        // Don't include error details in production
       },
       { 
         status: 500,
