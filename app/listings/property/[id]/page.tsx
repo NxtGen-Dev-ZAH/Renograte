@@ -152,31 +152,91 @@ export default function PropertyDetailPage() {
 
   // Calculate renovation potential and after renovation value
   const calculateRenovationDetails = (property: Property) => {
-    // Base renovation potential based on property price tiers
-    let baseRenovationPercentage;
+    // Start with a base amount rather than a percentage
+    // This ensures properties at the same price point can have very different budgets
+    let baseBudget;
+    
+    // Base budget tiers by property price (not percentage-based)
     if (property.ListPrice <= 300000) {
-      baseRenovationPercentage = 0.165 ; // 16.5% for lower-priced properties
+      baseBudget = 30000; // For lower-priced properties
     } else if (property.ListPrice <= 600000) {
-      baseRenovationPercentage = 0.135; // 13.5% for mid-range properties
+      baseBudget = 60000; // For mid-range properties
     } else {
-      baseRenovationPercentage = 0.115; // 11.5% for high-end properties
-    }
-
-    // Maximum allowance caps based on price tiers
-    let maxAllowance;
-    if (property.ListPrice <= 300000) {
-      maxAllowance = 45000; 
-    } else if (property.ListPrice <= 600000) {
-      maxAllowance = 75000;
-    } else {
-      maxAllowance = 120000;
+      baseBudget = 90000; // For high-end properties
     }
     
-    // Calculate renovation allowance based on property price
-    const renovationAllowance = Math.min(
-      property.ListPrice * baseRenovationPercentage,
-      maxAllowance
-    );
+    // Create distinct adjustments based on property characteristics
+    // These adjustments will be used to modify the base budget
+    
+    // Bedrooms have significant impact on variation
+    const bedroomAdjustment = property.BedroomsTotal >= 4 ? 1.15 : 
+                              property.BedroomsTotal === 3 ? 1.0 : 
+                              property.BedroomsTotal === 2 ? 0.9 : 0.85;
+    
+    // Bathrooms also impact renovation needs
+    const bathroomAdjustment = property.BathroomsTotalInteger >= 3 ? 1.12 : 
+                               property.BathroomsTotalInteger === 2 ? 1.0 : 0.92;
+    
+    // Square footage creates substantial variation
+    // Use a stepped approach for clearer differentiation
+    let areaSizeAdjustment = 1.0;
+    if (property.LivingArea) {
+      if (property.LivingArea < 800) areaSizeAdjustment = 0.85;
+      else if (property.LivingArea < 1000) areaSizeAdjustment = 0.9;
+      else if (property.LivingArea < 1500) areaSizeAdjustment = 0.95;
+      else if (property.LivingArea < 2000) areaSizeAdjustment = 1.0;
+      else if (property.LivingArea < 2500) areaSizeAdjustment = 1.05;
+      else if (property.LivingArea < 3000) areaSizeAdjustment = 1.1;
+      else areaSizeAdjustment = 1.15;
+    }
+    
+    // Property type adjustment is more pronounced
+    let typeAdjustment = 1.0;
+    const propertyType = property.PropertySubType || property.PropertyType;
+    if (propertyType === "Condominium") {
+      typeAdjustment = 0.8; // Condos typically need less renovation
+    } else if (propertyType === "Townhouse") {
+      typeAdjustment = 0.9;
+    } else if (propertyType === "Commercial") {
+      typeAdjustment = 1.25; // Commercial properties often need more
+    }
+    
+    // Age adjustment is more significant
+    let ageAdjustment = 1.0;
+    if (property.YearBuilt) {
+      const age = new Date().getFullYear() - property.YearBuilt;
+      if (age > 50) ageAdjustment = 1.3;
+      else if (age > 30) ageAdjustment = 1.2;
+      else if (age > 15) ageAdjustment = 1.1;
+      else if (age > 5) ageAdjustment = 1.0;
+      else ageAdjustment = 0.9; // Newer homes need less
+    }
+    
+    // Create a unique property identifier based on address
+    const uniqueIdentifier = property.StreetNumber + property.StreetName + property.City + property.PostalCode;
+    
+    // Generate a deterministic variation factor using the property address
+    // This ensures identical properties with different addresses get different budgets
+    const hashValue = uniqueIdentifier.split('').reduce((acc, char, idx) => {
+      return acc + (char.charCodeAt(0) * (idx + 1));
+    }, 0);
+    
+    // Create a variation factor between 0.85 and 1.15 (±15%)
+    const addressVariationFactor = 0.85 + ((hashValue % 30) / 100);
+    
+    // Apply all adjustments to the base budget
+    let calculatedBudget = baseBudget * bedroomAdjustment * bathroomAdjustment * 
+                          areaSizeAdjustment * typeAdjustment * ageAdjustment * 
+                          addressVariationFactor;
+    
+    // Add a final adjustment based on property price to maintain proportion
+    const priceAdjustment = property.ListPrice / 
+                           (property.ListPrice <= 300000 ? 200000 : 
+                            property.ListPrice <= 600000 ? 400000 : 800000);
+    calculatedBudget *= priceAdjustment;
+    
+    // Round to the nearest $1000 for clearer visual differentiation
+    const renovationAllowance = Math.round(calculatedBudget / 1000) * 1000;
     
     // Calculate after renovation value (ARV) with a more conservative multiplier
     // ARV = Purchase Price + Renovation Cost + (Renovation Cost * Profit Margin)

@@ -142,7 +142,7 @@ export default function PropertiesPage() {
   // ---------------------------------------------------------------
   
   // Filter states
-  const [priceRange, setPriceRange] = useState<[number, number]>([200000, 800000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([175500, 800000]);
   const [filterStatus, setFilterStatus] = useState<string>(PropertyStatus.Active);
   const [filterType, setFilterType] = useState<string>(PropertyType.Residential);
   const [locationSearch, setLocationSearch] = useState<string>('');
@@ -340,56 +340,95 @@ export default function PropertiesPage() {
 
   // Calculate renovation budget based on home price and characteristics
   const calculateRenovationBudget = (property: ApiPropertyResponse): number => {
-    // Base renovation percentage adjusted by property price tier
-    let basePercentage = 0;
+    // Start with a base amount rather than a percentage
+    // This ensures properties at the same price point can have very different budgets
+    let baseBudget;
+    
+    // Base budget tiers by property price (not percentage-based)
     if (property.ListPrice < 300000) {
-      basePercentage = 0.15; // 15% for lower-priced properties
+      baseBudget = 30000; // For lower-priced properties
     } else if (property.ListPrice < 600000) {
-      basePercentage = 0.12; // 12% for mid-range properties
+      baseBudget = 60000; // For mid-range properties
     } else {
-      basePercentage = 0.10; // 10% for high-end properties
+      baseBudget = 90000; // For high-end properties
     }
     
-    // Add realistic variability to the base percentage (±1.5%)
-    const variabilityFactor = 0.015; // 1.5% variation
-    const randomVariation = (Math.random() * variabilityFactor * 2) - variabilityFactor;
-    const adjustedPercentage = basePercentage + randomVariation;
+    // Create distinct adjustments based on property characteristics
+    // These adjustments will be used to modify the base budget
     
-    // Age adjustment: older homes may need more renovation
-    let ageMultiplier = 1.0;
-    if (property.YearBuilt) {
-      const age = new Date().getFullYear() - property.YearBuilt;
-      if (age > 50) ageMultiplier = 1.25;
-      else if (age > 30) ageMultiplier = 1.15;
-      else if (age > 15) ageMultiplier = 1.05;
-      
-      // Add slight randomness to age multiplier (±0.05)
-      const ageRandomness = (Math.random() * 0.1) - 0.05;
-      ageMultiplier += ageRandomness;
+    // Bedrooms have significant impact on variation
+    const bedroomAdjustment = property.BedroomsTotal >= 4 ? 1.15 : 
+                              property.BedroomsTotal === 3 ? 1.0 : 
+                              property.BedroomsTotal === 2 ? 0.9 : 0.85;
+    
+    // Bathrooms also impact renovation needs
+    const bathroomAdjustment = property.BathroomsTotalInteger >= 3 ? 1.12 : 
+                               property.BathroomsTotalInteger === 2 ? 1.0 : 0.92;
+    
+    // Square footage creates substantial variation
+    // Use a stepped approach for clearer differentiation
+    let areaSizeAdjustment = 1.0;
+    if (property.LivingArea) {
+      if (property.LivingArea < 800) areaSizeAdjustment = 0.85;
+      else if (property.LivingArea < 1000) areaSizeAdjustment = 0.9;
+      else if (property.LivingArea < 1500) areaSizeAdjustment = 0.95;
+      else if (property.LivingArea < 2000) areaSizeAdjustment = 1.0;
+      else if (property.LivingArea < 2500) areaSizeAdjustment = 1.05;
+      else if (property.LivingArea < 3000) areaSizeAdjustment = 1.1;
+      else areaSizeAdjustment = 1.15;
     }
     
-    // Property type adjustment
-    let typeMultiplier = 1.0;
+    // Property type adjustment is more pronounced
+    let typeAdjustment = 1.0;
     const propertyType = property.PropertySubType || property.PropertyType;
     if (propertyType === PropertyType.Condominium) {
-      typeMultiplier = 0.9; // Condos typically need less renovation
+      typeAdjustment = 0.8; // Condos typically need less renovation
     } else if (propertyType === PropertyType.Townhouse) {
-      typeMultiplier = 0.95;
+      typeAdjustment = 0.9;
     } else if (propertyType === PropertyType.Commercial) {
-      typeMultiplier = 1.2; // Commercial properties often need more
+      typeAdjustment = 1.25; // Commercial properties often need more
     }
     
-    // Add specific property uniqueness factor
-    // Use hash of ListingKey to get consistent but seemingly random variation per property
-    const uniquenessBase = property.ListingKey.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const uniquenessFactor = 0.9 + ((uniquenessBase % 20) / 100); // 0.9 to 1.1 range
+    // Age adjustment is more significant
+    let ageAdjustment = 1.0;
+    if (property.YearBuilt) {
+      const age = new Date().getFullYear() - property.YearBuilt;
+      if (age > 50) ageAdjustment = 1.3;
+      else if (age > 30) ageAdjustment = 1.2;
+      else if (age > 15) ageAdjustment = 1.1;
+      else if (age > 5) ageAdjustment = 1.0;
+      else ageAdjustment = 0.9; // Newer homes need less
+    }
     
-    // Calculate base budget with all multipliers
-    const calculatedBudget = property.ListPrice * adjustedPercentage * ageMultiplier * typeMultiplier * uniquenessFactor;
-    const roundedBudget = Math.round(calculatedBudget / 10) * 10; // Round to nearest 10
+    // Create a unique property identifier based on address
+    const uniqueIdentifier = property.StreetNumber + property.StreetName + property.City + property.PostalCode;
     
-    // Apply caps based on property value
-    const maxBudget = Math.min(property.ListPrice * 0.25, 200000);
+    // Generate a deterministic variation factor using the property address
+    // This ensures identical properties with different addresses get different budgets
+    const hashValue = uniqueIdentifier.split('').reduce((acc, char, idx) => {
+      return acc + (char.charCodeAt(0) * (idx + 1));
+    }, 0);
+    
+    // Create a variation factor between 0.85 and 1.15 (±15%)
+    const addressVariationFactor = 0.85 + ((hashValue % 30) / 100);
+    
+    // Apply all adjustments to the base budget
+    let calculatedBudget = baseBudget * bedroomAdjustment * bathroomAdjustment * 
+                          areaSizeAdjustment * typeAdjustment * ageAdjustment * 
+                          addressVariationFactor;
+    
+    // Add a final adjustment based on property price to maintain proportion
+    const priceAdjustment = property.ListPrice / 
+                           (property.ListPrice < 300000 ? 200000 : 
+                            property.ListPrice < 600000 ? 400000 : 800000);
+    calculatedBudget *= priceAdjustment;
+    
+    // Round to the nearest $1000 for clearer visual differentiation
+    const roundedBudget = Math.round(calculatedBudget / 1000) * 1000;
+    
+    // Apply maximum cap as percentage of property value
+    const maxBudget = Math.min(property.ListPrice * 0.23, 200000);
+    
     return Math.min(roundedBudget, maxBudget);
   };
 
@@ -682,8 +721,8 @@ export default function PropertiesPage() {
             </Select>
           </div>
           
-       {/* Bathrooms */}
-       <div className="space-y-2">
+          {/* Bathrooms */}
+          <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">Bathrooms</label>
             <Select value={bathroomsFilter} onValueChange={setBathroomsFilter}>
               <SelectTrigger className="w-full">
@@ -754,14 +793,14 @@ export default function PropertiesPage() {
             </Select>
           </div>
         </div>
-      </div>
-
+                </div>
+                
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-12 w-12 text-[#0C71C3] animate-spin" />
           <span className="ml-3 text-lg text-gray-600">Loading properties...</span>
-        </div>
+                </div>
       )}
 
       {/* Error State */}
@@ -777,7 +816,7 @@ export default function PropertiesPage() {
           >
             Retry
           </Button>
-        </div>
+                </div>
       )}
 
       {/* Results Count */}
@@ -786,7 +825,7 @@ export default function PropertiesPage() {
           <p className="text-gray-600">
             Showing {properties.length} of {totalCount} properties
           </p>
-        </div>
+                </div>
       )}
 
       {/* No Results */}
@@ -807,20 +846,20 @@ export default function PropertiesPage() {
       {/* Properties Grid */}
       {!loading && properties.length > 0 && (
         <>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {properties.map((property) => (
-              <Card
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {properties.map((property) => (
+          <Card
                 key={`property-${property.id}`}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+            className="overflow-hidden hover:shadow-lg transition-shadow"
                 onMouseEnter={() => setHoveredProperty(property.id)}
                 onMouseLeave={() => setHoveredProperty(null)}
-              >
+          >
                 <CardHeader className="p-0 relative">
                   <Link href={`/listings/property/${property.id}`} passHref>
                     <div className="relative h-48 w-full">
-                      <Image
-                        src={property.image}
-                        alt={property.title}
+              <Image
+                src={property.image}
+                alt={property.title}
                         fill
                         style={{ objectFit: 'cover' }}
                         className="transition-transform duration-300 hover:scale-105"
@@ -833,56 +872,56 @@ export default function PropertiesPage() {
                       </div>
                     )}
                   </Link>
-                </CardHeader>
-                <CardContent className="p-6">
+            </CardHeader>
+            <CardContent className="p-6">
                   <Link href={`/listings/property/${property.id}`} passHref>
                     <h3 className="text-xl font-semibold mb-2 hover:text-blue-600 transition-colors">{property.title}</h3>
                   </Link>
                   <p className="text-gray-600 mb-4 text-sm line-clamp-2">{property.location}</p>
 
-                  <div className="grid grid-cols-3 gap-4 mb-4">
+              <div className="grid grid-cols-3 gap-4 mb-4">
                     <div className="flex flex-col items-center">
                       <BedDouble className="h-5 w-5 text-[#0C71C3] mb-1" />
-                      <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600">
                         {property.bedrooms} {property.bedrooms === 1 ? 'bed' : 'beds'}
-                      </p>
-                    </div>
+                  </p>
+                </div>
                     <div className="flex flex-col items-center">
                       <Bath className="h-5 w-5 text-[#0C71C3] mb-1" />
-                      <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600">
                         {property.bathrooms} {property.bathrooms === 1 ? 'bath' : 'baths'}
-                      </p>
-                    </div>
+                  </p>
+                </div>
                     <div className="flex flex-col items-center">
                       <Ruler className="h-5 w-5 text-[#0C71C3] mb-1" />
                       <p className="text-sm text-gray-600">{property.sqft.toLocaleString()} sqft</p>
-                    </div>
-                  </div>
+                </div>
+              </div>
 
-                  <div className="flex justify-between items-center mb-4">
-                    <div>
-                      <p className="text-sm text-gray-500">Listed Price</p>
-                      <p className="text-lg font-bold text-[#0C71C3]">
-                        ${property.price.toLocaleString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-500">Renovation Allowance</p>
-                      <p className="text-lg font-bold text-cyan-600 text-center">
-                        ${property.renovationBudget.toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
+              <div className="flex justify-between items-center mb-4">
+                <div>
+                  <p className="text-sm text-gray-500">Listed Price</p>
+                  <p className="text-lg font-bold text-[#0C71C3]">
+                    ${property.price.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Renovation Allowance</p>
+                  <p className="text-lg font-bold text-cyan-600 text-center">
+                    ${property.renovationBudget.toLocaleString()}
+                  </p>
+                </div>
+              </div>
 
                   <Link href={`/listings/property/${property.id}`} passHref>
-                    <Button className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90">
-                      View Details
-                    </Button>
+              <Button className="w-full bg-[#0C71C3] hover:bg-[#0C71C3]/90">
+                View Details
+              </Button>
                   </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
           
           {/* Load More Button */}
           {totalCount > properties.length && !isLoadingMore && (
