@@ -6,78 +6,78 @@ import Image from "next/image";
 import { X, BedDouble, Bath, Square, MapPin, Calculator, TrendingUp } from "lucide-react";
 
 const properties = [
-  {
-    id: 1,
-    title: "Modern Fixer-Upper",
-    address: "123 Main St, Philadelphia, USA",
-    price: 350000,
-    renovationAllowance: 50000,
-    image: "/home1.png",
-    width: 795,
-    height: 499,
-    description: "A stunning modern home with great potential for customization. Features open concept living spaces and abundant natural light. Perfect for buyers looking to add their personal touch.",
-    specs: {
-      bedrooms: 4,
-      bathrooms: 2.5,
-      sqft: 2800,
+    {
+      id: 1,
+      title: "Modern Fixer-Upper",
+      address: "1428 Willow Creek Ln, Arlington, VA 22207", // Realistic address in a well-established Virginia neighborhood
+      price: 350000,
+      renovationAllowance: 48500,
+      image: "/home1.png",
+      width: 795,
+      height: 499,
+      description: "A stunning modern home with great potential for customization. Features open concept living spaces and abundant natural light. Perfect for buyers looking to add their personal touch.",
+      specs: {
+        bedrooms: 4,
+        bathrooms: 3,
+        sqft: 2800,
+      },
+      features: [
+        "Open Floor Plan",
+        "Large Windows",
+        "Hardwood Floors",
+        "Spacious Backyard",
+        "Attached Garage",
+        "Updated Kitchen" // This might be potential or existing depending on "fixer-upper" level
+      ]
     },
-    features: [
-      "Open Floor Plan",
-      "Large Windows",
-      "Hardwood Floors",
-      "Spacious Backyard",
-      "Attached Garage",
-      "Updated Kitchen"
-    ]
-  },
-  {
-    id: 2,
-    title: "Charming Bungalow",
-    address: "456 Oak Ave, Maryland, USA",
-    price: 275000,
-    renovationAllowance: 35000,
-    image: "/villabung.png",
-    width: 826,
-    height: 523,
-    description: "Charming bungalow with classic architectural details. This home offers a perfect blend of historic character and modern renovation potential. Ideal for those seeking a cozy yet stylish living space.",
-    specs: {
-      bedrooms: 3,
-      bathrooms: 2,
-      sqft: 1800,
+    {
+      id: 2,
+      title: "Charming Bungalow",
+      address: "456 Oak Ave, Takoma Park, MD 20912", // Realistic address in a charming Maryland town known for bungalows
+      price: 275000,
+      renovationAllowance: 29500,
+      image: "/villabung.png",
+      width: 826,
+      height: 523,
+      description: "Charming bungalow with classic architectural details. This home offers a perfect blend of historic character and modern renovation potential. Ideal for those seeking a cozy yet stylish living space.",
+      specs: {
+        bedrooms: 3,
+        bathrooms: 2,
+        sqft: 1800,
+      },
+      features: [
+        "Original Hardwood",
+        "Built-in Shelving",
+        "Covered Porch",
+        "Updated Electrical", // Plausible for an older home
+        "Mature Garden",
+        "Basement Storage"
+      ]
     },
-    features: [
-      "Original Hardwood",
-      "Built-in Shelving",
-      "Covered Porch",
-      "Updated Electrical",
-      "Mature Garden",
-      "Basement Storage"
-    ]
-  },
-  {
-    id: 3,
-    title: "Spacious Colonial",
-    address: "789 Elm St, Pennsylvania, USA",
-    price: 450000,
-    renovationAllowance: 65000,
-    image: "/home2.png",
-    width: 817,
-    height: 513,
-    description: "Elegant colonial home with tremendous potential. Features high ceilings, formal dining room, and a grand entrance. Perfect for buyers looking to create their dream home with historic charm.",
-    specs: {
-      bedrooms: 5,
-      bathrooms: 3.5,
-      sqft: 3500,
-    },
-    features: [
-      "Grand Staircase",
-      "Crown Molding",
-      "Formal Dining",
-      "Butler's Pantry",
-      "Multiple Fireplaces",
-      "Large Windows"
-    ]
-  },
+    {
+      id: 3,
+      title: "Spacious Colonial",
+      address: "789 Elm St, Villanova, PA 19085", // Realistic address in an affluent area in Pennsylvania known for larger homes
+      price: 450000, // Price might be low for Villanova, consider adjusting or picking a different town depending on desired realism vs. example price
+      renovationAllowance: 56700,
+      image: "/home2.png",
+      width: 817,
+      height: 513,
+      description: "Elegant colonial home with tremendous potential. Features high ceilings, formal dining room, and a grand entrance. Perfect for buyers looking to create their dream home with historic charm.",
+      specs: {
+        bedrooms: 5,
+        bathrooms: 3,
+        sqft: 3500,
+      },
+      features: [
+        "Grand Staircase",
+        "Crown Molding",
+        "Formal Dining",
+        "Butler's Pantry", // Common in larger older homes
+        "Multiple Fireplaces",
+        "Large Windows"
+      ]
+    }
 ];
 
 export default function PropertyListings() {
@@ -85,7 +85,7 @@ export default function PropertyListings() {
   const [selectedProperty, setSelectedProperty] = useState<typeof properties[0] | null>(null);
 
   const calculateAfterRenovationValue = (price: number, allowance: number) => {
-    return price + allowance * 1.4;
+    return price + allowance * 1.30;
   };
 
   return (

@@ -97,6 +97,12 @@ export default function Header() {
                       href="/listings"
                       className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
                     >
+                      MLS Listings
+                    </Link>
+                    <Link
+                      href="/listings/renograte-listings"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
+                    >
                       Renograte Listings
                     </Link>
                     <Link
@@ -232,7 +238,14 @@ export default function Header() {
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="block py-1 text-gray-800 hover:text-[#0C71C3]"
                       >
-                        Renograte Listings
+                        MLS Listings
+                      </Link>
+                      <Link
+                        href="/renograte-listings"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="block py-1 text-gray-800 hover:text-[#0C71C3]"
+                      >
+                        Renograte Exclusive Listings
                       </Link>
                       <Link
                         href="/listings/distressed-homes"

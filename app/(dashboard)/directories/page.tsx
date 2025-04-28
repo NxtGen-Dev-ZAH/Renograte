@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Star, MapPin, Phone, Mail, Building, Wrench, Briefcase } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 const categories = [
   { id: "contractors", name: "Contractors", icon: Wrench },
@@ -48,6 +51,29 @@ const providers = [
 export default function DirectoriesPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
+
+  // Check authentication status
+  useEffect(() => {
+    // Skip authentication check if in development mode or if we have a token
+    const hasToken = typeof window !== 'undefined' && localStorage.getItem('token');
+    
+    if (!isAuthenticated && !hasToken) {
+      // If not authenticated, redirect to login
+      const currentPath = '/directories';
+      router.push(`/login?returnUrl=${encodeURIComponent(currentPath + (searchParams.toString() ? '?' + searchParams.toString() : ''))}`);
+    }
+  }, [isAuthenticated, router, searchParams]);
+
+  // Check for category parameter and set it
+  useEffect(() => {
+    const category = searchParams.get("category");
+    if (category && categories.some(c => c.id === category)) {
+      setSelectedCategory(category);
+    }
+  }, [searchParams]);
 
   const filteredProviders = providers.filter(provider => {
     const matchesSearch = !searchQuery || 

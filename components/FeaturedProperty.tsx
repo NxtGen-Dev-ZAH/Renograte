@@ -10,11 +10,11 @@ export default function FeaturedProperty() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const propertyDetails = {
-    title: "Luxurious Beachfront Villa",
-    address: "123 Ocean Drive, Malibu, CA",
-    price: "$4,500,000",
-    renovationAllowance: "$500,000",
-    description: "Experience luxury living at its finest in this stunning beachfront villa. Featuring panoramic ocean views, premium finishes, and state-of-the-art amenities throughout.",
+    title: "Luxurious Starboard Residence",
+    address: " Elkridge, MD 21075 ",
+    price: "$850,000",
+    renovationAllowance: "$135,000",
+    description: "Featuring spacious interiors, refined finishes,thoughtful design, luxurious suite,  access to nature, and versatile living areas.",
     specs: {
       bedrooms: 5,
       bathrooms: 4.5,
@@ -22,11 +22,12 @@ export default function FeaturedProperty() {
     },
     features: [
       "Private Beach Access",
-      "Infinity Pool",
-      "Smart Home Technology",
+      "Parking Space (Asphalt driveway)",
+      "Water Source",
       "Gourmet Kitchen",
       "Wine Cellar",
-      "Home Theater"
+      "Heating Forced Air",
+      "Cooling Central AC",
     ],
     // agent: {
     //   name: "Sarah Johnson",
@@ -53,7 +54,7 @@ export default function FeaturedProperty() {
         >
           <div className="relative w-full h-[250px] sm:h-[400px] md:h-[500px] lg:h-[600px]">
             <Image
-              src="/featured.png"
+              src="/featured2.png"
               alt="Featured Property"
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, 1200px"
@@ -137,7 +138,7 @@ export default function FeaturedProperty() {
                   {/* Property Images */}
                   <div className="relative w-full h-[300px] rounded-xl overflow-hidden mb-6">
                     <Image
-                      src="/featured.png"
+                      src="/featured2.png"
                       alt="Featured Property"
                       fill
                       className="object-cover"

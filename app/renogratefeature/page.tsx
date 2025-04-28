@@ -16,8 +16,11 @@ import {
   Cpu,
 } from "lucide-react";
 import TrialDialog from "@/components/TrialDialog";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 
 export default function FeaturesPage() {
+  const router = useRouter();
   const mainFeatures = [
     {
       title: "Renograte Calculator",
@@ -146,7 +149,16 @@ export default function FeaturesPage() {
             integration, increase sales, and deliver exceptional value to your
             clients.
           </p>
-          <TrialDialog />
+          {/* <TrialDialog /> */}
+          <motion.button
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-cyan-700 transition-all duration-300"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => router.push("/become-member")}
+          >
+            Let's Get Started
+          </motion.button>
+          
         </div>
       </div>
 

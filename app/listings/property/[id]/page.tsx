@@ -8,6 +8,7 @@ import { ArrowLeft, Home, Bed, Bath, Square, MapPin } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { Property, Media } from '@/types/property';
+import { Button } from '@/components/ui/button';
 
 // Dynamically import map components with no SSR
 const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
@@ -703,9 +704,11 @@ export default function PropertyDetailPage() {
       <div className="bg-blue-50 p-6 rounded-lg shadow-md mb-10">
         <h2 className="text-xl font-bold mb-4">Interested in this property?</h2>
         <p className="mb-4">Contact us for more information or to schedule a viewing.</p>
-        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">
-          Contact Listing Agent
-        </button>
+        <Link href={`/listings/property/${propertyId}/contact-agent`}>
+          <Button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-300">
+            Contact Listing Agent
+          </Button>
+        </Link>
       </div>
       
       {/* Disclaimer */}

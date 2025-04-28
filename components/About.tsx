@@ -45,7 +45,8 @@ const ModernFeaturePage: React.FC = () => {
             earnings.
           </p>
           <Link
-            href="#"
+            href="https://www.youtube.com/watch?v=QBQ3ndBQUDo"
+            target="_blank"
             className="text-[#0C71C3] text-sm sm:text-base font-semibold hover:underline transition"
           >
             watch agent video
@@ -70,7 +71,8 @@ const ModernFeaturePage: React.FC = () => {
             pipeline of new clients.
           </p>
           <Link
-            href="#"
+            href="https://www.youtube.com/watch?v=2PgxlHLCIMo"
+            target="_blank"
             className="text-[#0C71C3] text-sm sm:text-base font-semibold hover:underline transition"
           >
             watch contractor video
@@ -95,7 +97,8 @@ const ModernFeaturePage: React.FC = () => {
             pre-sale renovations required.
           </p>
           <Link
-            href="#"
+            href="https://www.youtube.com/watch?v=BfO1bJrMcu8"
+            target="_blank"
             className="text-[#0C71C3] text-sm sm:text-base font-semibold hover:underline transition"
           >
             watch seller video
@@ -120,7 +123,8 @@ const ModernFeaturePage: React.FC = () => {
             renovate their future home.
           </p>
           <Link
-            href="#"
+            href="https://www.youtube.com/watch?v=xSMDs-clSFE"
+            target="_blank"
             className="text-[#0C71C3] text-sm sm:text-base font-semibold hover:underline transition"
           >
             watch Buyer video

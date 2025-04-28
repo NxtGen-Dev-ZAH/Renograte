@@ -8,9 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Search, Home, ChevronDown, Loader2, BedDouble, Bath, Ruler } from "lucide-react";
 import Image from "next/image";
-import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import useRealtyFeedApi from "@/hooks/useRealtyFeedApi";
 import { PropertyType, PropertyStatus, getPropertyTypeFilter, getPropertyTypeOptions, getPropertyStatusOptions } from "@/utils/propertyUtils";
@@ -19,6 +17,8 @@ import dynamic from "next/dynamic";
 import type { Property as ApiProperty } from "@/types/property";
 import * as SliderPrimitive from "@radix-ui/react-slider";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 
 // ===============================================================
 // COMPONENT DEFINITIONS
@@ -162,6 +162,10 @@ export default function PropertiesPage() {
   const [nextLink, setNextLink] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  
+  // Router and auth
+  const router = useRouter();
+  const { isAuthenticated } = useAuth();
 
   // ---------------------------------------------------------------
   // Property Data Constants & Utilities
@@ -193,6 +197,9 @@ export default function PropertiesPage() {
 
   // Format price for display
   const formatPrice = (price: number): string => {
+    if (price >= 1000000) {
+      return `$${(price / 1000000).toFixed(1)}m`;
+    }
     return `$${(price / 1000).toFixed(0)}k`;
   };
 
@@ -956,6 +963,17 @@ export default function PropertiesPage() {
         </p>
         <Button
           className="bg-[#0C71C3] hover:bg-[#0A5A9C] text-white font-medium transition-all duration-200 px-8"
+          onClick={() => {
+            // Check both for authentication context and direct token
+            const hasToken = typeof window !== 'undefined' && localStorage.getItem('token');
+            if (isAuthenticated || hasToken) {
+              // If user is logged in, redirect to directories page filtering for agents
+              router.push('/directories?category=agents');
+            } else {
+              // If not logged in, redirect to login page with return path
+              router.push(`/login?returnUrl=${encodeURIComponent('/directories?category=agents')}`);
+            }
+          }}
         >
           Contact an Agent
         </Button>

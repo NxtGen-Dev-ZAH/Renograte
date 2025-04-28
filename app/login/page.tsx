@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-// import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -29,7 +29,8 @@ type FormData = z.infer<typeof schema>;
 
 const LoginModal = () => {
   const router = useRouter();
-  // const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,6 +43,14 @@ const LoginModal = () => {
     resolver: zodResolver(schema),
   });
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated) {
+      const returnUrl = searchParams.get("returnUrl");
+      router.push(returnUrl || "/dashboard");
+    }
+  }, [isAuthenticated, router, searchParams]);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -50,25 +59,38 @@ const LoginModal = () => {
     setIsLoading(true);
     
     try {
-      // This is a placeholder auth check
+      // Check for test credentials
       if (data.email === "info@renograte.com" && data.password === "123@Reno456") {
+        // For test credentials, manually handle the login
+        localStorage.setItem('token', 'test_token_' + Date.now());
+        
         toast({
           title: "Login Successful",
           description: "Welcome back to Renograte!",
         });
-        router.push("/dashboard");
-      } else {
-        toast({
-          title: "Login Failed",
-          description: "Please check your credentials and try again.",
-          variant: "destructive",
-        });
+        
+        // Redirect to returnUrl or dashboard
+        const returnUrl = searchParams.get("returnUrl");
+        router.push(returnUrl || "/dashboard");
+        return;
       }
+      
+      // For all other credentials, use the auth context login function
+      await login(data.email, data.password);
+      
+      toast({
+        title: "Login Successful",
+        description: "Welcome back to Renograte!",
+      });
+      
+      // Redirect to returnUrl or dashboard
+      const returnUrl = searchParams.get("returnUrl");
+      router.push(returnUrl || "/dashboard");
     } catch (error) {
       console.error("Login error:", error);
       toast({
-        title: "Login Error",
-        description: "An unexpected error occurred. Please try again later.",
+        title: "Login Failed",
+        description: "Please check your credentials and try again.",
         variant: "destructive",
       });
     } finally {
