@@ -24,6 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import RoleProtected from '@/components/RoleProtected';
 
 const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
   ssr: false,
@@ -46,7 +47,7 @@ interface PropertyResponse {
 
 const ITEMS_PER_PAGE = 20;
 
-export default function PropertyListingsPage() {
+export function PropertyListingsPage() {
   const [query, setQuery] = useState<string | null>(null);
   const [properties, setProperties] = useState<Property[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -481,5 +482,13 @@ export default function PropertyListingsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function ListingsProtectedWrapper() {
+  return (
+    <RoleProtected allowedRoles={['user', 'member', 'agent', 'contractor', 'admin']}>
+      <PropertyListingsPage />
+    </RoleProtected>
   );
 }

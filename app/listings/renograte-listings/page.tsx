@@ -20,146 +20,127 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getSignedFileUrl } from "@/lib/s3";
+import RoleProtected from '@/components/RoleProtected';
 
-// Mock listing data - In a real app, this would come from your backend
-const mockListings = [
-  {
-    id: "re-1001",
-    title: "Modern Renovation Project",
-    price: 350000,
-    renovationBudget: 45000,
-    afterRenovationValue: 415000,
-    address: "123 Oak Street",
-    location: "Tampa, FL 33601",
-    bedrooms: 3,
-    bathrooms: 2,
-    sqft: 1850,
-    yearBuilt: 1995,
-    image: "/sample-house-1.jpg",
-    status: "Available",
-    agentName: "Sarah Johnson",
-    agentCompany: "Renograte Realty",
-    approvedDate: "2023-11-15",
-    daysListed: 7
-  },
-  {
-    id: "re-1002",
-    title: "Charming Bungalow with Potential",
-    price: 275000,
-    renovationBudget: 29000,
-    afterRenovationValue: 335000,
-    address: "456 Maple Avenue",
-    location: "Tampa, FL 33602",
-    bedrooms: 2,
-    bathrooms: 1,
-    sqft: 1200,
-    yearBuilt: 1962,
-    image: "/sample-house-2.jpg",
-    status: "Available",
-    agentName: "Michael Chen",
-    agentCompany: "Renograte Realty",
-    approvedDate: "2023-11-10",
-    daysListed: 12
-  },
-  {
-    id: "re-1003",
-    title: "Executive Home Renovation Project",
-    price: 520000,
-    renovationBudget: 75000,
-    afterRenovationValue: 615000,
-    address: "789 Pine Lane",
-    location: "Tampa, FL 33607",
-    bedrooms: 4,
-    bathrooms: 3,
-    sqft: 2800,
-    yearBuilt: 2001,
-    image: "/sample-house-3.jpg",
-    status: "Under Contract",
-    agentName: "Jessica Rodriguez",
-    agentCompany: "Renograte Partners",
-    approvedDate: "2023-11-05",
-    daysListed: 17
-  },
-  {
-    id: "re-1004",
-    title: "Downtown Condo Reimagined",
-    price: 299000,
-    renovationBudget: 29000,
-    afterRenovationValue: 365000,
-    address: "101 Riverside Drive, #402",
-    location: "Tampa, FL 33606",
-    bedrooms: 2,
-    bathrooms: 2,
-    sqft: 1150,
-    yearBuilt: 2008,
-    image: "/sample-condo-1.jpg",
-    status: "Available",
-    agentName: "David Wright",
-    agentCompany: "Urban Core Realty",
-    approvedDate: "2023-11-18",
-    daysListed: 4
-  },
-];
+// Define interface for the listing type
+interface Listing {
+  id: string;
+  title: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  bedrooms: number;
+  bathrooms: number;
+  squareFootage: number;
+  yearBuilt?: number;
+  listingPrice: number;
+  renovationCost: number;
+  afterRepairValue: number;
+  status: string;
+  isVisible: boolean;
+  createdAt: string;
+  agent?: {
+    name: string;
+  };
+  photos?: string[];
+}
 
-export default function RenograteListingsPage() {
-  const [listings, setListings] = useState(mockListings);
-  const [loading, setLoading] = useState(false);
+export  function RenograteListingsPage() {
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
+  const [photoUrls, setPhotoUrls] = useState<{ [key: string]: string[] }>({});
 
-  // In a real application, you would fetch data from your API
+  // Fetch approved listings from the API
   useEffect(() => {
-    // Simulate loading
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    const fetchListings = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/listings?status=approved&isVisible=true');
+        if (response.ok) {
+          const data = await response.json();
+          setListings(data.listings || []);
+          
+          // Fetch signed URLs for all photos
+          const photoPromises = data.listings.map(async (listing: Listing) => {
+            if (listing.photos && listing.photos.length > 0) {
+              try {
+                const signedUrls = await Promise.all(
+                  listing.photos.map(photo => getSignedFileUrl(photo))
+                );
+                return { id: listing.id, urls: signedUrls };
+              } catch (error) {
+                console.error(`Error fetching signed URLs for listing ${listing.id}:`, error);
+                return { id: listing.id, urls: [] };
+              }
+            }
+            return { id: listing.id, urls: [] };
+          });
+
+          const photoResults = await Promise.all(photoPromises);
+          const photoUrlMap = photoResults.reduce((acc, { id, urls }) => {
+            acc[id] = urls;
+            return acc;
+          }, {} as { [key: string]: string[] });
+
+          setPhotoUrls(photoUrlMap);
+        } else {
+          console.error("Failed to fetch listings");
+        }
+      } catch (error) {
+        console.error("Error fetching listings:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    // Here you would normally fetch your data
-    // const fetchListings = async () => {
-    //   const response = await fetch('/api/renograte-listings');
-    //   const data = await response.json();
-    //   setListings(data);
-    //   setLoading(false);
-    // };
-    // fetchListings();
+    fetchListings();
   }, []);
 
   // Filter and sort listings
   const filteredListings = listings.filter(listing => {
-    if (filterStatus !== "all" && listing.status !== filterStatus) {
+    // Filter by price
+    if (filterPrice === "under300k" && listing.listingPrice >= 300000) {
       return false;
-    }
-    
-    if (filterPrice === "under300k" && listing.price >= 300000) {
+    } else if (filterPrice === "300k-500k" && (listing.listingPrice < 300000 || listing.listingPrice > 500000)) {
       return false;
-    } else if (filterPrice === "300k-500k" && (listing.price < 300000 || listing.price > 500000)) {
-      return false;
-    } else if (filterPrice === "over500k" && listing.price <= 500000) {
+    } else if (filterPrice === "over500k" && listing.listingPrice <= 500000) {
       return false;
     }
     
     return true;
   }).sort((a, b) => {
     if (sortOption === "newest") {
-      return b.daysListed - a.daysListed;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     } else if (sortOption === "price-asc") {
-      return a.price - b.price;
+      return a.listingPrice - b.listingPrice;
     } else if (sortOption === "price-desc") {
-      return b.price - a.price;
+      return b.listingPrice - a.listingPrice;
     } else if (sortOption === "renovation-budget") {
-      return b.renovationBudget - a.renovationBudget;
+      return b.renovationCost - a.renovationCost;
     }
     return 0;
   });
 
-  const formatCurrency = (amount: number) => {  
+  const formatCurrency = (amount: number): string => {  
     return new Intl.NumberFormat('en-US', { 
       style: 'currency', 
       currency: 'USD', 
       maximumFractionDigits: 0 
     }).format(amount);
+  };
+
+  // Calculate how long ago a listing was created
+  const getDaysListed = (createdAtDate: string): number => {
+    const createdAt = new Date(createdAtDate);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - createdAt.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   return (
@@ -201,21 +182,6 @@ export default function RenograteListingsPage() {
       {/* Filters and Sorting */}
       <div className="bg-gradient-to-r from-blue-50 to-cyan-50 p-4 mb-8 rounded-lg border border-blue-100">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium mb-1 text-gray-700">Status</label>
-            <Select value={filterStatus} onValueChange={setFilterStatus}>
-              <SelectTrigger className="w-full bg-white">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="Available">Available</SelectItem>
-                <SelectItem value="Under Contract">Under Contract</SelectItem>
-                <SelectItem value="Sold">Sold</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
           <div>
             <label className="block text-sm font-medium mb-1 text-gray-700">Price Range</label>
             <Select value={filterPrice} onValueChange={setFilterPrice}>
@@ -275,14 +241,8 @@ export default function RenograteListingsPage() {
               <div className="relative">
                 {/* Status Badge */}
                 <div className="absolute top-2 right-2 z-10">
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    listing.status === "Available" 
-                      ? "bg-green-500 text-white" 
-                      : listing.status === "Under Contract"
-                        ? "bg-yellow-500 text-white"
-                        : "bg-blue-500 text-white"
-                  }`}>
-                    {listing.status}
+                  <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-500 text-white">
+                    Available
                   </span>
                 </div>
                 
@@ -290,16 +250,27 @@ export default function RenograteListingsPage() {
                 <div className="absolute top-2 left-2 z-10">
                   <span className="bg-white/90 backdrop-blur-sm text-gray-700 px-3 py-1 rounded-full text-xs font-medium flex items-center">
                     <Clock className="w-3 h-3 mr-1" />
-                    {listing.daysListed} {listing.daysListed === 1 ? 'day' : 'days'}
+                    {getDaysListed(listing.createdAt)} {getDaysListed(listing.createdAt) === 1 ? 'day' : 'days'}
                   </span>
                 </div>
                 
                 {/* Property Image */}
                 <Link href={`/listings/renograte-listings/${listing.id}`}>
                   <div className="h-56 w-full relative overflow-hidden">
-                    <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                      <Home className="h-12 w-12 text-gray-400" />
-                    </div>
+                    {photoUrls[listing.id] && photoUrls[listing.id].length > 0 ? (
+                      <Image
+                        src={photoUrls[listing.id][0]}
+                        alt={listing.title}
+                        fill
+                        className="object-cover transition-transform hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        priority={false}
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+                        <Home className="h-12 w-12 text-gray-400" />
+                      </div>
+                    )}
                   </div>
                 </Link>
 
@@ -307,7 +278,7 @@ export default function RenograteListingsPage() {
                 <div className="absolute -bottom-3 right-4 z-10">
                   <div className="bg-white shadow-md rounded-full px-3 py-1 border border-gray-200 text-xs flex items-center">
                     <span className="text-gray-700 font-medium mr-1">Listed by:</span>
-                    <span className="text-blue-700">{listing.agentName}</span>
+                    <span className="text-blue-700">{listing.agent?.name || "Renograte Agent"}</span>
                   </div>
                 </div>
               </div>
@@ -318,15 +289,15 @@ export default function RenograteListingsPage() {
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-xs text-gray-500 font-medium">LIST PRICE</p>
-                      <p className="text-lg font-bold text-gray-900">{formatCurrency(listing.price)}</p>
+                      <p className="text-lg font-bold text-gray-900">{formatCurrency(listing.listingPrice)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 font-medium">RENO ALLOWANCE</p>
-                      <p className="text-lg font-bold text-cyan-600">{formatCurrency(listing.renovationBudget)}</p>
+                      <p className="text-lg font-bold text-cyan-600">{formatCurrency(listing.renovationCost)}</p>
                     </div>
                     <div>
                       <p className="text-xs text-gray-500 font-medium">ARV</p>
-                      <p className="text-lg font-bold text-emerald-600">{formatCurrency(listing.afterRenovationValue)}</p>
+                      <p className="text-lg font-bold text-emerald-600">{formatCurrency(listing.afterRepairValue)}</p>
                     </div>
                   </div>
                 </div>
@@ -335,7 +306,7 @@ export default function RenograteListingsPage() {
                 <Link href={`/listings/renograte-listings/${listing.id}`}>
                   <h3 className="text-xl font-semibold mb-1 hover:text-blue-600 transition-colors">{listing.title}</h3>
                 </Link>
-                <p className="text-gray-600 mb-3 text-sm">{listing.address}, {listing.location}</p>
+                <p className="text-gray-600 mb-3 text-sm">{listing.address}, {listing.city}, {listing.state} {listing.zipCode}</p>
 
                 {/* Property Details */}
                 <div className="grid grid-cols-3 gap-2 mb-4">
@@ -353,16 +324,18 @@ export default function RenograteListingsPage() {
                   </div>
                   <div className="flex flex-col items-center">
                     <Ruler className="h-5 w-5 text-blue-500 mb-1" />
-                    <p className="text-sm text-gray-600">{listing.sqft.toLocaleString()} sqft</p>
+                    <p className="text-sm text-gray-600">{listing.squareFootage.toLocaleString()} sqft</p>
                   </div>
                 </div>
 
                 {/* Year Built and Renograte Verified Badge */}
                 <div className="flex justify-between mb-4 items-center">
-                  <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
-                    <Tag className="h-4 w-4 text-gray-600" />
-                    <span className="text-sm text-gray-700">Built {listing.yearBuilt}</span>
-                  </div>
+                  {listing.yearBuilt && (
+                    <div className="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded">
+                      <Tag className="h-4 w-4 text-gray-600" />
+                      <span className="text-sm text-gray-700">Built {listing.yearBuilt}</span>
+                    </div>
+                  )}
                   <div className="flex items-center">
                     <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded font-medium">Renograte Verified</span>
                   </div>
@@ -386,7 +359,6 @@ export default function RenograteListingsPage() {
             variant="outline" 
             className="border-blue-500 text-blue-500 hover:bg-blue-50"
             onClick={() => {
-              setFilterStatus("all");
               setFilterPrice("all");
             }}
           >
@@ -401,8 +373,20 @@ export default function RenograteListingsPage() {
         <p className="text-gray-600 mb-6 max-w-2xl mx-auto">
           Login to List your properties with Renograte to get approved renovation allowances and reach more buyers interested in renovation projects.
         </p>
-       
+        <Link href="/dashboard/add-listing">
+          <Button className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+            Submit a Property
+          </Button>
+        </Link>
       </div>
     </div>
+  );
+}
+
+export default function RenograteListingsProtectedWrapper() {
+  return (
+    <RoleProtected allowedRoles={['user', 'member', 'agent', 'contractor', 'admin']}>
+      <RenograteListingsPage />
+    </RoleProtected>
   );
 } 

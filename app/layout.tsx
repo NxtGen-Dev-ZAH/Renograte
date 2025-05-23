@@ -1,8 +1,8 @@
-import type { Metadata } from "next";
+"use client";
+
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AuthProvider } from "@/hooks/useAuth";
-import { Toaster } from "@/components/ui/toaster";
+import { Providers } from "@/components/Providers";
 import { RootLayoutContent } from "@/components/RootLayoutContent";
 
 const inter = Inter({
@@ -10,23 +10,21 @@ const inter = Inter({
   display: "swap", 
 });
 
-export const metadata: Metadata = {
-  title: "Renograte",
-  description: "Renograte - Revolutionizing Real Estate Renovation",
-};
-
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <title>Renograte - Revolutionizing Real Estate Renovation</title>
+        <meta name="description" content="Renograte - Revolutionizing Real Estate Renovation" />
+      </head>
       <body className={`${inter.className} text-black bg-white overflow-x-hidden`}>
-        <AuthProvider>
+        <Providers>
           <RootLayoutContent>{children}</RootLayoutContent>
-          <Toaster />
-        </AuthProvider>
+        </Providers>
       </body>
     </html>
   );

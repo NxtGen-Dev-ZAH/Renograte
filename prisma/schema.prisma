@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          String    @default("user") // user, agent, admin
+  accounts      Account[]
+  sessions      Session[]
+  listings      Listing[]
+  memberProfile MemberProfile?
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Lead {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String
+  roles     String[]
+  address   String?
+  status    String   @default("new")
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Listing {
+  id               String   @id @default(cuid())
+  title            String
+  address          String
+  city             String
+  state            String
+  zipCode          String
+  description      String   @db.Text
+  propertyType     String
+  bedrooms         Int
+  bathrooms        Float
+  squareFootage    Int
+  lotSize          String?
+  yearBuilt        Int?
+  
+  // Pricing & Terms
+  listingPrice     Float
+  afterRepairValue Float
+  renovationCost   Float
+  termsAvailable   String
+  additionalTerms  String?  @db.Text
+  
+  // Media
+  photos           String[] // URLs to stored photos
+  videoUrl         String?
+  virtualTourUrl   String?
+  
+  // Listing Status
+  status           String   @default("pending") // pending, approved, rejected
+  agentId          String
+  agent            User     @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  
+  // Admin review fields
+  adminFeedback    String?  @db.Text
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  
+  // Visibility on main listings page
+  isVisible        Boolean  @default(false)
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model MemberProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company       String?
+  phone         String
+  businessType  String
+  licenseNumber String?
+  plan          String
+  billingCycle  String
+  status        String   @default("pending") // pending, active, inactive
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}

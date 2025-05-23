@@ -9,15 +9,14 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
-import { useAuth } from "@/hooks/useAuth";
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from 'react-icons/fa';
+import { signIn } from "next-auth/react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from 'react-icons/fa';
 
 // Zod schema for validation
 const schema = z.object({
@@ -30,7 +29,6 @@ type FormData = z.infer<typeof schema>;
 const LoginModal = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -43,14 +41,6 @@ const LoginModal = () => {
     resolver: zodResolver(schema),
   });
 
-  // Redirect if already logged in
-  useEffect(() => {
-    if (isAuthenticated) {
-      const returnUrl = searchParams.get("returnUrl");
-      router.push(returnUrl || "/dashboard");
-    }
-  }, [isAuthenticated, router, searchParams]);
-
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -59,34 +49,60 @@ const LoginModal = () => {
     setIsLoading(true);
     
     try {
-      // Check for test credentials
-      if (data.email === "info@renograte.com" && data.password === "123@Reno456") {
-        // For test credentials, manually handle the login
-        localStorage.setItem('token', 'test_token_' + Date.now());
-        
-        toast({
-          title: "Login Successful",
-          description: "Welcome back to Renograte!",
-        });
-        
-        // Redirect to returnUrl or dashboard
-        const returnUrl = searchParams.get("returnUrl");
-        router.push(returnUrl || "/dashboard");
-        return;
-      }
+      const { email, password } = data;
       
-      // For all other credentials, use the auth context login function
-      await login(data.email, data.password);
+      // Get the returnUrl or callbackUrl before login
+      const returnUrl = searchParams.get("returnUrl") || searchParams.get("callbackUrl");
       
-      toast({
-        title: "Login Successful",
-        description: "Welcome back to Renograte!",
+      // Login with credentials
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
       
-      // Redirect to returnUrl or dashboard
-      const returnUrl = searchParams.get("returnUrl");
-      router.push(returnUrl || "/dashboard");
-    } catch (error) {
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      
+      // Successful login
+      toast({
+        title: "Login Successful",
+        description: "Welcome to Renograte!",
+      });
+      
+      // Fetch current session to get user role
+      const sessionData = await fetch('/api/auth/session').then(res => res.json());
+      const userRole = sessionData?.user?.role;
+      
+      // Route based on user role and returnUrl
+      if (userRole === 'admin') {
+        // If admin, go to admin page
+        router.push('/admin');
+      } else if (userRole === 'member' || userRole === 'agent' || userRole === 'contractor') {
+        // If member, agent, or contractor, check if there's a return URL
+        if (returnUrl && !returnUrl.includes('admin')) {
+          router.push(returnUrl);
+        } else {
+          // Default to dashboard for members
+          router.push('/dashboard');
+        }
+      } else if (userRole === 'user') {
+        // Regular users can access listings but not dashboard
+        if (returnUrl && (
+            returnUrl.includes('/listings') || 
+            returnUrl.includes('/properties')
+          )) {
+          router.push(returnUrl);
+        } else {
+          // Default to listings page for regular users
+          router.push('/listings');
+        }
+      } else {
+        // Default for unknown roles (fallback to home)
+        router.push('/');
+      }
+    } catch (error: any) {
       console.error("Login error:", error);
       toast({
         title: "Login Failed",
@@ -98,9 +114,30 @@ const LoginModal = () => {
     }
   };
 
+  // Custom close handler for the dialog/modal
+  const handleDialogClose = () => {
+    const callbackUrl = searchParams.get("callbackUrl") || searchParams.get("returnUrl") || "/";
+    // List of protected routes (add more as needed)
+    const protectedRoutes = [
+      "/properties",
+      "/listings",
+      "/dashboard",
+      "/admin",
+      "/listings/renograte-listings",
+      "/listings/property",
+      "/listings/distressed-homes"
+    ];
+    // If callbackUrl is protected, go to home instead
+    if (protectedRoutes.some(route => callbackUrl.startsWith(route))) {
+      router.push("/");
+    } else {
+      router.push(callbackUrl);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-cyan-100 p-4">
-      <Dialog defaultOpen onOpenChange={() => router.back()}>
+      <Dialog defaultOpen onOpenChange={(open) => { if (!open) handleDialogClose(); }}>
         <DialogContent className="w-[95%] sm:w-[425px] max-w-lg mx-auto p-0 overflow-hidden border-none shadow-2xl bg-gradient-to-tr from-gray-50 via-cyan-50 to-gray-50">
           <div className="p-6">
             <div className="flex justify-center mb-4">
@@ -110,9 +147,6 @@ const LoginModal = () => {
                 alt="Renograte Logo" 
                 width={1520} 
                 height={164}
-                // style={{
-                //   filter: "brightness(0) invert(1)",
-                // }} 
               />
             </div>
             <DialogTitle className="text-xl sm:text-2xl font-bold text-center text-black">
@@ -211,9 +245,12 @@ const LoginModal = () => {
                     type="button"
                     variant="outline"
                     className="w-full border-[#0C71C3] text-[#0C71C3] hover:bg-[#0C71C3] hover:text-white transition-all duration-200 font-medium"
-                    onClick={() => router.push("/become-member")}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/signup", { scroll: false });
+                    }}
                   >
-                    Become a Member
+                    Sign Up
                   </Button>
                 </div>
               </div>

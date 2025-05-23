@@ -6,8 +6,9 @@ import { ArrowRight, DollarSign, Clock, Wrench, Search, Check, X } from "lucide-
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import RoleProtected from '@/components/RoleProtected';
 
-export default function DistressedHomes() {
+export  function DistressedHomes() {
   const router = useRouter();
   const [searchValue, setSearchValue] = useState("");
   const [showForm, setShowForm] = useState(false);
@@ -386,5 +387,13 @@ export default function DistressedHomes() {
         </div>
       </section>
     </div>
+  );
+}
+
+export default function DistressedHomesProtectedWrapper() {
+  return (
+    <RoleProtected allowedRoles={['user', 'member', 'agent', 'contractor', 'admin']}>
+      <DistressedHomes />
+    </RoleProtected>
   );
 } 

@@ -1,6 +1,6 @@
 "use client";
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Dialog,
   DialogContent,
@@ -24,10 +25,10 @@ const schema = z
   .object({
     name: z.string().min(2, "Name is required"),
     email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters long"),
+    password: z.string().min(8, "Password must be at least 8 characters long"),
     confirmPassword: z
       .string()
-      .min(6, "Password must be at least 6 characters long"),
+      .min(8, "Password must be at least 8 characters long"),
     phone: z
       .string()
       .regex(
@@ -44,6 +45,8 @@ type FormData = z.infer<typeof schema>;
 
 const SignUpModal = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -57,6 +60,13 @@ const SignUpModal = () => {
     resolver: zodResolver(schema),
   });
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (isAuthenticated && !authLoading) {
+      router.push("/dashboard");
+    }
+  }, [isAuthenticated, authLoading, router]);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -69,38 +79,49 @@ const SignUpModal = () => {
     try {
       setIsLoading(true);
       
-      // Simulate API call for demo
-      // In production, uncomment and use actual API
-      /*
-      const response = await fetch("http://localhost:8000/api/auth/signup", {
+      // Call the API to register the user
+      const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: data.name,
+          email: data.email,
+          password: data.password
+        }),
       });
 
-      if (!response.ok) {
-        throw new Error("Signup failed");
-      }
-      */
+      const result = await response.json();
       
-      // Simulate successful signup after 1.5 seconds
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to create account");
+      }
 
       toast({
         title: "Account Created Successfully",
-        description: "Please check your email to verify your account.",
+        description: "You can now log in with your credentials.",
       });
+      
+      // Redirect to login page
       router.push("/login");
-    } catch (error) {
-      console.error(error);
-      toast({
-        title: "Signup Failed",
-        description:
-          "There was an error creating your account. Please try again later.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      
+      // Handle specific error cases
+      if (error.message.includes("Email already exists")) {
+        toast({
+          title: "Registration Failed",
+          description: "This email is already registered. Please log in instead.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Registration Failed",
+          description: error.message || "There was an error creating your account. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -257,7 +278,7 @@ const SignUpModal = () => {
                 </div>
               </div>
               
-              <div className="pt-2">
+              <div className="pt-2 pb-2">
                 <Button
                   type="submit"
                   className="w-full bg-[#0C71C3] hover:bg-[#0A5A9C] text-white font-medium py-2.5 rounded-md transition-all duration-200 shadow-md hover:shadow-lg"
@@ -275,22 +296,6 @@ const SignUpModal = () => {
                     "Create Account"
                   )}
                 </Button>
-              </div>
-              
-              <div className="text-center space-y-4 pt-1">
-                <div className="text-sm text-gray-600">
-                  Already have an account?{" "}
-                  <a
-                    href="#"
-                    className="text-[#0C71C3] hover:text-[#0A5A9C] font-medium hover:underline transition-colors"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      router.push("/login");
-                    }}
-                  >
-                    Sign In
-                  </a>
-                </div>
                 
                 <p className="text-center text-xs text-gray-500 mt-4">
                   By creating an account, you agree to our{" "}
@@ -300,6 +305,22 @@ const SignUpModal = () => {
                   and{" "}
                   <a href="#" className="text-[#0C71C3] hover:underline">
                     Privacy Policy
+                  </a>
+                </p>
+              </div>
+              
+              <div className="text-center pt-4 border-t border-gray-200">
+                <p className="text-sm text-gray-600">
+                  Already have an account?{" "}
+                  <a
+                    href="#"
+                    className="text-[#0C71C3] hover:text-[#0A5A9C] font-medium hover:underline"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/login");
+                    }}
+                  >
+                    Sign In
                   </a>
                 </p>
               </div>

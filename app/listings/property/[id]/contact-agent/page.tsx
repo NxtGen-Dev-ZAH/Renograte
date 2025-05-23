@@ -9,8 +9,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
+import RoleProtected from '@/components/RoleProtected';
 
-export default function ContactAgentPage() {
+export function ContactAgentPage() {
   const router = useRouter();
   const params = useParams();
   const propertyId = params.id as string;
@@ -286,5 +287,13 @@ export default function ContactAgentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ContactAgentProtectedWrapper() {
+  return (
+    <RoleProtected allowedRoles={['user', 'member', 'agent', 'contractor', 'admin']}>
+      <ContactAgentPage />
+    </RoleProtected>
   );
 } 

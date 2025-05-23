@@ -4,17 +4,19 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { ChevronDownIcon, Menu, X } from "lucide-react";
+import { ChevronDownIcon, Menu, X, ShieldAlert } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-// import { useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isListingsOpen, setIsListingsOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileListingsOpen, setIsMobileListingsOpen] = useState(false);
-  const { isAuthenticated, logout } = useAuth();
-  // const router = useRouter();
+  const { isAuthenticated, logout, user } = useAuth();
+  const router = useRouter();
+  
+  const isAdmin = user?.role === 'admin';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -46,6 +48,18 @@ export default function Header() {
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-center">
+        {isAdmin && (
+                  <Link href="/admin">
+                    <motion.button
+                      className="btn-primary px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <ShieldAlert className="mr-2 h-4 w-4" />
+                      Admin
+                    </motion.button>
+                  </Link>
+                )}
           {/* Logo - centered on mobile, left-aligned on desktop */}
           <div className="flex md:hidden items-center justify-center flex-1">
             <Link href="/" className="flex items-center">
@@ -93,12 +107,12 @@ export default function Header() {
                     >
                       Estimated Renovation Allowance
                     </Link>
-                    <Link
+                    {/* <Link
                       href="/listings"
                       className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
                     >
                       MLS Listings
-                    </Link>
+                    </Link> */}
                     <Link
                       href="/listings/renograte-listings"
                       className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
@@ -169,7 +183,7 @@ export default function Header() {
                   >
                     Dashboard
                   </motion.button>
-                </Link>
+                </Link>     
                 <motion.button
                   className="text-black hover:text-[#0C71C3]"
                   whileHover={{ scale: 1.1 }}
@@ -178,12 +192,15 @@ export default function Header() {
                 >
                   Log Out
                 </motion.button>
-                
               </>
             ) : (
               <>
                 <Link href="/signup">
                   <motion.button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/signup");
+                    }}
                     className="btn-primary px-6 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
@@ -193,6 +210,10 @@ export default function Header() {
                 </Link>
                 <Link href="/login">
                   <motion.button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/login");
+                    }}
                     className="text-black hover:text-[#0C71C3]"
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
@@ -292,6 +313,14 @@ export default function Header() {
                           Dashboard
                         </button>
                       </Link>
+                      {isAdmin && (
+                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                          <button className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
+                            <ShieldAlert className="mr-2 h-4 w-4" />
+                            Admin Dashboard
+                          </button>
+                        </Link>
+                      )}
                       <button
                         className="w-full px-4 py-2 text-black hover:text-[#0C71C3] text-center"
                         onClick={() => {
@@ -304,12 +333,20 @@ export default function Header() {
                     </div>
                   ) : (
                     <div className="flex flex-col space-y-2">
-                      <Link href="/signup" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/signup" onClick={(e) => {
+                        e.preventDefault();
+                        setIsMobileMenuOpen(false);
+                        router.push("/signup");
+                      }}>
                         <button className="w-full px-4 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors">
                           Sign Up
                         </button>
                       </Link>
-                      <Link href="/login" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link href="/login" onClick={(e) => {
+                        e.preventDefault();
+                        setIsMobileMenuOpen(false);
+                        router.push("/login");
+                      }}>
                         <button className="w-full px-4 py-2 text-black hover:text-[#0C71C3] text-center">
                           Log In
                         </button>

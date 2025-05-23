@@ -18,6 +18,7 @@ import {
   BarChart3,
   Calendar,
 } from "lucide-react";
+import RoleProtected from '@/components/RoleProtected';
 
 const quickActions = [
   {
@@ -123,7 +124,7 @@ const recentActivity = [
   },
 ];
 
-export default function DashboardPage() {
+function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header Section */}
@@ -264,5 +265,13 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+  );
+}
+
+export default function DashboardProtectedWrapper() {
+  return (
+    <RoleProtected allowedRoles={['member', 'agent', 'contractor', 'admin']}>
+      <DashboardPage />
+    </RoleProtected>
   );
 } 

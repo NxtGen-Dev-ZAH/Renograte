@@ -1,69 +1,77 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext } from "react";
 import { useRouter } from "next/navigation";
+import { signIn, signOut, useSession } from "next-auth/react";
 
 interface AuthContextType {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   user: any | null;
+  isLoading: boolean;
+  session: any | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   login: async () => {},
-  logout: () => {},
+  logout: async () => {},
   user: null,
+  isLoading: true,
+  session: null,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
   const router = useRouter();
-
-  useEffect(() => {
-    // Check for token in localStorage on mount
-    const token = localStorage.getItem("token");
-    if (token) {
-      setIsAuthenticated(true);
-      // Optionally fetch user data here
-    }
-  }, []);
+  const { data: session, status } = useSession();
+  const isLoading = status === "loading";
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await fetch("http://localhost:8000/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, password }),
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
       });
 
-      if (!response.ok) {
-        throw new Error("Login failed");
+      if (!result) {
+        throw new Error("Authentication failed");
       }
 
-      const data = await response.json();
-      localStorage.setItem("token", data.access_token);
-      setIsAuthenticated(true);
-      router.push("/dashboard");
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      // If we get here, login was successful
+      return;
     } catch (error) {
       console.error("Login error:", error);
       throw error;
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    setUser(null);
-    router.push("/");
+  const logout = async () => {
+    try {
+      await signOut({ redirect: false });
+      router.push("/");
+    } catch (error) {
+      console.error("Logout error:", error);
+      throw error;
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout, user }}>
+    <AuthContext.Provider 
+      value={{ 
+        isAuthenticated: !!session?.user, 
+        login, 
+        logout, 
+        user: session?.user || null,
+        isLoading,
+        session
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

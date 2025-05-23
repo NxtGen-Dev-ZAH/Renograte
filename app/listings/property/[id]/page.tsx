@@ -9,6 +9,7 @@ import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { Property, Media } from '@/types/property';
 import { Button } from '@/components/ui/button';
+import RoleProtected from '@/components/RoleProtected';
 
 // Dynamically import map components with no SSR
 const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
@@ -28,7 +29,15 @@ interface PropertyResponse {
   value: Property[];
 }
 
-export default function PropertyDetailPage() {
+export default function PropertyDetailProtectedWrapper() {
+  return (
+    <RoleProtected allowedRoles={['user', 'member', 'agent', 'contractor', 'admin']}>
+      <PropertyDetailPage />
+    </RoleProtected>
+  );
+}
+
+export function PropertyDetailPage() {
   const params = useParams();
   const router = useRouter();
   const propertyId = params.id as string;

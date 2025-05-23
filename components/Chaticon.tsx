@@ -17,6 +17,7 @@ import {
   ChatApiError,
   fetchWithRetry
 } from '../lib/chat-config';
+import { faqData, FAQItem } from './FAQData';
 
 export default function ProfessionalChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -186,40 +187,20 @@ export default function ProfessionalChatbot() {
 
   const renderFAQSection = () => (
     <div className="h-[50vh] sm:h-96 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar">
-      <h3 className="font-semibold text-base sm:text-lg mb-2 text-[#0C71C3]">
+      <h3 className="font-semibold text-base sm:text-lg mb-4 text-[#0C71C3] sticky top-0 bg-white/80 backdrop-blur-sm py-2">
         Frequently Asked Questions
       </h3>
       <div className="space-y-4">
-        <div className="bg-gray-100 p-3 sm:p-4 rounded-lg">
-          <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
-            What is RENOGRATE®?
-          </h4>
-          <p className="text-xs sm:text-sm text-gray-600">
-            RENOGRATE® integrates renovations into real estate deals, letting
-            buyers customize homes before closing and helping sellers sell as-is
-            for premium prices. It empowers agents with unique tools.
-          </p>
-        </div>
-        <div className="bg-gray-100 p-3 sm:p-4 rounded-lg">
-          <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
-            How does RENOGRATE® benefit buyers?
-          </h4>
-          <p className="text-xs sm:text-sm text-gray-600">
-            Buyers can customize homes pre-closing, creating personalized spaces
-            without post-purchase renovations. There are no upfront costs, and
-            all renovations are completed before closing.
-          </p>
-        </div>
-        <div className="bg-gray-100 p-3 sm:p-4 rounded-lg">
-          <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
-            What advantages does RENOGRATE® offer to sellers?
-          </h4>
-          <p className="text-xs sm:text-sm text-gray-600">
-            Sellers can sell as-is at premium prices, avoiding upfront
-            renovation costs while increasing their property&apos;s market appeal and
-            potential sale price.
-          </p>
-        </div>
+        {faqData.map((faq, index) => (
+          <div key={index} className="bg-gray-100 p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors">
+            <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
+              {faq.question}
+            </h4>
+            <p className="text-xs sm:text-sm text-gray-600">
+              {faq.answer}
+            </p>
+          </div>
+        ))}
       </div>
     </div>
   );

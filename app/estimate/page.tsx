@@ -13,6 +13,7 @@ export default function EstimatePage() {
   const [progress, setProgress] = useState(0);
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [leadSubmitted, setLeadSubmitted] = useState(false);
+  const [submissionStep, setSubmissionStep] = useState(0);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -61,15 +62,54 @@ export default function EstimatePage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submissionSteps = [
+    { title: "Validating Information", description: "Checking your details...", icon: <Lightbulb className="w-6 h-6" /> },
+    { title: "Processing Data", description: "Preparing your estimate...", icon: <Loader2 className="w-6 h-6 animate-spin" /> },
+    { title: "Creating Estimate", description: "Almost there...", icon: <CheckCircle2 className="w-6 h-6" /> }
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would typically send the data to your backend or email service
-    console.log("Lead form submitted:", formData);
-    setLeadSubmitted(true);
-    // Show estimate after form submission
-    setTimeout(() => {
-      setShowLeadForm(false);
-    }, 2000);
+    setSubmissionStep(1); // Start submission process
+
+    try {
+      // Step 1: Validate Information
+      await new Promise(resolve => setTimeout(resolve, 800));
+      setSubmissionStep(2);
+
+      // Step 2: Process Data and Send to API
+      const response = await fetch('/api/leads', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          role: formData.role,
+          address: address,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit lead');
+      }
+
+      // Step 3: Show Success
+      setSubmissionStep(3);
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setLeadSubmitted(true);
+      
+      // Show estimate after form submission
+      setTimeout(() => {
+        setShowLeadForm(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Error submitting lead:", error);
+      // Handle error state here
+    }
   };
 
   return (
@@ -120,15 +160,90 @@ export default function EstimatePage() {
                 >
                   {leadSubmitted ? (
                     <div className="text-center py-8">
-                      <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <motion.div 
+                        className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                      >
                         <Check className="w-8 h-8 text-green-500" />
-                      </div>
+                      </motion.div>
                       <h2 className="text-xl font-semibold text-gray-800 mb-2">Thank you!</h2>
                       <p className="text-gray-600">Your information has been received. Preparing your estimate...</p>
                     </div>
+                  ) : submissionStep > 0 ? (
+                    <motion.div 
+                      className="py-8"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <div className="max-w-sm mx-auto">
+                        <div className="flex flex-col items-center text-center">
+                          {/* Progress Steps */}
+                          <div className="w-full mb-8">
+                            {submissionSteps.map((step, index) => (
+                              <div 
+                                key={step.title}
+                                className={`flex items-center ${index !== submissionSteps.length - 1 ? 'mb-4' : ''}`}
+                              >
+                                <div 
+                                  className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                                    index + 1 === submissionStep ? 'bg-blue-100 text-blue-600' :
+                                    index + 1 < submissionStep ? 'bg-green-100 text-green-600' :
+                                    'bg-gray-100 text-gray-400'
+                                  }`}
+                                >
+                                  {index + 1 < submissionStep ? (
+                                    <Check className="w-5 h-5" />
+                                  ) : index + 1 === submissionStep ? (
+                                    step.icon
+                                  ) : (
+                                    <div className="w-3 h-3 rounded-full bg-current" />
+                                  )}
+                                </div>
+                                <div className="ml-4 flex-1">
+                                  <p className={`font-medium ${
+                                    index + 1 === submissionStep ? 'text-blue-600' :
+                                    index + 1 < submissionStep ? 'text-green-600' :
+                                    'text-gray-400'
+                                  }`}>
+                                    {step.title}
+                                  </p>
+                                  <p className={`text-sm ${
+                                    index + 1 === submissionStep ? 'text-blue-500' :
+                                    index + 1 < submissionStep ? 'text-green-500' :
+                                    'text-gray-400'
+                                  }`}>
+                                    {step.description}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Current Step Animation */}
+                          <motion.div
+                            className="w-16 h-16 mb-4 flex items-center justify-center"
+                            key={submissionStep}
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <div className={`w-16 h-16 rounded-full flex items-center justify-center ${
+                              submissionStep === 1 ? 'bg-blue-100' :
+                              submissionStep === 2 ? 'bg-yellow-100' :
+                              'bg-green-100'
+                            }`}>
+                              {submissionSteps[submissionStep - 1].icon}
+                            </div>
+                          </motion.div>
+                        </div>
+                      </div>
+                    </motion.div>
                   ) : (
                     <form onSubmit={handleSubmit} className="space-y-1 shadow-2xl px-10 py-4 rounded-xl shadow-cyan-500">
-                      <div className="text-center mb-8 ">
+                      <div className="text-center mb-8">
                         <h2 className="text-2xl font-semibold text-gray-800 mb-2">Get Your Estimate</h2>
                         <p className="text-gray-500">Please provide your details to receive your personalized renovation allowance estimate.</p>
                       </div>
@@ -143,7 +258,7 @@ export default function EstimatePage() {
                             required
                             value={formData.name}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500  focus:border-transparent transition-all focus:outline-none duration-200 placeholder-gray-400"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all focus:outline-none duration-200 placeholder-gray-400"
                             placeholder="Your full name"
                           />
                         </div>
@@ -157,7 +272,7 @@ export default function EstimatePage() {
                             required
                             value={formData.email}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2.5 focus:outline-none border border-gray-200 rounded-lg  focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
+                            className="w-full px-4 py-2.5 focus:outline-none border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 placeholder-gray-400"
                             placeholder="your@email.com"
                           />
                         </div>
