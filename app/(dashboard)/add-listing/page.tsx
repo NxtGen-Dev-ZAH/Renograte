@@ -31,6 +31,8 @@ interface PropertyDetails {
   lotSize: string;
   yearBuilt: string;
   description: string;
+  latitude: string;
+  longitude: string;
 }
 
 interface PricingTerms {
@@ -70,6 +72,8 @@ export default function AddListingPage() {
     lotSize: "",
     yearBuilt: "",
     description: "",
+    latitude: "",
+    longitude: "",
   });
   
   // Pricing & Terms
@@ -192,6 +196,8 @@ export default function AddListingPage() {
         listingPrice: parseFloat(pricingTerms.listingPrice),
         afterRepairValue: parseFloat(pricingTerms.afterRepairValue),
         renovationCost: parseFloat(pricingTerms.renovationCost),
+        latitude: propertyDetails.latitude ? parseFloat(propertyDetails.latitude) : null,
+        longitude: propertyDetails.longitude ? parseFloat(propertyDetails.longitude) : null,
         videoUrl: videoFileUrl,
         virtualTourUrl,
         photos: photoUrls,
@@ -409,6 +415,28 @@ export default function AddListingPage() {
                     type="number" 
                     placeholder="e.g., 1995" 
                     value={propertyDetails.yearBuilt}
+                    onChange={handlePropertyDetailsChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="latitude">Latitude</Label>
+                  <Input 
+                    id="latitude" 
+                    type="number" 
+                    step="any"
+                    placeholder="e.g., 37.7749" 
+                    value={propertyDetails.latitude}
+                    onChange={handlePropertyDetailsChange}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="longitude">Longitude</Label>
+                  <Input 
+                    id="longitude" 
+                    type="number" 
+                    step="any"
+                    placeholder="e.g., -122.4194" 
+                    value={propertyDetails.longitude}
                     onChange={handlePropertyDetailsChange}
                   />
                 </div>
@@ -630,6 +658,14 @@ export default function AddListingPage() {
                         `${propertyDetails.address}, ${propertyDetails.city}, ${propertyDetails.state} ${propertyDetails.zipCode}` : 
                         "Not provided"}
                     </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Latitude:</span>
+                    <p className="font-medium">{propertyDetails.latitude || "Not provided"}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Longitude:</span>
+                    <p className="font-medium">{propertyDetails.longitude || "Not provided"}</p>
                   </div>
                   <div>
                     <span className="text-sm text-gray-500">Property Type:</span>

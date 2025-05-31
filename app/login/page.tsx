@@ -41,6 +41,18 @@ const LoginModal = () => {
     resolver: zodResolver(schema),
   });
 
+  // Check for message parameter when component mounts
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message === "membership_activated") {
+      toast({
+        title: "Membership Activated",
+        description: "Your membership has been activated successfully. Please sign in to access your dashboard.",
+        variant: "default",
+      });
+    }
+  }, [searchParams, toast]);
+
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
@@ -90,13 +102,13 @@ const LoginModal = () => {
       } else if (userRole === 'user') {
         // Regular users can access listings but not dashboard
         if (returnUrl && (
-            returnUrl.includes('/listings') || 
+            returnUrl.includes('/renograte-listings') || 
             returnUrl.includes('/properties')
           )) {
           router.push(returnUrl);
         } else {
           // Default to listings page for regular users
-          router.push('/listings');
+          router.push('/properties');
         }
       } else {
         // Default for unknown roles (fallback to home)

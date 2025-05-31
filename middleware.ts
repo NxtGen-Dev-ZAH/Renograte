@@ -41,6 +41,28 @@ async function adminMiddleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+// Check if user's email is verified
+async function emailVerificationMiddleware(req: NextRequest) {
+  const token = await getToken({ req });
+  
+  if (!token) {
+    return NextResponse.redirect(new URL(`/login?callbackUrl=${encodeURIComponent(req.nextUrl.pathname)}`, req.url));
+  }
+
+  // Allow access to email verification page even if email is not verified
+  if (req.nextUrl.pathname.startsWith('/verify-email')) {
+    return NextResponse.next();
+  }
+
+  // Check if email is verified
+  if (!token.emailVerified) {
+    // Redirect to a page informing user to verify their email
+    return NextResponse.redirect(new URL('/verify-email-notice', req.url));
+  }
+
+  return NextResponse.next();
+}
+
 // Protected routes middleware
 export default withAuth(
   function middleware(req) {
@@ -54,14 +76,27 @@ export default withAuth(
       return adminMiddleware(req);
     }
 
+    // Check email verification for protected routes
+    if (req.nextUrl.pathname.match(config.matcher.filter(path => 
+      !path.startsWith('/login') && 
+      !path.startsWith('/signup') && 
+      !path.startsWith('/verify-email')
+    ).join('|'))) {
+      return emailVerificationMiddleware(req);
+    }
+
     // For all other protected routes, just proceed (withAuth will handle the protection)
     return NextResponse.next();
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        // Allow access to login and signup without a token
-        if (req.nextUrl.pathname.startsWith('/login') || req.nextUrl.pathname.startsWith('/signup')) {
+        // Allow access to login, signup, and email verification without a token
+        if (
+          req.nextUrl.pathname.startsWith('/login') || 
+          req.nextUrl.pathname.startsWith('/signup') ||
+          req.nextUrl.pathname.startsWith('/verify-email')
+        ) {
           return true;
         }
         
@@ -102,5 +137,8 @@ export const config = {
     // Auth pages for redirecting authenticated users
     '/login',
     '/signup',
+    // Email verification routes
+    '/verify-email',
+    '/verify-email-notice'
   ]
 }; 

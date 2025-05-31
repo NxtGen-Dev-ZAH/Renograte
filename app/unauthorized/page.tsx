@@ -32,7 +32,7 @@ export default function UnauthorizedPage() {
           
           <Button 
             variant="outline"
-            onClick={() => router.back()}
+            onClick={() => router.push('/')}
             className="w-full"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

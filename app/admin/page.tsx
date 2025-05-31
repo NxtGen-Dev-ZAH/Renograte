@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, BarChart3, Settings, Home, ListFilter, Clock } from "lucide-react";
+import { Users, BarChart3, Settings, Home, ListFilter, Clock, FileText } from "lucide-react";
 
 export default function AdminDashboard() {
   const [leadCount, setLeadCount] = useState<number | null>(null);
@@ -176,6 +176,19 @@ export default function AdminDashboard() {
                 <div>
                   <h3 className="font-medium text-gray-900">Property Listings</h3>
                   <p className="text-sm text-gray-500">Review and manage listings</p>
+                </div>
+              </Link>
+              
+              <Link 
+                href="/admin/offers"
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-200 transition-colors"
+              >
+                <div className="rounded-full bg-green-100 p-3 mr-4">
+                  <FileText className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">Offers</h3>
+                  <p className="text-sm text-gray-500">Manage property offers</p>
                 </div>
               </Link>
               

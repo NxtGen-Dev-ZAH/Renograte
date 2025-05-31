@@ -6,7 +6,7 @@ import { z } from "zod";
 
 // Schema for validating update role data
 const updateRoleSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string(),
   newRole: z.string(),
   planType: z.string().optional(),
   billingCycle: z.string().optional()

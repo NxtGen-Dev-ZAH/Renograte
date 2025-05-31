@@ -5,13 +5,13 @@ import * as React from "react"
 
 import type {
   ToastActionElement,
-  ToastProps,
+  ToastProps as UIToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 5
+const TOAST_REMOVE_DELAY = 5000
 
-type ToasterToast = ToastProps & {
+type ToasterToast = UIToastProps & {
   id: string
   title?: React.ReactNode
   description?: React.ReactNode
@@ -28,7 +28,7 @@ const actionTypes = {
 let count = 0
 
 function genId() {
-  count = (count + 1) % Number.MAX_VALUE
+  count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
 }
 
@@ -140,7 +140,9 @@ function dispatch(action: Action) {
   })
 }
 
-export function toast({ ...props }: Omit<ToasterToast, "id">) {
+type ToastProps = Omit<ToasterToast, "id">
+
+function createToast(props: ToastProps) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -156,7 +158,7 @@ export function toast({ ...props }: Omit<ToasterToast, "id">) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open) => {
+      onOpenChange: (open: boolean) => {
         if (!open) dismiss()
       },
     },
@@ -167,6 +169,43 @@ export function toast({ ...props }: Omit<ToasterToast, "id">) {
     dismiss,
     update,
   }
+}
+
+export function toast(props: ToastProps) {
+  return createToast(props)
+}
+
+toast.success = (message: string, props?: Partial<ToastProps>) => {
+  return createToast({
+    title: "Success",
+    description: message,
+    ...props,
+  })
+}
+
+toast.error = (message: string, props?: Partial<ToastProps>) => {
+  return createToast({
+    title: "Error",
+    description: message,
+    variant: "destructive",
+    ...props,
+  })
+}
+
+toast.info = (message: string, props?: Partial<ToastProps>) => {
+  return createToast({
+    title: "Info",
+    description: message,
+    ...props,
+  })
+}
+
+toast.warning = (message: string, props?: Partial<ToastProps>) => {
+  return createToast({
+    title: "Warning",
+    description: message,
+    ...props,
+  })
 }
 
 export function useToast() {

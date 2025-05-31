@@ -6,9 +6,9 @@ import { authOptions } from "@/lib/auth";
 
 // Schema for validating member upgrade data
 const upgradeSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string(),
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Invalid email address"),
+    
   company: z.string().optional(),
   phone: z.string().min(10, "Phone number must be at least 10 digits"),
   businessType: z.string().min(1, "Business type is required"),

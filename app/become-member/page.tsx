@@ -359,20 +359,38 @@ export default function BecomeMember() {
         throw new Error(errorData.error || 'Failed to update membership status');
       }
 
-      // Force a session refresh to update the user's role in the client
-      const refreshResponse = await fetch('/api/auth/session', {
-        method: 'GET',
-      });
-
       toast({
         title: "Payment Successful",
-        description: "Your membership has been activated. Redirecting to dashboard...",
+        description: "Your membership has been activated. You'll be redirected to login for a fresh session.",
       });
-      
-      // Short delay to allow the session to update
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 2000);
+
+      // Instead of trying to wait for the session to update (which can be unreliable),
+      // we'll sign the user out and redirect them to login with a callback URL
+      // This ensures they get a fresh session with the correct role
+      try {
+        // Try to sign out the user first
+        const res = await fetch('/api/auth/signout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ redirect: false, callbackUrl: '/dashboard' }),
+        });
+        
+        if (res.ok) {
+          // If successful, redirect to login with callback to dashboard
+          setTimeout(() => {
+            router.push('/login?callbackUrl=/dashboard&message=membership_activated');
+          }, 1500);
+        } else {
+          // Fallback if signout fails
+          router.push('/login?callbackUrl=/dashboard&message=membership_activated');
+        }
+      } catch (error) {
+        // Fallback if the signout request fails
+        console.error('Error during signout:', error);
+        router.push('/login?callbackUrl=/dashboard&message=membership_activated');
+      }
     } catch (error) {
       console.error('Error updating user role:', error);
       toast({

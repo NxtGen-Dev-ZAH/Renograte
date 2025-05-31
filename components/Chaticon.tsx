@@ -75,7 +75,7 @@ export default function ProfessionalChatbot() {
 
     try {
       const response = await fetchWithRetry(
-        `${CHAT_API_CONFIG.BASE_URL}${CHAT_API_CONFIG.ENDPOINTS.CHAT}`,
+        `/api/chat`,
         {
           method: "POST",
           headers: {
@@ -223,7 +223,7 @@ export default function ProfessionalChatbot() {
           </div>
         </div>
         <div className="bg-gray-100 p-4 rounded-lg flex items-center space-x-4">
-          <FileText size={32} className="text-[#0C71C3]" />
+          <FileText size={24} className="text-[#0C71C3]" />
           <div>
             <h4 className="font-semibold text-[#0C71C3]">
               Partnership Directory
@@ -245,6 +245,28 @@ export default function ProfessionalChatbot() {
             </p>
           </div>
         </div>
+        <div className="bg-gray-100 p-4 rounded-lg flex items-center space-x-4">
+          <FileText size={24} className="text-[#0C71C3]" />
+          <div>
+            <h4 className="font-semibold text-[#0C71C3]">
+              Renograte University
+            </h4>
+            <p className="text-sm text-gray-600">
+              Access educational resources and video tutorials
+            </p>
+          </div>
+        </div>
+        <div className="bg-gray-100 p-4 rounded-lg flex items-center space-x-4">
+          <FileText size={24} className="text-[#0C71C3]" />
+          <div>
+            <h4 className="font-semibold text-[#0C71C3]">
+              Marketing Resources
+            </h4>
+            <p className="text-sm text-gray-600">
+              Tools and strategies for promoting Renograte listings
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -259,7 +281,7 @@ export default function ProfessionalChatbot() {
           <Phone size={24} className="text-[#0C71C3]" />
           <div>
             <h4 className="font-semibold text-[#0C71C3]">Phone Support</h4>
-            <p className="text-sm text-gray-600">[Your phone number]</p>
+            <p className="text-sm text-gray-600">1-800-RENOGRATE</p>
             <p className="text-xs text-gray-500">
               Monday - Friday, 9am - 5pm EST
             </p>
@@ -269,7 +291,7 @@ export default function ProfessionalChatbot() {
           <MessageSquare size={24} className="text-[#0C71C3]" />
           <div>
             <h4 className="font-semibold text-[#0C71C3]">Email Support</h4>
-            <p className="text-sm text-gray-600">[Your email]</p>
+            <p className="text-sm text-gray-600">info@renograte.com</p>
             <p className="text-xs text-gray-500">
               24/7 support, response within 24 hours
             </p>

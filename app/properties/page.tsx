@@ -352,96 +352,80 @@ function PropertiesPage() {
 
   // Calculate renovation budget based on home price and characteristics
   const calculateRenovationBudget = (property: ApiPropertyResponse): number => {
-    // Start with a base amount rather than a percentage
-    // This ensures properties at the same price point can have very different budgets
-    let baseBudget;
+    // Calculate dynamic ARV multiplier based on property characteristics
+    let arvMultiplier = 1.15; // Base multiplier (15% increase)
     
-    // Base budget tiers by property price (not percentage-based)
-    if (property.ListPrice < 300000) {
-      baseBudget = 30000; // For lower-priced properties
-    } else if (property.ListPrice < 600000) {
-      baseBudget = 60000; // For mid-range properties
-    } else {
-      baseBudget = 90000; // For high-end properties
-    }
+    // Adjust for bedrooms (0-3% impact)
+    const bedroomAdjustment = property.BedroomsTotal >= 4 ? 0.03 : 
+                             property.BedroomsTotal === 3 ? 0.02 : 
+                             property.BedroomsTotal === 2 ? 0.01 : 0;
     
-    // Create distinct adjustments based on property characteristics
-    // These adjustments will be used to modify the base budget
+    // Adjust for bathrooms (0-3% impact)
+    const bathroomAdjustment = property.BathroomsTotalInteger >= 3 ? 0.03 : 
+                              property.BathroomsTotalInteger === 2 ? 0.02 : 0.01;
     
-    // Bedrooms have significant impact on variation
-    const bedroomAdjustment = property.BedroomsTotal >= 4 ? 1.15 : 
-                              property.BedroomsTotal === 3 ? 1.0 : 
-                              property.BedroomsTotal === 2 ? 0.9 : 0.85;
-    
-    // Bathrooms also impact renovation needs
-    const bathroomAdjustment = property.BathroomsTotalInteger >= 3 ? 1.12 : 
-                               property.BathroomsTotalInteger === 2 ? 1.0 : 0.92;
-    
-    // Square footage creates substantial variation
-    // Use a stepped approach for clearer differentiation
-    let areaSizeAdjustment = 1.0;
+    // Adjust for square footage (0-4% impact)
+    let areaSizeAdjustment = 0;
     if (property.LivingArea) {
-      if (property.LivingArea < 800) areaSizeAdjustment = 0.85;
-      else if (property.LivingArea < 1000) areaSizeAdjustment = 0.9;
-      else if (property.LivingArea < 1500) areaSizeAdjustment = 0.95;
-      else if (property.LivingArea < 2000) areaSizeAdjustment = 1.0;
-      else if (property.LivingArea < 2500) areaSizeAdjustment = 1.05;
-      else if (property.LivingArea < 3000) areaSizeAdjustment = 1.1;
-      else areaSizeAdjustment = 1.15;
+      if (property.LivingArea < 1000) areaSizeAdjustment = 0;
+      else if (property.LivingArea < 1500) areaSizeAdjustment = 0.01;
+      else if (property.LivingArea < 2000) areaSizeAdjustment = 0.02;
+      else if (property.LivingArea < 2500) areaSizeAdjustment = 0.03;
+      else areaSizeAdjustment = 0.04;
     }
     
-    // Property type adjustment is more pronounced
-    let typeAdjustment = 1.0;
+    // Adjust for property type (0-3% impact)
+    let typeAdjustment = 0;
     const propertyType = property.PropertySubType || property.PropertyType;
-    if (propertyType === PropertyType.Condominium) {
-      typeAdjustment = 0.8; // Condos typically need less renovation
-    } else if (propertyType === PropertyType.Townhouse) {
-      typeAdjustment = 0.9;
-    } else if (propertyType === PropertyType.Commercial) {
-      typeAdjustment = 1.25; // Commercial properties often need more
+    if (propertyType === "Condominium") {
+      typeAdjustment = 0.01;
+    } else if (propertyType === "Townhouse") {
+      typeAdjustment = 0.02;
+    } else if (propertyType === "Residential") {
+      typeAdjustment = 0.03;
     }
     
-    // Age adjustment is more significant
-    let ageAdjustment = 1.0;
+    // Adjust for age (0-4% impact)
+    let ageAdjustment = 0;
     if (property.YearBuilt) {
       const age = new Date().getFullYear() - property.YearBuilt;
-      if (age > 50) ageAdjustment = 1.3;
-      else if (age > 30) ageAdjustment = 1.2;
-      else if (age > 15) ageAdjustment = 1.1;
-      else if (age > 5) ageAdjustment = 1.0;
-      else ageAdjustment = 0.9; // Newer homes need less
+      if (age > 50) ageAdjustment = 0.04;
+      else if (age > 30) ageAdjustment = 0.03;
+      else if (age > 15) ageAdjustment = 0.02;
+      else if (age > 5) ageAdjustment = 0.01;
     }
     
     // Create a unique property identifier based on address
     const uniqueIdentifier = property.StreetNumber + property.StreetName + property.City + property.PostalCode;
     
     // Generate a deterministic variation factor using the property address
-    // This ensures identical properties with different addresses get different budgets
     const hashValue = uniqueIdentifier.split('').reduce((acc, char, idx) => {
       return acc + (char.charCodeAt(0) * (idx + 1));
     }, 0);
     
-    // Create a variation factor between 0.85 and 1.15 (±15%)
-    const addressVariationFactor = 0.85 + ((hashValue % 30) / 100);
+    // Create a variation factor between -2% and +2%
+    const addressVariationFactor = -0.02 + ((hashValue % 40) / 1000);
     
-    // Apply all adjustments to the base budget
-    let calculatedBudget = baseBudget * bedroomAdjustment * bathroomAdjustment * 
-                          areaSizeAdjustment * typeAdjustment * ageAdjustment * 
-                          addressVariationFactor;
+    // Combine all adjustments
+    const totalAdjustment = bedroomAdjustment + bathroomAdjustment + areaSizeAdjustment + 
+                           typeAdjustment + ageAdjustment + addressVariationFactor;
     
-    // Add a final adjustment based on property price to maintain proportion
-    const priceAdjustment = property.ListPrice / 
-                           (property.ListPrice < 300000 ? 200000 : 
-                            property.ListPrice < 600000 ? 400000 : 800000);
-    calculatedBudget *= priceAdjustment;
+    // Final ARV multiplier (between 1.15 and 1.35, or 15% to 35% increase)
+    const finalMultiplier = Math.min(Math.max(arvMultiplier + totalAdjustment, 1.15), 1.35);
     
-    // Round to the nearest $1000 for clearer visual differentiation
-    const roundedBudget = Math.round(calculatedBudget / 1000) * 1000;
+    // Calculate ARV
+    const arv = Math.round(property.ListPrice * finalMultiplier);
     
-    // Apply maximum cap as percentage of property value
-    const maxBudget = Math.min(property.ListPrice * 0.23, 200000);
+    // Fixed TARR at 87%
+    const TARR = 0.87;
     
-    return Math.min(roundedBudget, maxBudget);
+    // Calculate TARA
+    const TARA = TARR * arv;
+    
+    // Calculate Renovation Allowance
+    const renovationAllowance = Math.max(0, Math.round(TARA - property.ListPrice));
+    
+    return renovationAllowance;
   };
 
   // Convert UI properties to API properties for the map

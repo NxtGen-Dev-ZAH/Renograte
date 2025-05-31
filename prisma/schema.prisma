@@ -19,6 +19,11 @@ model User {
   sessions      Session[]
   listings      Listing[]
   memberProfile MemberProfile?
+  customFields  UserCustomFields?
+  passwordResetToken PasswordResetToken?
+  offers        Offer[]
+  courseProgress UserCourseProgress[]
+  tasks         Task[]
 }
 
 model Account {
@@ -48,11 +53,21 @@ model Session {
 }
 
 model VerificationToken {
+  id         String   @id @default(cuid())
   identifier String
   token      String   @unique
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  token     String   @unique
+  expires   DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Lead {
@@ -95,6 +110,10 @@ model Listing {
   videoUrl         String?
   virtualTourUrl   String?
   
+  // Geolocation
+  latitude         Float?
+  longitude        Float?
+  
   // Listing Status
   status           String   @default("pending") // pending, approved, rejected
   agentId          String
@@ -126,6 +145,171 @@ model MemberProfile {
   status        String   @default("pending") // pending, active, inactive
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model UserCustomFields {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  website        String?
+  agencyName     String?
+  title          String?
+  license        String?
+  whatsapp       String?
+  taxNumber      String?
+  faxNumber      String?
+  languages      String[]
+  serviceAreas   String[]
+  specialties    String[]
+  aboutAgency    String?  @db.Text
+  facebookUsername String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Offer {
+  id               String   @id @default(cuid())
+  propertyAddress  String
+  propertyType     String
+  listingPrice     String
+  offerAmount      String
+  earnestMoney     String
+  closingDate      String
+  financing        String?
+  downPayment      String?
+  loanAmount       String?
+  inspectionPeriod String?
+  contingencies    String?  @db.Text
+  
+  // Status and review
+  status           String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  adminFeedback    String?  @db.Text
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  
+  // User relationship
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Course {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @db.Text
+  category    String
+  thumbnail   String?       // S3 key for thumbnail image
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  videos      CourseVideo[]
+  progress    UserCourseProgress[]
+}
+
+model CourseVideo {
+  id          String        @id @default(cuid())
+  title       String
+  description String        @db.Text
+  videoUrl    String        // S3 key for video file
+  duration    Int           // Duration in seconds
+  order       Int           // Order in the course
+  courseId    String
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress    UserCourseProgress[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([courseId])
+}
+
+model UserCourseProgress {
+  id          String      @id @default(cuid())
+  userId      String
+  courseId    String
+  videoId     String
+  completed   Boolean     @default(false)
+  watchedSeconds Int      @default(0)
+  lastPosition Int        @default(0)
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course      @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  video       CourseVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([courseId])
+  @@index([videoId])
+}
+
+model Contract {
+  id               String            @id @default(cuid())
+  title            String
+  description      String?           @db.Text
+  documentUrl      String            // URL to the uploaded document
+  status           String            @default("PENDING") // PENDING, IN_PROGRESS, FULLY_EXECUTED
+  createdBy        String            // User ID of the agent who created the contract
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  sections         ContractSection[]
+  signatures       ContractSignature[]
+}
+
+model ContractSection {
+  id               String            @id @default(cuid())
+  contractId       String
+  contract         Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  title            String
+  description      String?           @db.Text
+  pageNumber       Int               // Page number in the document
+  role             String            // BUYER, SELLER, CONTRACTOR, AGENT
+  required         Boolean           @default(true)
+  status           String            @default("PENDING") // PENDING, SIGNED
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  signature        ContractSignature?
+  
+  @@index([contractId])
+}
+
+model ContractSignature {
+  id               String            @id @default(cuid())
+  contractId       String
+  contract         Contract          @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  sectionId        String            @unique
+  section          ContractSection   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  signatureData    String            @db.Text // Base64 encoded signature image
+  signerName       String
+  signerEmail      String
+  signerRole       String            // BUYER, SELLER, CONTRACTOR, AGENT
+  signedAt         DateTime          @default(now())
+  ipAddress        String?
+  
+  @@index([contractId])
+  @@index([sectionId])
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?   @db.Text
+  dueDate     DateTime?
+  priority    String    @default("medium") // low, medium, high
+  status      String    @default("pending") // pending, in-progress, completed
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([userId])
 }

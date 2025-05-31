@@ -249,4 +249,85 @@ export const getSimilarPropertiesQuery = (property: Property, limit: number = 15
     `&$select=ListingKey,StandardStatus,PropertyType,ListPrice,StreetNumber,StreetName,` +
     `City,StateOrProvince,PostalCode,BedroomsTotal,BathroomsTotalInteger,LivingArea,` +
     `Latitude,Longitude&$expand=Media&$top=${limit}`;
-}; 
+};
+
+/**
+ * Fetch property details by ID
+ * This can be used from server components or API routes
+ */
+// export const getPropertyDetails = async (propertyId: string) => {
+//   try {
+//     // Use the existing query builder function
+//     const query = getPropertyDetailsQuery(propertyId);
+    
+//     // Make the API request using the same pattern as in the listings pages
+//     const response = await fetch(`/api/realtyfeed?resource=${encodeURIComponent(query)}`, {
+//       method: 'GET',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       cache: 'no-store', // Don't cache this request
+//     });
+
+//     if (!response.ok) {
+//       throw new Error(`Failed to fetch property details: ${response.status}`);
+//     }
+
+//     const data = await response.json();
+    
+//     // Check if we have valid property data
+//     if (!data.value || !data.value.length || !data.value[0]) {
+//       console.warn('No property found with ID:', propertyId);
+//       // Fall back to placeholder data
+//       return {
+//         id: propertyId,
+//         address: "Property details not available",
+//         price: 0,
+//         propertyType: "Unknown",
+//         bedrooms: 0,
+//         bathrooms: 0,
+//         squareFootage: 0,
+//         yearBuilt: 0
+//       };
+//     }
+    
+//     // Extract the property from the response
+//     const property = data.value[0];
+    
+//     // Format the address
+//     const address = `${property.StreetNumber || ''} ${property.StreetName || ''}, ${property.City || ''}, ${property.StateOrProvince || ''} ${property.PostalCode || ''}`;
+    
+//     // Return a standardized property object
+//     return {
+//       id: property.ListingKey,
+//       address: address,
+//       price: property.ListPrice,
+//       propertyType: property.PropertyType || property.PropertySubType || 'Residential',
+//       bedrooms: property.BedroomsTotal || 0,
+//       bathrooms: property.BathroomsTotalInteger || 0,
+//       squareFootage: property.LivingArea || 0,
+//       yearBuilt: property.YearBuilt || 0,
+//       latitude: property.Latitude,
+//       longitude: property.Longitude,
+//       status: property.StandardStatus,
+//       officeName: property.ListOfficeName,
+//       agentName: property.ListAgentFullName,
+//       description: property.PublicRemarks,
+//       // Include the raw property data for advanced use cases
+//       rawData: property
+//     };
+//   } catch (error) {
+//     console.error('Error fetching property details:', error);
+//     // Return a fallback object
+//     return {
+//       id: propertyId,
+//       address: "Error fetching property details",
+//       price: 0,
+//       propertyType: "Unknown",
+//       bedrooms: 0,
+//       bathrooms: 0,
+//       squareFootage: 0,
+//       yearBuilt: 0
+//     };
+//   }
+// }; 

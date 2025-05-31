@@ -100,11 +100,15 @@ const SignUpModal = () => {
 
       toast({
         title: "Account Created Successfully",
-        description: "You can now log in with your credentials.",
+        description: result.message || "Please check your email to verify your account.",
       });
       
-      // Redirect to login page
-      router.push("/login");
+      // Use the redirect URL from the API response
+      if (result.redirect) {
+        router.push(result.redirect);
+      } else {
+        router.push("/verify-email-notice");
+      }
     } catch (error: any) {
       console.error("Signup error:", error);
       

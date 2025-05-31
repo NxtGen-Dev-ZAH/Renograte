@@ -8,7 +8,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   try {
-    const { amount, currency, plan, billingCycle } = await req.json();
+    const { amount, currency, plan, billingCycle, userId } = await req.json();
 
     // Create a PaymentIntent with the order amount and currency
     const params: Stripe.PaymentIntentCreateParams = {
@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       metadata: {
         plan,
         billingCycle,
+        ...(userId && { userId }),
       },
     };
 

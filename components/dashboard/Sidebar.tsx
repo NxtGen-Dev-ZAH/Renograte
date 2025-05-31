@@ -37,7 +37,6 @@ const navigation = [
   { name: "Marketing", href: "/marketing", icon: Megaphone },
   { name: "Directories", href: "/directories", icon: Users },
   { name: "Property Perks", href: "/perks", icon: Gift },
-  { name: "Leads", href: "/leads", icon: PhoneCall },
   { name: "Distressed Homes", href: "/distressed", icon: AlertTriangle },
   { name: "Contracts", href: "/contracts", icon: FileCheck },
 ];

@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
     // Get credentials from environment variables
     const clientId = process.env.REALTYFEED_CLIENT_ID;
     const clientSecret = process.env.REALTYFEED_CLIENT_SECRET;
-    const authenticationUrl = process.env.REALTYFEED_AUTH_URL || 'https://realtyfeed-sso.auth.us-east-1.amazoncognito.com/oauth2/token';
+    const authenticationUrl = process.env.REALTYFEED_AUTH_URL || 'https://api.realtyfeed.com/v1/auth/token';
     const apiUrl = process.env.REALTYFEED_API_URL || 'https://api.realtyfeed.com/reso/odata/';
     const apiKey = process.env.REALTYFEED_API_KEY;
     const allowedOrigin = process.env.NEXT_PUBLIC_APP_URL || 'https://www.renograte.com';
@@ -47,16 +47,14 @@ export async function GET(request: NextRequest) {
       const formData = new URLSearchParams();
       formData.append('grant_type', 'client_credentials');
       formData.append('client_id', clientId);
+      formData.append('client_secret', clientSecret);
 
       const authResponse = await axios.post(authenticationUrl, formData, {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': '*/*',
-        },
-        auth: {
-          username: clientId,
-          password: clientSecret,
-        },
+          'Accept-Encoding': 'gzip, deflate, br'
+        }
       });
 
       if (!authResponse.data.access_token) {

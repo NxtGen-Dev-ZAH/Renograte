@@ -5,39 +5,39 @@ export interface FAQItem {
 
 export const faqData: FAQItem[] = [
   {
-    question: "Why RENOGRATE®?",
-    answer: "The RENOGRATE® solution helps buyers to customize their dream homes before closing and sellers to receive a premium price for their properties without upfront renovation costs."
+    question: "Why RENOGRATE?",
+    answer: "The RENOGRATE solution helps buyers customize their dream homes before closing and sellers receive a premium price for their properties without upfront renovation costs."
   },
   {
-    question: "What is RENOGRATE®?",
-    answer: "RENOGRATE® integrates renovations into real estate deals, letting buyers customize homes before closing and helping sellers sell as-is for premium prices. It empowers agents with unique tools."
+    question: "What is RENOGRATE?",
+    answer: "RENOGRATE integrates renovations into real estate deals, allowing buyers to customize homes before closing and helping sellers sell as-is for premium prices. It also empowers agents with unique tools."
   },
   {
-    question: "How does RENOGRATE® benefit buyers?",
-    answer: "Buyers can customize homes pre-closing, creating personalized spaces without post-purchase renovations."
+    question: "How does RENOGRATE benefit buyers?",
+    answer: "Buyers can customize homes pre-closing, creating personalized spaces without the need for post-purchase renovations."
   },
   {
-    question: "What advantages does RENOGRATE® offer to sellers?",
-    answer: "Sellers can sell as-is at premium prices, avoiding upfront renovation costs."
+    question: "What advantages does RENOGRATE offer to sellers?",
+    answer: "Sellers can sell properties as-is at premium prices, avoiding upfront renovation costs."
   },
   {
-    question: "How can real estate agents benefit from RENOGRATE®?",
-    answer: "Agents can create RENOGRATE® listings, offering custom renovation solutions, increasing commissions, and gaining more leads."
+    question: "How can real estate agents benefit from RENOGRATE?",
+    answer: "Agents can create RENOGRATE listings, offer custom renovation solutions, increase commissions, and generate more leads."
   },
   {
-    question: "Are there any out-of-pocket expenses for buyers or sellers in RENOGRATE® transactions?",
-    answer: "No, RENOGRATE® transactions are designed to be cost-effective for both buyers and sellers. Buyers can make renovations before closing without upfront expenses, and sellers can sell their properties without renovation costs."
+    question: "Are there any out-of-pocket expenses for buyers or sellers in RENOGRATE transactions?",
+    answer: "No, RENOGRATE transactions are designed to be cost-effective. Buyers can make renovations before closing without upfront expenses, and sellers can sell their properties without renovation costs."
   },
   {
-    question: "What resources are available on the RENOGRATE® platform for agents?",
-    answer: "RENOGRATE® provides a range of resources, including listing services, renovation calculators, marketing templates, training modules, and collaborative features like chats, forums, and FAQs."
+    question: "What resources are available on the RENOGRATE platform for agents?",
+    answer: "RENOGRATE provides a range of resources, including listing services, renovation calculators, marketing templates, training modules, and collaborative features like chats, forums, and FAQs."
   },
   {
-    question: "How does RENOGRATE® ensure that renovations are completed as agreed upon?",
-    answer: "RENOGRATE® agreements and processes are designed to ensure that renovations are carried out according to the agreed-upon terms. Contractors are paid at closing, providing an incentive for them to complete the renovations as specified."
+    question: "How does RENOGRATE ensure that renovations are completed as agreed upon?",
+    answer: "RENOGRATE agreements and processes are designed to ensure renovations are carried out according to the agreed-upon terms. Contractors are paid at closing, incentivizing them to complete the renovations as specified."
   },
   {
-    question: "How can I get started with RENOGRATE®?",
+    question: "How can I get started with RENOGRATE?",
     answer: "To get started, sign up for the platform. Create your agent profile, familiarize yourself with the platform, complete training modules, explore marketing templates, create listings, and consider joining or creating working groups for collaboration."
   },
   {
