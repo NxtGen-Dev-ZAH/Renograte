@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       }
       
       // Start a transaction
-      const result = await prisma.$transaction(async (tx) => {
+      const result = await prisma.$transaction(async (tx: ExtendedTransaction) => {
         // Create signature
         const signature = await tx.contractSignature.create({
           data: {
@@ -87,8 +87,8 @@ export async function POST(request: Request) {
 
         // Update contract status based on signatures
         if (contract) {
-          const allRequiredSections = contract.sections.filter(section => section.required);
-          const allRequiredSectionsSigned = allRequiredSections.every(section => section.status === "SIGNED");
+          const allRequiredSections = contract.sections.filter((section: any)=>section.required);
+          const allRequiredSectionsSigned = allRequiredSections.every((section: any)=>section.status === "SIGNED");
           
           const newStatus = allRequiredSectionsSigned 
             ? "FULLY_EXECUTED" 

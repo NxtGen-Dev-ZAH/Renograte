@@ -49,19 +49,19 @@ export async function GET(request: NextRequest) {
       const userProgress = await prisma.userCourseProgress.findMany({
         where: {
           userId,
-          courseId: { in: courses.map(course => course.id) }
+          courseId: { in: courses.map((course: any) => course.id) }
         }
       });
       
       // Calculate progress for each course
-      const coursesWithProgress = courses.map(course => {
+      const coursesWithProgress = courses.map((course: any) => {
         const courseVideos = course.videos || [];
         const totalVideos = courseVideos.length;
         
         if (totalVideos === 0) return { ...course, progress: 0 };
         
         const completedVideos = userProgress.filter(
-          progress => progress.courseId === course.id && progress.completed
+          (progress: any) => progress.courseId === course.id && progress.completed
         ).length;
         
         const progressPercentage = Math.round((completedVideos / totalVideos) * 100);

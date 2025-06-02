@@ -37,13 +37,13 @@ export async function GET(request: NextRequest) {
       const userProgress = await prisma.userCourseProgress.findMany({
         where: {
           userId,
-          videoId: { in: videos.map(video => video.id) }
+          videoId: { in: videos.map((video: any) => video.id) }
         }
       });
       
       // Map progress to videos
-      const videosWithProgress = await Promise.all(videos.map(async (video) => {
-        const progress = userProgress.find(p => p.videoId === video.id);
+      const videosWithProgress = await Promise.all(videos.map(async (video: any) => {
+          const progress = userProgress.find((p: any) => p.videoId === video.id);
         
         // Get signed URL for video
         let videoUrl;

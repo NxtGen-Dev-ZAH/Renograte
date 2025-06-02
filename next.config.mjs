@@ -14,7 +14,17 @@ const nextConfig = {
   },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-  }
+  },
+  webpack: (config, { isServer }) => {
+    // Handle canvas in browser environment
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        canvas: false,
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig; 

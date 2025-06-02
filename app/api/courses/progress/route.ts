@@ -114,18 +114,18 @@ export async function GET(request: NextRequest) {
     const progress = await prisma.userCourseProgress.findMany({
       where: {
         userId,
-        videoId: { in: videos.map(video => video.id) }
+        videoId: { in: videos.map((video: any) => video.id) }
       }
     });
     
     // Calculate overall course progress
     const totalVideos = videos.length;
-    const completedVideos = progress.filter(p => p.completed).length;
+    const completedVideos = progress.filter((p: any) => p.completed).length;
     const overallProgress = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
     
     // Map progress to videos and generate signed URLs
-    const videosWithProgress = await Promise.all(videos.map(async (video) => {
-      const videoProgress = progress.find(p => p.videoId === video.id);
+      const videosWithProgress = await Promise.all(videos.map(async (video: any) => {
+      const videoProgress = progress.find((p: any) => p.videoId === video.id);
       
       // Generate signed URL for video
       let videoUrl = null;

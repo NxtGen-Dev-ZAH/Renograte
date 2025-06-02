@@ -1,8 +1,6 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 import { getContractBySigningToken } from "@/lib/contracts/contractService";
-
-const prisma = new PrismaClient();
 
 // GET /api/contracts/token/[token] - Get contract data from a token
 export async function GET(
