@@ -18,10 +18,17 @@ const nextConfig = {
   webpack: (config, { isServer }) => {
     // Handle canvas in browser environment
     if (!isServer) {
+      // Client-side: use fallback for canvas
       config.resolve.fallback = {
         ...config.resolve.fallback,
         canvas: false,
       };
+    } else {
+      // Server-side: mark canvas as external
+      config.externals.push({
+        canvas: 'commonjs canvas',
+        'pdfjs-dist': 'commonjs pdfjs-dist',
+      });
     }
     return config;
   },

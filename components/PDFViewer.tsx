@@ -1,10 +1,30 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+
+// Dynamically import react-pdf components with ssr: false
+const PDFDocument = dynamic(() => import("react-pdf").then(mod => mod.Document), {
+  ssr: false,
+  loading: () => (
+    <div className="flex justify-center items-center py-10">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p>Loading PDF viewer...</p>
+      </div>
+    </div>
+  ),
+});
+
+const PDFPage = dynamic(() => import("react-pdf").then(mod => mod.Page), {
+  ssr: false,
+});
+
+// Import pdfjs for configuration
+import { pdfjs } from "react-pdf";
 
 // Configure PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
@@ -100,7 +120,7 @@ export function PDFViewer({ url }: PDFViewerProps) {
             </Button>
           </div>
         ) : (
-          <Document
+          <PDFDocument
             file={url}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
@@ -116,14 +136,14 @@ export function PDFViewer({ url }: PDFViewerProps) {
             key={`pdf-${retryCount}`} // Force re-render on retry
           >
             {numPages && (
-              <Page
+              <PDFPage
                 pageNumber={pageNumber}
                 scale={scale}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
               />
             )}
-          </Document>
+          </PDFDocument>
         )}
       </div>
       
