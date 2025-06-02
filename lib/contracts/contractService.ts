@@ -1,3 +1,7 @@
+import { prisma } from "@/lib/prisma";
+import { addDays } from "date-fns";
+import { v4 as uuidv4 } from "uuid";
+
 // Contract role and status types
 export type ContractRole = "BUYER" | "SELLER" | "CONTRACTOR" | "AGENT";
 export type ContractStatus = "PENDING" | "IN_PROGRESS" | "FULLY_EXECUTED";
@@ -86,30 +90,60 @@ export async function signContractSection(data: {
 }
 
 // Generate signing link for a specific role
-export async function generateSigningLink(contractId: string, role: ContractRole): Promise<string> {
-  // Create a token by encoding the contractId and role
-  const token = Buffer.from(`${contractId}:${role}`).toString('base64');
+export async function generateSigningLink(
+  contractId: string, 
+  role: ContractRole,
+  email?: string,
+  name?: string
+): Promise<string> {
+  // Create a random token
+  const randomToken = uuidv4();
   
-  // Return the signing URL path
-  return `/sign/${token}`;
+  // Store token in the database with expiration date (7 days)
+  await prisma.contractSigningToken.create({
+    data: {
+      token: randomToken,
+      contractId,
+      role,
+      email,
+      name,
+      expiresAt: addDays(new Date(), 7),
+    }
+  });
+  
+  // Return the signing URL path with the token
+  return `/sign/${encodeURIComponent(randomToken)}`;
 }
 
 // Get contract by signing token
 export async function getContractBySigningToken(token: string) {
   try {
-    // Decode the token to get contractId and role
-    const decoded = Buffer.from(token, 'base64').toString();
-    const [contractId, role] = decoded.split(':');
+    // URL decode the token first
+    const decodedToken = decodeURIComponent(token);
     
-    if (!contractId) {
-      throw new Error('Invalid token');
+    // Find the token in the database
+    const tokenRecord = await prisma.contractSigningToken.findUnique({
+      where: { token: decodedToken },
+      include: { contract: true }
+    });
+    
+    if (!tokenRecord) {
+      throw new Error('Invalid or expired token');
+    }
+    
+    // Check if token is expired
+    if (tokenRecord.expiresAt < new Date()) {
+      throw new Error('Token has expired');
     }
     
     return {
-      contractId,
-      role: role as ContractRole | undefined
+      contractId: tokenRecord.contractId,
+      role: tokenRecord.role as ContractRole,
+      email: tokenRecord.email,
+      name: tokenRecord.name,
+      isUsed: tokenRecord.isUsed
     };
   } catch (error) {
-    throw new Error('Invalid token format');
+    throw new Error('Invalid token format or expired token');
   }
 } 

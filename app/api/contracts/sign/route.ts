@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getContractBySigningToken } from "@/lib/contracts/contractService";
 
 const prisma = new PrismaClient();
+
+// Type for the extended transaction that includes contractSigningToken
+type ExtendedTransaction = Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends"> & {
+  contractSigningToken: {
+    update: Function;
+  }
+};
 
 // POST /api/contracts/sign - Sign a contract section from a token
 export async function POST(request: Request) {
@@ -16,24 +24,19 @@ export async function POST(request: Request) {
       );
     }
     
-    // Decode the token to get contractId and role
     try {
-      const decoded = Buffer.from(token, 'base64').toString();
-      const [contractId, signerRole] = decoded.split(':');
+      // URL decode the token first
+      const decodedToken = decodeURIComponent(token);
       
-      if (!contractId || !signerRole) {
-        return NextResponse.json(
-          { error: "Invalid token" },
-          { status: 400 }
-        );
-      }
+      // Get contract info from token
+      const tokenInfo = await getContractBySigningToken(decodedToken);
       
-      // Check if this token has already been used for this section
+      // Check if this section has already been signed
       const existingSignature = await prisma.contractSignature.findFirst({
         where: {
-          contractId,
+          contractId: tokenInfo.contractId,
           sectionId,
-          signerRole,
+          signerRole: tokenInfo.role,
         },
       });
       
@@ -49,14 +52,13 @@ export async function POST(request: Request) {
         // Create signature
         const signature = await tx.contractSignature.create({
           data: {
-            contractId,
+            contractId: tokenInfo.contractId,
             sectionId,
             signatureData,
             signerName,
             signerEmail,
-            signerRole,
+            signerRole: tokenInfo.role,
             ipAddress: request.headers.get("x-forwarded-for") || "unknown",
-            // Token is tracked in the application logic, not in the database
           },
         });
 
@@ -69,9 +71,15 @@ export async function POST(request: Request) {
           },
         });
 
+        // Mark token as used
+        await (tx as ExtendedTransaction).contractSigningToken.update({
+          where: { token: decodedToken },
+          data: { isUsed: true }
+        });
+
         // Check if all required sections are signed
         const contract = await tx.contract.findUnique({
-          where: { id: contractId },
+          where: { id: tokenInfo.contractId },
           include: {
             sections: true,
           },
@@ -87,7 +95,7 @@ export async function POST(request: Request) {
             : "IN_PROGRESS";
           
           await tx.contract.update({
-            where: { id: contractId },
+            where: { id: tokenInfo.contractId },
             data: {
               status: newStatus,
               updatedAt: new Date(),
@@ -104,9 +112,9 @@ export async function POST(request: Request) {
         message: "Signature saved successfully"
       });
     } catch (error) {
-      console.error("Error decoding token:", error);
+      console.error("Error processing token:", error);
       return NextResponse.json(
-        { error: "Invalid token format" },
+        { error: "Invalid or expired token" },
         { status: 400 }
       );
     }

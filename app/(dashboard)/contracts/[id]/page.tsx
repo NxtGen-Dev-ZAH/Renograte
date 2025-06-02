@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { ArrowLeft, Download, Share2, Check, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Download, Share2, Check, Clock, AlertTriangle, Mail } from "lucide-react";
 import ContractSignatureFlow from "@/components/ContractSignatureFlow";
 import { ContractRole } from "@/lib/contracts/contractService";
 import { Skeleton } from "@/components/ui/skeleton";
-import { PDFViewer } from "@/components/PDFViewer";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { PDFViewer } from "@/components/PDFViewer";
 
 export default function ContractDetailPage({ params }: { params: Promise<{ id: string }> }) {
   // Unwrap params with React.use() to properly access id
@@ -22,6 +25,10 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
   
   const [contract, setContract] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipientName, setRecipientName] = useState("");
   const { toast } = useToast();
   const router = useRouter();
   const [currentUserRole, setCurrentUserRole] = useState<ContractRole | undefined>("AGENT"); // Hardcoded for demo, should be based on auth
@@ -109,7 +116,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
 
   const handleSendSigningLink = async (role: ContractRole, email: string, name: string) => {
     try {
-      // Send signing link via API
+      // Send signing link via API with PDF attachment
       const response = await fetch('/api/contracts/send-signing-link', {
         method: 'POST',
         headers: {
@@ -120,6 +127,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
           role,
           email,
           name,
+          attachPdf: true // Include PDF attachment in email
         }),
       });
       
@@ -131,7 +139,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
       
       toast({
         title: "Signing Link Generated",
-        description: `A link has been sent to ${email}.`,
+        description: `A link has been sent to ${email} with the contract document attached.`,
       });
       
       return data.signingLink;
@@ -143,6 +151,54 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
         variant: "destructive",
       });
       throw error;
+    }
+  };
+
+  const handleSendDocumentEmail = async () => {
+    if (!contract || !recipientEmail) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a recipient email address.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setSendingEmail(true);
+      
+      const response = await fetch('/api/contracts/send-document', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contractId: contract.id,
+          documentUrl: contract.documentUrl,
+          recipientEmail,
+          recipientName,
+          contractTitle: contract.title,
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to send document via email');
+      }
+      
+      setEmailDialogOpen(false);
+      toast({
+        title: "Email Sent",
+        description: `The document has been sent to ${recipientEmail}.`,
+      });
+    } catch (error) {
+      console.error("Error sending document via email:", error);
+      toast({
+        title: "Error",
+        description: "Failed to send the document. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingEmail(false);
     }
   };
 
@@ -200,6 +256,58 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
           Back to Contracts
         </Button>
         <div className="flex gap-2">
+          <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                <Mail className="mr-2 h-4 w-4" />
+                Email Document
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Send Document via Email</DialogTitle>
+                <DialogDescription>
+                  Enter the recipient's details to send the document as an email attachment.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Recipient Name</Label>
+                  <Input
+                    id="name"
+                    value={recipientName}
+                    onChange={(e) => setRecipientName(e.target.value)}
+                    placeholder="Enter recipient's name"
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Recipient Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={recipientEmail}
+                    onChange={(e) => setRecipientEmail(e.target.value)}
+                    placeholder="Enter recipient's email"
+                    required
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setEmailDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSendDocumentEmail}
+                  disabled={sendingEmail || !recipientEmail}
+                >
+                  {sendingEmail ? "Sending..." : "Send Document"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
           <Button 
             variant="outline" 
             size="sm"
@@ -295,7 +403,9 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                                 <div className="text-sm">
                                   <p className="font-medium">{section.signature.signerName}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {format(new Date(section.signature.createdAt), "MMM d, yyyy")}
+                                    {section.signature.createdAt ? 
+                                      format(new Date(section.signature.createdAt), "MMM d, yyyy") : 
+                                      "Hover to view details"}
                                   </p>
                                 </div>
                               </div>
@@ -304,7 +414,10 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                               <div className="text-xs">
                                 <p>Signed by: {section.signature.signerName}</p>
                                 <p>Email: {section.signature.signerEmail}</p>
-                                <p>Date: {format(new Date(section.signature.createdAt), "MMM d, yyyy h:mm a")}</p>
+                                <p>Date: {section.signature.signedAt ? 
+                                  format(new Date(section.signature.signedAt), "MMM d, yyyy h:mm a") : 
+                                  "Date unavailable"}
+                                </p>
                               </div>
                             </TooltipContent>
                           </Tooltip>

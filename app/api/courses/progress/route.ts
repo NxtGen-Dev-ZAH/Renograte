@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { getSignedFileUrl } from '@/lib/s3';
 
 // POST /api/courses/progress - Update user progress for a video
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -13,7 +14,18 @@ export async function POST(request: Request) {
     }
     
     const userId = session.user.id;
-    const data = await request.json();
+    
+    // Handle potential empty request body
+    let data;
+    try {
+      data = await request.json();
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 }
+      );
+    }
     
     const { videoId, courseId, watchedSeconds, lastPosition, completed } = data;
     
@@ -80,10 +92,22 @@ export async function GET(request: NextRequest) {
       );
     }
     
-    // Get all videos for the course
+    // Get all videos for the course with course information
     const videos = await prisma.courseVideo.findMany({
       where: { courseId },
-      orderBy: { order: "asc" }
+      orderBy: { order: "asc" },
+      include: {
+        course: {
+          select: {
+            title: true,
+            description: true,
+            category: true,
+            thumbnail: true,
+            createdAt: true,
+            updatedAt: true
+          }
+        }
+      }
     });
     
     // Get user progress for these videos
@@ -99,17 +123,28 @@ export async function GET(request: NextRequest) {
     const completedVideos = progress.filter(p => p.completed).length;
     const overallProgress = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
     
-    // Map progress to videos
-    const videosWithProgress = videos.map(video => {
+    // Map progress to videos and generate signed URLs
+    const videosWithProgress = await Promise.all(videos.map(async (video) => {
       const videoProgress = progress.find(p => p.videoId === video.id);
+      
+      // Generate signed URL for video
+      let videoUrl = null;
+      try {
+        if (video.videoUrl) {
+          videoUrl = await getSignedFileUrl(video.videoUrl);
+        }
+      } catch (error) {
+        console.error(`Error generating signed URL for video ${video.id}:`, error);
+      }
       
       return {
         ...video,
+        videoUrl,
         completed: videoProgress?.completed || false,
         watchedSeconds: videoProgress?.watchedSeconds || 0,
         lastPosition: videoProgress?.lastPosition || 0
       };
-    });
+    }));
     
     return NextResponse.json({
       videos: videosWithProgress,

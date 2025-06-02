@@ -8,35 +8,90 @@ const s3Client = new S3Client({
     accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
   },
+  // Increase timeouts for large file uploads
+  requestHandler: {
+    requestTimeout: 15 * 60 * 1000, // 15 minutes
+  },
 });
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!;
 
 export async function uploadFileToS3(file: File, prefix: string = 'listings/'): Promise<string> {
-  const fileExtension = file.name.split('.').pop();
-  const fileName = `${prefix}${uuidv4()}.${fileExtension}`;
+  try {
+    // Generate a unique filename with the original extension
+    const originalName = file.name;
+    const fileExtension = originalName.split('.').pop()?.toLowerCase() || '';
+    const fileName = `${prefix}${uuidv4()}.${fileExtension}`;
 
-  const arrayBuffer = await file.arrayBuffer();
-  const uint8Array = new Uint8Array(arrayBuffer);
+    console.log(`Starting upload for file: ${originalName} (${file.size} bytes) to ${fileName}`);
+    
+    // Convert file to ArrayBuffer
+    const arrayBuffer = await file.arrayBuffer();
+    const uint8Array = new Uint8Array(arrayBuffer);
 
-  const command = new PutObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: fileName,
-    Body: uint8Array,
-    ContentType: file.type,
-  });
+    // Set up the S3 upload command with appropriate content type
+    const command = new PutObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fileName,
+      Body: uint8Array,
+      ContentType: file.type,
+      // Add metadata to track original filename
+      Metadata: {
+        'original-name': encodeURIComponent(originalName)
+      }
+    });
 
-  await s3Client.send(command);
-  return fileName;
+    // Upload to S3 with retry logic
+    let retries = 0;
+    const maxRetries = 3;
+    
+    while (retries <= maxRetries) {
+      try {
+        await s3Client.send(command);
+        console.log(`Successfully uploaded ${fileName} to S3`);
+        return fileName;
+      } catch (uploadError) {
+        retries++;
+        if (retries > maxRetries) {
+          throw uploadError;
+        }
+        console.log(`Upload attempt ${retries} failed, retrying...`);
+        // Wait before retrying (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries)));
+      }
+    }
+    
+    throw new Error("Upload failed after multiple retries");
+  } catch (error) {
+    console.error("Error in uploadFileToS3:", error);
+    throw new Error(`Failed to upload file: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 export async function getSignedFileUrl(fileKey: string): Promise<string> {
-  const command = new GetObjectCommand({
-    Bucket: BUCKET_NAME,
-    Key: fileKey,
-  });
+  try {
+    console.log(`Generating signed URL for file: ${fileKey}`);
+    
+    // If the fileKey is already a URL (starts with http or /api), return it as is
+    if (fileKey.startsWith('http') || fileKey.startsWith('/api')) {
+      console.log('File key is already a URL, returning as is');
+      return fileKey;
+    }
+    
+    const command = new GetObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: fileKey,
+    });
 
-  return await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL expires in 1 hour
+    // Increase expiration time to 24 hours for better reliability
+    const signedUrl = await getSignedUrl(s3Client, command, { expiresIn: 86400 });
+    
+    console.log(`Successfully generated signed URL with 24-hour expiration`);
+    return signedUrl;
+  } catch (error) {
+    console.error(`Error generating signed URL for ${fileKey}:`, error);
+    throw new Error(`Failed to generate signed URL: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 export async function uploadMultipleFilesToS3(files: File[]): Promise<string[]> {

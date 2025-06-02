@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
 import { prisma } from '@/lib/prisma';
 import crypto from 'crypto';
+import { getSignedFileUrl } from '@/lib/s3';
+import axios from 'axios';
 
 // Create reusable transporter object using SMTP
 export const transporter = nodemailer.createTransport({
@@ -98,6 +100,78 @@ export const sendVerificationEmail = async (
     return true;
   } catch (error) {
     console.error('Error sending verification email:', error);
+    return false;
+  }
+};
+
+/**
+ * Send an email with a PDF attachment
+ * @param to Recipient email address
+ * @param subject Email subject
+ * @param htmlContent HTML content of the email
+ * @param documentUrl URL or S3 key of the PDF document
+ * @param documentName Name to use for the PDF attachment
+ * @param contractTitle Title of the contract (for the email subject)
+ */
+export const sendEmailWithPdfAttachment = async (
+  to: string,
+  subject: string,
+  htmlContent: string,
+  documentUrl: string,
+  documentName: string,
+  contractTitle: string
+): Promise<boolean> => {
+  try {
+    console.log(`Preparing to send email with PDF attachment to ${to}`);
+    
+    // Get the PDF file content
+    let pdfBuffer: Buffer;
+    
+    if (documentUrl.startsWith('http')) {
+      // If it's already a URL, fetch it directly
+      const response = await axios.get(documentUrl, { responseType: 'arraybuffer' });
+      pdfBuffer = Buffer.from(response.data);
+    } else if (documentUrl.startsWith('/api')) {
+      // If it's an internal API URL, fetch it with the base URL
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? process.env.NEXT_PUBLIC_APP_URL || 'https://www.renograte.com'
+        : 'http://localhost:3000';
+      
+      const response = await axios.get(`${baseUrl}${documentUrl}`, { 
+        responseType: 'arraybuffer',
+        headers: {
+          'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN}`
+        }
+      });
+      pdfBuffer = Buffer.from(response.data);
+    } else {
+      // If it's an S3 key, get a signed URL and fetch it
+      const signedUrl = await getSignedFileUrl(documentUrl);
+      const response = await axios.get(signedUrl, { responseType: 'arraybuffer' });
+      pdfBuffer = Buffer.from(response.data);
+    }
+    
+    console.log(`Successfully fetched PDF document (${pdfBuffer.length} bytes)`);
+    
+    // Send email with attachment
+    await transporter.sendMail({
+      from: '"Renograte" <info@renograte.com>',
+      to,
+      subject,
+      html: htmlContent,
+      attachments: [
+        {
+          filename: documentName || `${contractTitle.replace(/\s+/g, '_')}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf'
+        }
+      ]
+    });
+    
+    console.log(`Successfully sent email with PDF attachment to ${to}`);
+    return true;
+  } catch (error) {
+    console.error('Error sending email with PDF attachment:', error);
     return false;
   }
 }; 

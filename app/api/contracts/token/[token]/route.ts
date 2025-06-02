@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { getContractBySigningToken } from "@/lib/contracts/contractService";
 
 const prisma = new PrismaClient();
 
@@ -9,25 +10,22 @@ export async function GET(
   { params }: { params: { token: string } }
 ) {
   try {
-    const { token } = params;
+    // Get token from params
+    const token = params.token;
     
-    // Decode the token to get contractId and role
+    // URL decode the token first
+    const decodedToken = decodeURIComponent(token);
+    
     try {
-      const decoded = Buffer.from(token, 'base64').toString();
-      const [contractId, role] = decoded.split(':');
+      // Get contract info from token
+      const tokenInfo = await getContractBySigningToken(decodedToken);
       
-      if (!contractId) {
-        return NextResponse.json(
-          { error: "Invalid token" },
-          { status: 400 }
-        );
-      }
-      
+      // Get the contract with sections for the specific role
       const contract = await prisma.contract.findUnique({
-        where: { id: contractId },
+        where: { id: tokenInfo.contractId },
         include: {
           sections: {
-            where: role ? { role } : undefined,
+            where: tokenInfo.role ? { role: tokenInfo.role } : undefined,
             include: {
               signature: true,
             },
@@ -45,11 +43,15 @@ export async function GET(
         );
       }
       
-      return NextResponse.json(contract);
+      return NextResponse.json({
+        ...contract,
+        signerEmail: tokenInfo.email,
+        signerName: tokenInfo.name,
+      });
     } catch (error) {
-      console.error("Error decoding token:", error);
+      console.error("Error processing token:", error);
       return NextResponse.json(
-        { error: "Invalid token format" },
+        { error: "Invalid or expired token" },
         { status: 400 }
       );
     }

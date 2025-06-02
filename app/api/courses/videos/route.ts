@@ -104,14 +104,46 @@ export async function POST(request: Request) {
       );
     }
     
+    // Validate video file type
+    const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+    if (!validTypes.includes(videoFile.type)) {
+      return NextResponse.json(
+        { error: "Invalid file type. Please upload MP4, WebM, or MOV video files." },
+        { status: 400 }
+      );
+    }
+    
+    // Validate file size (limit to 50MB)
+    const maxSizeInBytes = 50 * 1024 * 1024; // 50MB
+    if (videoFile.size > maxSizeInBytes) {
+      return NextResponse.json(
+        { error: "Video file is too large. Maximum size is 50MB." },
+        { status: 400 }
+      );
+    }
+    
+    // Check if course exists
+    const course = await prisma.course.findUnique({
+      where: { id: courseId }
+    });
+    
+    if (!course) {
+      return NextResponse.json(
+        { error: "Course not found" },
+        { status: 404 }
+      );
+    }
+    
     // Upload video to S3
     let videoUrl;
     try {
+      console.log(`Starting upload of video: ${videoFile.name} (${videoFile.size} bytes)`);
       videoUrl = await uploadFileToS3(videoFile, 'courses/videos/');
+      console.log(`Video uploaded successfully: ${videoUrl}`);
     } catch (error) {
       console.error("Error uploading video:", error);
       return NextResponse.json(
-        { error: "Failed to upload video" },
+        { error: "Failed to upload video. Please try again." },
         { status: 500 }
       );
     }
@@ -128,7 +160,10 @@ export async function POST(request: Request) {
       }
     });
     
-    return NextResponse.json({ video }, { status: 201 });
+    return NextResponse.json({ 
+      video,
+      message: "Video uploaded successfully"
+    }, { status: 201 });
   } catch (error) {
     console.error("Error creating video:", error);
     return NextResponse.json(

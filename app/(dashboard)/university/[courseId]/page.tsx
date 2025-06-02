@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";  
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Play, CheckCircle, ArrowLeft, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import React from "react";
 
 interface CourseVideo {
   id: string;
@@ -32,7 +33,9 @@ interface Course {
   videos: CourseVideo[];
 }
 
-export default function CourseDetailsPage({ params }: { params: { courseId: string } }) {
+export default function CourseDetailsPage({ params }: { params: { courseId: string | Promise<string> } }) {
+  const unwrappedParams = React.use(Promise.resolve(params)); 
+  const courseId = unwrappedParams.courseId;
   const router = useRouter();
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -51,7 +54,7 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
     const fetchCourseDetails = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/courses/progress?courseId=${params.courseId}`);
+        const response = await fetch(`/api/courses/progress?courseId=${String(courseId)}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch course details');
@@ -61,7 +64,7 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
         
         if (data.videos && data.videos.length > 0) {
           setCourse({
-            id: params.courseId,
+            id: String(courseId),
             title: data.videos[0].course?.title || "Course",
             description: data.videos[0].course?.description || "",
             category: data.videos[0].course?.category || "",
@@ -92,7 +95,7 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
     };
     
     fetchCourseDetails();
-  }, [params.courseId, toast]);
+  }, [courseId, toast]);
 
   // Set up video progress tracking
   useEffect(() => {
@@ -119,14 +122,25 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
       }
       
       progressUpdateInterval.current = setInterval(() => {
-        if (!videoRef.current) return;
+        if (!videoRef.current || !activeVideo) return;
         
-        const currentPos = Math.floor(videoRef.current.currentTime);
-        const duration = videoRef.current.duration;
-        const watchedSecs = Math.max(activeVideo.watchedSeconds, currentPos);
-        
-        // Update progress in database
-        updateVideoProgress(activeVideo.id, watchedSecs, currentPos, watchedSecs >= duration * 0.9);
+        try {
+          const currentPos = Math.floor(videoRef.current.currentTime);
+          const duration = isFinite(videoRef.current.duration) ? videoRef.current.duration : 0;
+          
+          // Skip updates if we don't have valid numbers
+          if (!isFinite(currentPos) || currentPos < 0 || !isFinite(duration) || duration <= 0) {
+            return;
+          }
+          
+          const watchedSecs = Math.max(activeVideo.watchedSeconds || 0, currentPos);
+          const isCompleted = watchedSecs >= duration * 0.9;
+          
+          // Update progress in database
+          updateVideoProgress(activeVideo.id, watchedSecs, currentPos, isCompleted);
+        } catch (err) {
+          console.error("Error in progress tracking:", err);
+        }
       }, 5000);
     };
     
@@ -138,25 +152,40 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
       }
       
       // Final update when video is paused
-      if (videoRef.current) {
-        const currentPos = Math.floor(videoRef.current.currentTime);
-        const duration = videoRef.current.duration;
-        const watchedSecs = Math.max(activeVideo.watchedSeconds, currentPos);
-        
-        updateVideoProgress(activeVideo.id, watchedSecs, currentPos, watchedSecs >= duration * 0.9);
+      if (videoRef.current && activeVideo) {
+        try {
+          const currentPos = Math.floor(videoRef.current.currentTime);
+          const duration = isFinite(videoRef.current.duration) ? videoRef.current.duration : 0;
+          
+          // Skip updates if we don't have valid numbers
+          if (!isFinite(currentPos) || currentPos < 0 || !isFinite(duration) || duration <= 0) {
+            return;
+          }
+          
+          const watchedSecs = Math.max(activeVideo.watchedSeconds || 0, currentPos);
+          const isCompleted = watchedSecs >= duration * 0.9;
+          
+          updateVideoProgress(activeVideo.id, watchedSecs, currentPos, isCompleted);
+        } catch (err) {
+          console.error("Error in final progress update:", err);
+        }
       }
     };
     
     const handleVideoEnded = () => {
-      if (!videoRef.current) return;
+      if (!videoRef.current || !activeVideo) return;
       
-      // Mark as completed when ended
-      updateVideoProgress(activeVideo.id, activeVideo.duration, 0, true);
-      
-      // Auto-play next video if available
-      const currentIndex = course?.videos.findIndex(v => v.id === activeVideo.id) || 0;
-      if (course && currentIndex < course.videos.length - 1) {
-        setActiveVideo(course.videos[currentIndex + 1]);
+      try {
+        // Mark as completed when ended
+        updateVideoProgress(activeVideo.id, activeVideo.duration, 0, true);
+        
+        // Auto-play next video if available
+        const currentIndex = course?.videos.findIndex(v => v.id === activeVideo.id) || 0;
+        if (course && currentIndex < course.videos.length - 1) {
+          setActiveVideo(course.videos[currentIndex + 1]);
+        }
+      } catch (err) {
+        console.error("Error handling video end:", err);
       }
     };
     
@@ -187,6 +216,16 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
 
   const updateVideoProgress = async (videoId: string, watchedSeconds: number, lastPosition: number, completed: boolean) => {
     try {
+      // Validate inputs to ensure we're sending valid data
+      if (!videoId || !courseId) {
+        console.error('Missing required IDs for progress update');
+        return;
+      }
+      
+      // Ensure we're sending numbers for these values
+      const validWatchedSeconds = Math.max(0, Math.floor(watchedSeconds) || 0);
+      const validLastPosition = Math.max(0, Math.floor(lastPosition) || 0);
+      
       const response = await fetch('/api/courses/progress', {
         method: 'POST',
         headers: {
@@ -194,15 +233,16 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
         },
         body: JSON.stringify({
           videoId,
-          courseId: params.courseId,
-          watchedSeconds,
-          lastPosition,
+          courseId: String(courseId),
+          watchedSeconds: validWatchedSeconds,
+          lastPosition: validLastPosition,
           completed,
         }),
       });
       
       if (!response.ok) {
-        throw new Error('Failed to update progress');
+        const errorText = await response.text();
+        throw new Error(`Failed to update progress: ${errorText}`);
       }
       
       // If video was marked as completed, update the UI
@@ -226,6 +266,11 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
       }
     } catch (error) {
       console.error('Error updating progress:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update video progress. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -288,6 +333,19 @@ export default function CourseDetailsPage({ params }: { params: { courseId: stri
                   className="w-full h-full"
                   controls
                   playsInline
+                  preload="metadata"
+                  onCanPlay={(e) => {
+                    // Set buffer mode to improve performance
+                    const video = e.currentTarget;
+                    if (video.buffered.length === 0) return;
+                    
+                    // Try to preload more of the video
+                    try {
+                      video.preload = "auto";
+                    } catch (err) {
+                      console.error("Error setting preload:", err);
+                    }
+                  }}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">

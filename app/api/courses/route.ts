@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { uploadFileToS3 } from '@/lib/s3';
 
 // GET /api/courses - Get all courses
 export async function GET(request: NextRequest) {
@@ -110,13 +111,28 @@ export async function POST(request: Request) {
       );
     }
     
+    // Upload thumbnail to S3 if provided
+    let thumbnailUrl = null;
+    if (thumbnail) {
+      try {
+        thumbnailUrl = await uploadFileToS3(thumbnail, 'courses/thumbnails/');
+        console.log(`Thumbnail uploaded successfully: ${thumbnailUrl}`);
+      } catch (error) {
+        console.error("Error uploading thumbnail:", error);
+        return NextResponse.json(
+          { error: "Failed to upload thumbnail" },
+          { status: 500 }
+        );
+      }
+    }
+    
     // Create course in database
     const course = await prisma.course.create({
       data: {
         title,
         description,
         category,
-        thumbnail: thumbnail ? `courses/thumbnails/${thumbnail.name}` : null,
+        thumbnail: thumbnailUrl,
       }
     });
     

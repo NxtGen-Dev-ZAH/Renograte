@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { PDFViewer } from "@/components/PDFViewer";
 import SignatureDialog from "@/components/SignatureDialog";
 import { ContractRole } from "@/lib/contracts/contractService";
 import { Pen, Check, Clock } from "lucide-react";
@@ -24,6 +24,7 @@ export default function SigningPage({ params }: { params: Promise<{ token: strin
   const [signatureComplete, setSignatureComplete] = useState(false);
   const [alreadySigned, setAlreadySigned] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   // Extract token from params when component mounts
   useEffect(() => {
@@ -70,15 +71,18 @@ export default function SigningPage({ params }: { params: Promise<{ token: strin
       const contractData = await response.json();
       setContract(contractData);
       
-      // Extract role from token
-      try {
-        if (token) {
-          const decoded = Buffer.from(token, 'base64').toString();
-          const [, role] = decoded.split(':');
-          setSignerRole(role as ContractRole);
-        }
-      } catch (error) {
-        console.error("Error decoding token:", error);
+      // Auto-fill name and email if provided in the token
+      if (contractData.signerName) {
+        setSignerName(contractData.signerName);
+      }
+      
+      if (contractData.signerEmail) {
+        setSignerEmail(contractData.signerEmail);
+      }
+      
+      // Extract role from token data
+      if (contractData.sections && contractData.sections.length > 0) {
+        setSignerRole(contractData.sections[0].role);
       }
     } catch (error) {
       console.error("Error loading contract:", error);
@@ -172,12 +176,6 @@ export default function SigningPage({ params }: { params: Promise<{ token: strin
     }
   };
 
-  // Get the document URL with the token for unauthenticated access
-  const getDocumentUrl = () => {
-    if (!token || !contract?.documentUrl) return '';
-    return `/api/contracts/document/${token}`;
-  };
-
   if (loading) {
     return (
       <div className="container mx-auto py-10 space-y-6 my-12">
@@ -244,13 +242,7 @@ export default function SigningPage({ params }: { params: Promise<{ token: strin
               </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Document Preview */}
-              <div>
-                <h3 className="font-medium mb-4">Document Preview</h3>
-                <PDFViewer url={getDocumentUrl()} />
-              </div>
-
+            <div className="grid grid-cols-1 gap-6">
               {/* Signature Sections */}
               <div className="space-y-6">
                 <h3 className="font-medium">Signature Required</h3>

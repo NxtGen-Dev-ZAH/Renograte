@@ -9,7 +9,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = await params.id;
+    // Corrected: params.id is directly accessible, no need to await
+    const id = params.id; 
     
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -61,7 +62,8 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const id = await params.id;
+    // Corrected: params.id is directly accessible, no need to await
+    const id = params.id;
     const body = await request.json();
     const { sectionId, signatureData, signerName, signerEmail, signerRole } = body;
     
@@ -134,4 +136,5 @@ export async function POST(
       { status: 500 }
     );
   }
-} 
+}
+
