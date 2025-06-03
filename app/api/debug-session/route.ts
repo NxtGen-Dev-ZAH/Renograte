@@ -37,7 +37,10 @@ export async function GET(request: Request) {
     const tokenOptions = {
       req: request as any,
       secret: process.env.NEXTAUTH_SECRET,
-      secureCookie: process.env.NODE_ENV === "production"
+      secureCookie: process.env.NODE_ENV === "production",
+      cookieName: cookies['__Secure-next-auth.session-token'] ? 
+                 '__Secure-next-auth.session-token' : 
+                 'next-auth.session-token'
     };
     
     console.log('Getting token with options:', JSON.stringify(tokenOptions, null, 2));

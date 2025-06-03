@@ -93,13 +93,13 @@ export const authOptions: NextAuthOptions = {
   },
   cookies: {
     sessionToken: {
-      name: `next-auth.session-token`,
+      name: `__Secure-next-auth.session-token`,
       options: {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
         secure: true,
-        domain: process.env.NODE_ENV === "production" ? ".renograte.com" : undefined,
+        domain: process.env.NODE_ENV === "production" ? "renograte.com" : undefined,
         maxAge: 30 * 24 * 60 * 60, // 30 days
       },
     },
