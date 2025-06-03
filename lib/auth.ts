@@ -99,6 +99,7 @@ export const authOptions: NextAuthOptions = {
         sameSite: "lax",
         path: "/",
         secure: true,
+        domain: process.env.NODE_ENV === "production" ? ".renograte.com" : undefined,
         maxAge: 30 * 24 * 60 * 60, // 30 days
       },
     },
