@@ -83,31 +83,21 @@ const LoginModal = () => {
         description: "Welcome to Renograte!",
       });
       
-      // Fetch current session to get user role - use await to ensure we have the latest data
-      // Make a direct fetch to refresh-session to force a refresh first
-      await fetch('/api/auth/refresh-session', { cache: 'no-store' });
-      
-      // Now get the refreshed session data
-      const sessionResponse = await fetch('/api/auth/session', { cache: 'no-store' });
-      const sessionData = await sessionResponse.json();
+      // Fetch current session to get user role
+      const sessionData = await fetch('/api/auth/session').then(res => res.json());
       const userRole = sessionData?.user?.role;
-      
-      console.log("User role after login:", userRole);
-      
-      // Add a small delay to ensure session is fully established
-      await new Promise(resolve => setTimeout(resolve, 300));
       
       // Route based on user role and returnUrl
       if (userRole === 'admin') {
-        // If admin, go to admin page - use replace for cleaner navigation history
-        router.replace('/admin');
+        // If admin, go to admin page
+        router.push('/admin');
       } else if (userRole === 'member' || userRole === 'agent' || userRole === 'contractor') {
         // If member, agent, or contractor, check if there's a return URL
         if (returnUrl && !returnUrl.includes('admin')) {
-          router.replace(returnUrl);
+          router.push(returnUrl);
         } else {
           // Default to dashboard for members
-          router.replace('/dashboard');
+          router.push('/dashboard');
         }
       } else if (userRole === 'user') {
         // Regular users can access listings but not dashboard
@@ -115,14 +105,14 @@ const LoginModal = () => {
             returnUrl.includes('/renograte-listings') || 
             returnUrl.includes('/properties')
           )) {
-          router.replace(returnUrl);
+          router.push(returnUrl);
         } else {
           // Default to listings page for regular users
-          router.replace('/properties');
+          router.push('/properties');
         }
       } else {
         // Default for unknown roles (fallback to home)
-        router.replace('/');
+        router.push('/');
       }
     } catch (error: any) {
       console.error("Login error:", error);

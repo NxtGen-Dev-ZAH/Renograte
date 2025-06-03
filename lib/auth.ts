@@ -38,6 +38,7 @@ declare module "next-auth/jwt" {
     email?: string | null;
     picture?: string | null;
     role?: string | null;
+    emailVerified?: Date | null;
     sessionUpdateCount?: number;
   }
 }
@@ -148,6 +149,7 @@ export const authOptions: NextAuthOptions = {
               token.email = user.email;
               token.picture = user.image;
               token.role = user.role;
+              token.emailVerified = user.emailVerified;
               token.sessionUpdateCount = (token.sessionUpdateCount || 0) + 1;
             }
           } catch (error) {
@@ -166,6 +168,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.picture = user.image;
         token.role = user.role;
+        token.emailVerified = user.emailVerified;
         token.sessionUpdateCount = 0;
       }
       
