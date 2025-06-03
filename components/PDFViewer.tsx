@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
+// pagelook json
 // Dynamically import react-pdf components with ssr: false
 const PDFDocument = dynamic(() => import("react-pdf").then(mod => mod.Document), {
   ssr: false,
