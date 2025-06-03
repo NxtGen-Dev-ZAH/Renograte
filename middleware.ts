@@ -5,19 +5,26 @@ import { getToken } from "next-auth/jwt";
 
 // Standalone middleware for auth pages
 async function authPagesMiddleware(req: NextRequest) {
-  const token = await getToken({ req });
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const isAuthenticated = !!token;
   const isAccessingAuthPage = 
     req.nextUrl.pathname.startsWith('/login') || 
     req.nextUrl.pathname.startsWith('/signup');
 
   if (isAuthenticated && isAccessingAuthPage) {
-    // If user is admin, redirect to admin dashboard
+    // Route based on user role
     if (token.role === 'admin') {
+      // If admin, redirect to admin dashboard
       return NextResponse.redirect(new URL('/admin', req.url));
+    } else if (token.role === 'member' || token.role === 'agent' || token.role === 'contractor') {
+      // If member, agent, or contractor, redirect to dashboard
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    } else if (token.role === 'user') {
+      // Regular users redirect to properties
+      return NextResponse.redirect(new URL('/properties', req.url));
     }
-    // Otherwise to regular dashboard
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    // Default fallback if no specific role handling
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
   return NextResponse.next();
