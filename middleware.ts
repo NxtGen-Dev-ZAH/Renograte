@@ -54,6 +54,11 @@ async function emailVerificationMiddleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Skip email verification check for admin users
+  if (token.role === 'admin') {
+    return NextResponse.next();
+  }
+
   // Check if email is verified
   if (!token.emailVerified) {
     // Redirect to a page informing user to verify their email
