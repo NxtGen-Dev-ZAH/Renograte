@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 interface User {
@@ -46,7 +46,7 @@ export default function AdminOffersPage() {
   useEffect(() => {
     const fetchOffers = async () => {
       try {
-        const response = await fetch("/api/offers");
+        const response = await fetch("/api/term-sheets");
         if (!response.ok) {
           throw new Error("Failed to fetch offers");
         }

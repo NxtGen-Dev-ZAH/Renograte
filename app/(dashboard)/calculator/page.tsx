@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, FileDown } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { jsPDF } from "jspdf";
+import html2canvas from "html2canvas";
 
 interface CalculatorValues {
   currentHomeValue: string;
@@ -49,6 +52,8 @@ interface CalculationSummary {
 }
 
 export default function CalculatorPage() {
+  const { toast } = useToast();
+  const summaryRef = useRef<HTMLDivElement>(null);
   const [values, setValues] = useState<CalculatorValues>({
     currentHomeValue: "850000.00",
     afterRenovatedValue: "1000000.00",
@@ -61,7 +66,7 @@ export default function CalculatorPage() {
     otherPayoffs: "1000.00",
     sellerIncentives: "2000.00",
     sellerPayback: "0.00",
-    administrationFee: "1.00",
+    administrationFee: "499",
     otherFees: "0.00",
   });
 
@@ -97,7 +102,7 @@ export default function CalculatorPage() {
     let processedValue = value.replace(/[^\d.]/g, "");
     
     // Handle percentage fields
-    if (["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)) {
+    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
       processedValue = parseFloat(processedValue || "0").toFixed(2);
       
       // Apply constraints for percentage fields
@@ -108,10 +113,13 @@ export default function CalculatorPage() {
         processedValue = numValue < 0 ? "0.00" : "10.00";
       } else if (field === "sellerFee" && (numValue < 0 || numValue > 10)) {
         processedValue = numValue < 0 ? "0.00" : "10.00";
-      } else if (field === "administrationFee" && (numValue < 0 || numValue > 5)) {
-        processedValue = numValue < 0 ? "0.00" : "5.00";
       } else if (field === "otherFees" && (numValue < 0 || numValue > 1)) {
         processedValue = numValue < 0 ? "0.00" : "1.00";
+      }
+      
+      // Administration fee is now a static value
+      if (field === "administrationFee") {
+        processedValue = "499";
       }
     } else {
       // For price fields, store the raw number without formatting
@@ -137,8 +145,6 @@ export default function CalculatorPage() {
       finalValue = Math.min(Math.max(newValue, 0), 10);
     } else if (field === "sellerFee") {
       finalValue = Math.min(Math.max(newValue, 0), 10);
-    } else if (field === "administrationFee") {
-      finalValue = Math.min(Math.max(newValue, 0), 5);
     } else if (field === "otherFees") {
       finalValue = Math.min(Math.max(newValue, 0), 1);
     }
@@ -147,7 +153,10 @@ export default function CalculatorPage() {
   };
 
   const formatDisplayValue = (field: string, value: string) => {
-    if (["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)) {
+    if (field === "administrationFee") {
+      return "499";
+    }
+    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
       return value;
     }
     const numValue = parseFloat(value) || 0;
@@ -165,12 +174,12 @@ export default function CalculatorPage() {
     const agentCommissionPercent = parseFloat(values.agentCommission) / 100 || 0;
     const closingFeePercent = parseFloat(values.closingFee) / 100 || 0;
     const sellerFeePercent = parseFloat(values.sellerFee) / 100 || 0;
-    const adminFeePercent = parseFloat(values.administrationFee) / 100 || 0;
+    const adminFee = 499; // Static $499 fee
     const otherFeesPercent = parseFloat(values.otherFees) / 100 || 0;
 
     // Calculate TARR (should be between 85% to 90% of ARV)
     const totalPercentages = agentCommissionPercent + closingFeePercent + 
-                           sellerFeePercent + adminFeePercent + otherFeesPercent;
+                           sellerFeePercent + otherFeesPercent;
     const tarrPercent = Math.min(Math.max(0.85, 1 - totalPercentages), 0.90);
 
     // Calculate TARA
@@ -192,7 +201,7 @@ export default function CalculatorPage() {
     const agentCommissionAmount = arv * agentCommissionPercent;
     const closingFeeAmount = arv * closingFeePercent;
     const sellerFeeAmount = arv * sellerFeePercent;
-    const renograteAdminFee = arv * adminFeePercent;
+    const renograteAdminFee = adminFee; // Static $499 fee
     const otherFeesAmount = arv * otherFeesPercent;
 
     const newSummary = {
@@ -225,16 +234,84 @@ export default function CalculatorPage() {
 
   const saveCalculation = () => {
     setCalculationHistory(prev => [summary, ...prev]);
+    toast({
+      title: "Calculation Saved",
+      description: "Your calculation has been saved to history.",
+    });
   };
 
   const loadCalculation = (savedSummary: CalculationSummary) => {
     // Reconstruct the values that would lead to this summary
     const reconstructedValues = {
       ...values,
-      currentHomeValue: values.currentHomeValue,
+      currentHomeValue: (savedSummary.termSheet.afterRenovatedValue - savedSummary.termSheet.totalRenovationAllowanceBuyer - savedSummary.totalLiens).toString(),
       afterRenovatedValue: savedSummary.termSheet.afterRenovatedValue.toString(),
+      agentCommission: ((savedSummary.termSheet.agentCommissionAmount / savedSummary.termSheet.afterRenovatedValue) * 100).toFixed(2),
+      closingFee: ((savedSummary.termSheet.closingFeeAmount / savedSummary.termSheet.afterRenovatedValue) * 100).toFixed(2),
+      sellerFee: ((savedSummary.termSheet.sellerFeeAmount / savedSummary.termSheet.afterRenovatedValue) * 100).toFixed(2),
+      administrationFee: "499",
+      sellerIncentives: savedSummary.termSheet.sellerIncentives.toString(),
+      otherPayoffs: savedSummary.termSheet.otherPayoffs.toString(),
     };
+    
     setValues(reconstructedValues);
+    
+    toast({
+      title: "Calculation Loaded",
+      description: "Previous calculation has been loaded successfully.",
+    });
+  };
+
+  const exportToPDF = async () => {
+    if (!summaryRef.current) return;
+    
+    try {
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we prepare your PDF...",
+      });
+      
+      const canvas = await html2canvas(summaryRef.current, {
+        scale: 2,
+        logging: false,
+        useCORS: true,
+        backgroundColor: "#ffffff"
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      
+      // Add timestamp and footer
+      const timestamp = new Date().toLocaleString();
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
+      pdf.text(`Generated on: ${timestamp}`, 10, pageHeight - 10);
+      pdf.text('Renograte Calculator Summary', 10, pageHeight - 5);
+      
+      pdf.save('renograte-calculator-summary.pdf');
+      
+      toast({
+        title: "PDF Generated",
+        description: "Your PDF has been successfully downloaded.",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const renderInput = (
@@ -255,11 +332,11 @@ export default function CalculatorPage() {
           className="pl-6"
         />
         <span className="absolute left-2 top-1/2 transform -translate-y-1/2">
-          {["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)
+          {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)
             ? "%"
             : "$"}
         </span>
-        {["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field) && (
+        {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field) && (
           <div className="absolute right-2 flex flex-col">
             <button
               onClick={() => handlePercentageChange(field, true)}
@@ -374,21 +451,10 @@ export default function CalculatorPage() {
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                 {renderInput(
                   "administrationFee",
-                  "Renograte Admin Fee %",
-                  "% 0.00",
-                  "% 5.00",
-                  "Renograte administration fee"
-                )}
-              </div>
-
-              {/* Fourth Row */}
-              <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
-                  "otherFees",
-                  "Other Fees % (Miscellaneous)",
-                  "% 0.00",
-                  "% 1.00",
-                  "Optional, ranging from 0% to 1% of ARV"
+                  "Renograte Admin Fee",
+                  "$ 499",
+                  "$ 499",
+                  "Standard $499 transaction fee"
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
@@ -458,40 +524,56 @@ export default function CalculatorPage() {
             onClick={() => setIsSummaryOpen(!isSummaryOpen)}
           >
             <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl text-[#0C71C3] font-bold">Renograte Term Sheet & Summary</CardTitle>
-              {isSummaryOpen ? (
-                <ChevronUp size={24} className="text-[#0C71C3]" />
-              ) : (
-                <ChevronDown size={24} className="text-[#0C71C3]" />
-              )}
+              <CardTitle className="text-2xl text-[#0C71C3] font-bold">Renograte Calculator Summary</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="flex items-center gap-1" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportToPDF();
+                  }}
+                >
+                  <FileDown size={16} />
+                  <span>Export PDF</span>
+                </Button>
+                {isSummaryOpen ? (
+                  <ChevronUp size={24} className="text-[#0C71C3]" />
+                ) : (
+                  <ChevronDown size={24} className="text-[#0C71C3]" />
+                )}
+              </div>
             </div>
           </CardHeader>
           {isSummaryOpen && (
             <CardContent className="space-y-6 p-6">
-              {/* Term Sheet */}
-              <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Term Sheet</h3>
-                <div className="space-y-2">
-                  {renderSummaryRow("After Renovated Value (ARV)", summary.termSheet.afterRenovatedValue)}
-                  {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.termSheet.totalRenovationAllowanceBuyer)}
-                  {renderSummaryRow("Agent Commission Amount", summary.termSheet.agentCommissionAmount)}
-                  {renderSummaryRow("Closing Fee Amount", summary.termSheet.closingFeeAmount)}
-                  {renderSummaryRow("Seller Fee Amount", summary.termSheet.sellerFeeAmount)}
-                  {renderSummaryRow("Renograte Admin Fee", summary.termSheet.renograteAdminFee)}
-                  {renderSummaryRow("Other Fees Amount", summary.termSheet.otherFeesAmount)}
-                  {renderSummaryRow("Seller Incentives", summary.termSheet.sellerIncentives)}
-                  {renderSummaryRow("Other Payoffs", summary.termSheet.otherPayoffs)}
+              <div ref={summaryRef} className="space-y-6">
+                {/* Term Sheet */}
+                <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
+                  <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Calculations</h3>
+                  <div className="space-y-2">
+                    {renderSummaryRow("After Renovated Value (ARV)", summary.termSheet.afterRenovatedValue)}
+                    {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.termSheet.totalRenovationAllowanceBuyer)}
+                    {renderSummaryRow("Agent Commission Amount", summary.termSheet.agentCommissionAmount)}
+                    {renderSummaryRow("Closing Fee Amount", summary.termSheet.closingFeeAmount)}
+                    {renderSummaryRow("Seller Fee Amount", summary.termSheet.sellerFeeAmount)}
+                    {renderSummaryRow("Renograte Admin Fee", summary.termSheet.renograteAdminFee)}
+                    {renderSummaryRow("Other Fees Amount", summary.termSheet.otherFeesAmount)}
+                    {renderSummaryRow("Seller Incentives", summary.termSheet.sellerIncentives)}
+                    {renderSummaryRow("Other Payoffs", summary.termSheet.otherPayoffs)}
+                  </div>
                 </div>
-              </div>
 
-              {/* Renograte Summary */}
-              <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
-                <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Summary</h3>
-                <div className="space-y-2">
-                  {renderSummaryRow("Total Additional Seller Profit", summary.renograteSummary.totalAdditionalSellerProfit)}
-                  {renderSummaryRow("Renograte Admin Fee", summary.renograteSummary.renograteAdminFee)}
-                  {renderSummaryRow("Other Fees", summary.renograteSummary.otherFees)}
-                  {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.renograteSummary.totalRenovationAllowanceBuyer)}
+                {/* Renograte Summary */}
+                <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
+                  <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Summary</h3>
+                  <div className="space-y-2">
+                    {renderSummaryRow("Total Additional Seller Profit", summary.renograteSummary.totalAdditionalSellerProfit)}
+                    {renderSummaryRow("Renograte Admin Fee", summary.renograteSummary.renograteAdminFee)}
+                    {renderSummaryRow("Other Fees", summary.renograteSummary.otherFees)}
+                    {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.renograteSummary.totalRenovationAllowanceBuyer)}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -534,14 +616,16 @@ export default function CalculatorPage() {
                       {new Date(calc.timestamp).toLocaleString()}
                     </p>
                   </div>
-                  {/* <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => loadCalculation(calc)}
-                    className="bg-[#0C71C3] text-white hover:bg-[#0C71C3]/90"
-                  >
-                    Load
-                  </Button> */}
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => loadCalculation(calc)}
+                      className="bg-[#0C71C3] text-white hover:bg-[#0C71C3]/90"
+                    >
+                      Load
+                    </Button>
+                  </div>
                 </div>
               ))}
               {calculationHistory.length === 0 && (

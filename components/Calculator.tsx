@@ -28,7 +28,7 @@ export default function RenograteCalculator() {
     otherPayoffs: "1000.00",
     sellerIncentives: "2000.00",
     sellerPayback: "0.00",
-    administrationFee: "1.00",
+    administrationFee: "499",
     otherFees: "0.00",
   });
 
@@ -63,7 +63,7 @@ export default function RenograteCalculator() {
     let processedValue = value.replace(/[^\d.]/g, "");
     
     // Handle percentage fields
-    if (["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)) {
+    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
       processedValue = parseFloat(processedValue || "0").toFixed(2);
       
       // Apply constraints for percentage fields
@@ -74,10 +74,13 @@ export default function RenograteCalculator() {
         processedValue = numValue < 0 ? "0.00" : "10.00";
       } else if (field === "sellerFee" && (numValue < 0 || numValue > 10)) {
         processedValue = numValue < 0 ? "0.00" : "10.00";
-      } else if (field === "administrationFee" && (numValue < 0 || numValue > 5)) {
-        processedValue = numValue < 0 ? "0.00" : "5.00";
       } else if (field === "otherFees" && (numValue < 0 || numValue > 1)) {
         processedValue = numValue < 0 ? "0.00" : "1.00";
+      }
+      
+      // Administration fee is now a static value
+      if (field === "administrationFee") {
+        processedValue = "499";
       }
     } else {
       // For price fields, store the raw number without formatting
@@ -113,7 +116,10 @@ export default function RenograteCalculator() {
   };
 
   const formatDisplayValue = (field: string, value: string) => {
-    if (["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)) {
+    if (field === "administrationFee") {
+      return "499";
+    }
+    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
       return value;
     }
     const numValue = parseFloat(value) || 0;
@@ -124,7 +130,10 @@ export default function RenograteCalculator() {
   };
 
   const getPlaceholder = (field: string) => {
-    if (["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)) {
+    if (field === "administrationFee") {
+      return "499";
+    }
+    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
       return "0.00";
     }
     return "0";
@@ -156,12 +165,12 @@ export default function RenograteCalculator() {
     const agentCommissionPercent = parseFloat(values.agentCommission) / 100 || 0;
     const closingFeePercent = parseFloat(values.closingFee) / 100 || 0;
     const sellerFeePercent = parseFloat(values.sellerFee) / 100 || 0;
-    const adminFeePercent = parseFloat(values.administrationFee) / 100 || 0;
+    const adminFee = 499; // Static $499 fee
     const otherFeesPercent = parseFloat(values.otherFees) / 100 || 0;
 
     // Calculate TARR (should be between 85% to 90% of ARV)
     const totalPercentages = agentCommissionPercent + closingFeePercent + 
-                           sellerFeePercent + adminFeePercent + otherFeesPercent;
+                           sellerFeePercent + otherFeesPercent;
     const tarrPercent = Math.min(Math.max(0.85, 1 - totalPercentages), 0.90);
 
     // Calculate TARA
@@ -183,7 +192,7 @@ export default function RenograteCalculator() {
     const agentCommissionAmount = arv * agentCommissionPercent;
     const closingFeeAmount = arv * closingFeePercent;
     const sellerFeeAmount = arv * sellerFeePercent;
-    const renograteAdminFee = arv * adminFeePercent;
+    const renograteAdminFee = adminFee; // Static $499 fee
     const otherFeesAmount = arv * otherFeesPercent;
 
     setSummary({
@@ -232,11 +241,11 @@ export default function RenograteCalculator() {
           className="pl-6"
         />
         <span className="absolute left-2 top-1/2 transform -translate-y-1/2">
-          {["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field)
+          {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)
             ? "%"
             : "$"}
         </span>
-        {["agentCommission", "closingFee", "sellerFee", "administrationFee", "otherFees"].includes(field) && (
+        {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field) && (
           <div className="absolute right-2 flex flex-col">
             <button
               onClick={() => handlePercentageChange(field, true)}
@@ -355,10 +364,10 @@ export default function RenograteCalculator() {
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                 {renderInput(
                   "administrationFee",
-                  "Renograte Admin Fee %",
-                  "% 1.00",
-                  "% 5.00",
-                  "Agent has option to add additional commission fee for managing the overall Renograte process"
+                  "Renograte Admin Fee",
+                  "$ 499",
+                  "$ 499",
+                  "Standard $499 transaction fee"
                 )}
               </div>
 
@@ -429,7 +438,7 @@ export default function RenograteCalculator() {
                 onClick={() => setIsSummaryOpen(!isSummaryOpen)}
               >
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl text-[#0C71C3] font-bold">Renograte Term Sheet & Summary</CardTitle>
+                  <CardTitle className="text-2xl text-[#0C71C3] font-bold">Renograte Calculator Summary</CardTitle>
                   {isSummaryOpen ? (
                     <ChevronUp size={24} className="text-[#0C71C3]" />
                   ) : (
@@ -441,7 +450,7 @@ export default function RenograteCalculator() {
                 <CardContent className="space-y-6 p-6">
                   {/* Term Sheet */}
                   <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
-                    <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Term Sheet</h3>
+                    <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Calculations</h3>
                     <div className="space-y-2">
                       {renderSummaryRow("After Renovated Value (ARV)", summary.termSheet.afterRenovatedValue)}
                       {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.termSheet.totalRenovationAllowanceBuyer)}

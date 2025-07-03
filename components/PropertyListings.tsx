@@ -291,7 +291,7 @@ export default function PropertyListings() {
                       className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform transition-all duration-300"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => window.location.href = '/listings'}
+                      onClick={() => window.location.href = '/properties'}
                     >
                       View More Properties
                     </motion.button>

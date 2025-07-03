@@ -131,12 +131,12 @@ export const config = {
     '/university/:path*',
     '/directories/:path*', 
     '/leads/:path*',
-    '/term-sheet/:path*',
+    '/agreements/:path*',
     '/distressed/:path*', 
-    '/contracts/:path*',
+    '/my-agreements/:path*',
     '/perks/:path*',
     '/marketing/:path*',
-    '/create-offer/:path*',
+    '/create-termsheet/:path*',
     // Admin routes that require admin role
     '/admin/:path*',
     // Auth pages for redirecting authenticated users

@@ -1,6 +1,7 @@
 import { CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import VerificationToast from './verification-toast';
 
 async function verifyEmail(token: string) {
   try {
@@ -31,16 +32,22 @@ async function verifyEmail(token: string) {
 export default async function VerificationStatus({ token }: { token?: string }) {
   if (!token) {
     return (
-      <div className="text-center space-y-4">
-        <XCircle className="mx-auto h-12 w-12 text-red-500" />
-        <h2 className="text-xl font-semibold">Invalid Verification Link</h2>
-        <p className="text-gray-600">
-          The verification link is invalid or has expired.
-        </p>
-        <Button asChild>
-          <Link href="/login">Go to Login</Link>
-        </Button>
-      </div>
+      <>
+        <VerificationToast 
+          status="invalid" 
+          message="The verification link is invalid or has expired."
+        />
+        <div className="text-center space-y-4">
+          <XCircle className="mx-auto h-12 w-12 text-red-500" />
+          <h2 className="text-xl font-semibold">Invalid Verification Link</h2>
+          <p className="text-gray-600">
+            The verification link is invalid or has expired.
+          </p>
+          <Button asChild>
+            <Link href="/login">Go to Login</Link>
+          </Button>
+        </div>
+      </>
     );
   }
 
@@ -48,27 +55,39 @@ export default async function VerificationStatus({ token }: { token?: string }) 
 
   if (result.error) {
     return (
-      <div className="text-center space-y-4">
-        <XCircle className="mx-auto h-12 w-12 text-red-500" />
-        <h2 className="text-xl font-semibold">Verification Failed</h2>
-        <p className="text-gray-600">{result.error}</p>
-        <Button asChild>
-          <Link href="/login">Go to Login</Link>
-        </Button>
-      </div>
+      <>
+        <VerificationToast 
+          status="error" 
+          message={result.error}
+        />
+        <div className="text-center space-y-4">
+          <XCircle className="mx-auto h-12 w-12 text-red-500" />
+          <h2 className="text-xl font-semibold">Verification Failed</h2>
+          <p className="text-gray-600">{result.error}</p>
+          <Button asChild>
+            <Link href="/login">Go to Login</Link>
+          </Button>
+        </div>
+      </>
     );
   }
 
   return (
-    <div className="text-center space-y-4">
-      <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-      <h2 className="text-xl font-semibold">Email Verified Successfully</h2>
-      <p className="text-gray-600">
-        Your email has been verified. You can now log in to your account.
-      </p>
-      <Button asChild>
-        <Link href="/login">Go to Login</Link>
-      </Button>
-    </div>
+    <>
+      <VerificationToast 
+        status="success" 
+        message="Your email has been verified successfully."
+      />
+      <div className="text-center space-y-4">
+        <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+        <h2 className="text-xl font-semibold">Email Verified Successfully</h2>
+        <p className="text-gray-600">
+          Your email has been verified. You can now log in to your account.
+        </p>
+        <Button asChild>
+          <Link href="/login">Go to Login</Link>
+        </Button>
+      </div>
+    </>
   );
 } 

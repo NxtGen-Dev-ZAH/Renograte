@@ -10,7 +10,7 @@ export async function GET(
 ) {
   try {
     // Corrected: params.id is directly accessible, no need to await
-    const id = params.id; 
+    const id = (await params).id; 
     
     // Check authentication
     const session = await getServerSession(authOptions);

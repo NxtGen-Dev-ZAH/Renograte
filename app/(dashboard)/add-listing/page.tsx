@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { DollarSign, Image as ImageIcon, CheckCircle, X, UploadCloud, Video } from "lucide-react";
+import { DollarSign, Image as ImageIcon, CheckCircle, X, UploadCloud, Video, Loader2, AlertCircle } from "lucide-react";
 import { uploadFileToS3, uploadMultipleFilesToS3 } from "@/lib/s3";
 
 interface PropertyDetails {
@@ -47,7 +47,91 @@ const steps = [
   { id: 1, name: "Property Details" },
   { id: 2, name: "Pricing & Terms" },
   { id: 3, name: "Photos & Media" },
-  { id: 4, name: "Review & Submit" },
+  { id: 4, name: "Renovation Planning" },
+  { id: 5, name: "Review & Submit" },
+];
+
+// Initial state values
+const initialPropertyDetails: PropertyDetails = {
+  title: "",
+  address: "",
+  city: "",
+  state: "",
+  zipCode: "",
+  propertyType: "",
+  bedrooms: "",
+  bathrooms: "",
+  squareFootage: "",
+  lotSize: "",
+  yearBuilt: "",
+  description: "",
+  latitude: "",
+  longitude: "",
+};
+
+// US bounds for validation
+const US_BOUNDS = {
+  north: 49.38, // Northern border with Canada
+  south: 24.52, // Southern tip of Florida
+  west: -125.0, // Western coast
+  east: -66.93  // Eastern coast
+};
+
+// Function to check if coordinates are within US bounds
+const isWithinUSBounds = (lat: number, lng: number): boolean => {
+  return (
+    lat >= US_BOUNDS.south &&
+    lat <= US_BOUNDS.north &&
+    lng >= US_BOUNDS.west &&
+    lng <= US_BOUNDS.east
+  );
+};
+
+const initialPricingTerms: PricingTerms = {
+  listingPrice: "",
+  afterRepairValue: "",
+  renovationCost: "",
+  termsAvailable: "",
+  additionalTerms: "",
+};
+
+const initialSuggestedRenovations = {
+  kitchen: false,
+  bathrooms: false,
+  floors: false,
+  windows: false,
+  roofing: false,
+  electrical: false,
+  plumbing: false,
+  painting: false,
+  landscaping: false,
+};
+
+const initialSuggestedContractor = {
+  name: "",
+  phone: "",
+  email: "",
+  socialMedia: "",
+};
+
+// Initial renovation suggestions based on the user's request
+const initialRenovationSuggestions = [
+  {
+    title: "Kitchen Remodel",
+    description: "Modern appliances, new countertops, and updated cabinetry"
+  },
+  {
+    title: "Bathroom Upgrades",
+    description: "New fixtures, tiling, and modern vanities"
+  },
+  {
+    title: "Flooring Replacement",
+    description: "Hardwood or luxury vinyl throughout main living areas"
+  },
+  {
+    title: "Fresh Paint",
+    description: "Interior and exterior painting with modern colors"
+  }
 ];
 
 export default function AddListingPage() {
@@ -55,35 +139,16 @@ export default function AddListingPage() {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'uploading' | 'processing' | 'success' | 'error'>('idle');
+  const [submissionProgress, setSubmissionProgress] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
   
   // Property Details
-  const [propertyDetails, setPropertyDetails] = useState<PropertyDetails>({
-    title: "",
-    address: "",
-    city: "",
-    state: "",
-    zipCode: "",
-    propertyType: "",
-    bedrooms: "",
-    bathrooms: "",
-    squareFootage: "",
-    lotSize: "",
-    yearBuilt: "",
-    description: "",
-    latitude: "",
-    longitude: "",
-  });
+  const [propertyDetails, setPropertyDetails] = useState<PropertyDetails>(initialPropertyDetails);
   
   // Pricing & Terms
-  const [pricingTerms, setPricingTerms] = useState<PricingTerms>({
-    listingPrice: "",
-    afterRepairValue: "",
-    renovationCost: "",
-    termsAvailable: "",
-    additionalTerms: "",
-  });
+  const [pricingTerms, setPricingTerms] = useState<PricingTerms>(initialPricingTerms);
   
   // Photos & Media
   const [photos, setPhotos] = useState<string[]>([]);
@@ -91,6 +156,65 @@ export default function AddListingPage() {
   const [videoUrl, setVideoUrl] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [virtualTourUrl, setVirtualTourUrl] = useState("");
+
+  // Renovation Planning
+  interface RenovationPlan {
+  id: string;
+  title: string;
+  price: string;
+  size: string;
+  description: string;
+  image: File | null;
+  imageName: string;
+  imageSize: string;
+}
+
+interface SuggestedContractor {
+  name: string;
+  phone: string;
+  email: string;
+  socialMedia: string;
+}
+
+interface SuggestedRenovations {
+  kitchen: boolean;
+  bathrooms: boolean;
+  floors: boolean;
+  windows: boolean;
+  roofing: boolean;
+  electrical: boolean;
+  plumbing: boolean;
+  painting: boolean;
+  landscaping: boolean;
+}
+
+interface RenovationSuggestion {
+  title: string;
+  description: string;
+}
+
+  const [suggestedRenovations, setSuggestedRenovations] = useState<SuggestedRenovations>(initialSuggestedRenovations);
+  const [renovationSuggestions, setRenovationSuggestions] = useState<RenovationSuggestion[]>(initialRenovationSuggestions);
+
+  const [renovationPlans, setRenovationPlans] = useState<RenovationPlan[]>([
+  {
+    id: Date.now().toString(),
+    title: "",
+    price: "",
+    size: "",
+    description: "",
+    image: null,
+    imageName: "",
+    imageSize: "",
+  },
+]);
+
+const [estimatedTimeframe, setEstimatedTimeframe] = useState("");
+const [suggestedContractor, setSuggestedContractor] = useState<SuggestedContractor>(initialSuggestedContractor);
+const [quoteFile, setQuoteFile] = useState<File | null>(null);
+const [quoteFileName, setQuoteFileName] = useState("");
+const [quoteFileSize, setQuoteFileSize] = useState("");
+const quoteFileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePropertyDetailsChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target;
@@ -110,8 +234,8 @@ export default function AddListingPage() {
     setPricingTerms(prev => ({ ...prev, termsAvailable: value }));
   };
 
-  const MAX_IMAGE_SIZE = 0.5 * 1024 * 1024; // 0.5MB in bytes
-  const MAX_VIDEO_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB in bytes
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB in bytes
 
   const handlePhotoUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -123,7 +247,7 @@ export default function AddListingPage() {
         toast({
           variant: "destructive",
           title: "File too large",
-          description: `${file.name} exceeds the 0.5MB limit. Please compress the image and try again.`
+          description: `${file.name} exceeds the 5MB limit. Please compress the image and try again.`
         });
         return;
       }
@@ -161,7 +285,7 @@ export default function AddListingPage() {
         toast({
           variant: "destructive",
           title: "File too large",
-          description: "Video file exceeds the 5MB limit. Please compress the video and try again."
+          description: "Video file exceeds the 50MB limit. Please compress the video and try again."
         });
         return;
       }
@@ -170,20 +294,124 @@ export default function AddListingPage() {
     }
   };
 
+  // Reset form function
+  const resetForm = () => {
+    setPropertyDetails(initialPropertyDetails);
+    setPricingTerms(initialPricingTerms);
+    setPhotos([]);
+    setPhotoFiles([]);
+    setVideoUrl("");
+    setVideoFile(null);
+    setVirtualTourUrl("");
+    setSuggestedRenovations(initialSuggestedRenovations);
+    setRenovationPlans([{
+      id: Date.now().toString(),
+      title: "",
+      price: "",
+      size: "",
+      description: "",
+      image: null,
+      imageName: "",
+      imageSize: "",
+    }]);
+    setRenovationSuggestions(initialRenovationSuggestions);
+    setEstimatedTimeframe("");
+    setSuggestedContractor(initialSuggestedContractor);
+    setQuoteFile(null);
+    setQuoteFileName("");
+    setQuoteFileSize("");
+    setCurrentStep(1);
+    setSubmissionStatus('idle');
+    setSubmissionProgress(0);
+  };
+
   const submitListing = async () => {
     try {
       setIsSubmitting(true);
+      setSubmissionStatus('uploading');
+      setSubmissionProgress(10);
       
       // Upload photos to S3
       let photoUrls: string[] = [];
       if (photoFiles.length > 0) {
+        setSubmissionProgress(20);
         photoUrls = await uploadMultipleFilesToS3(photoFiles);
+        setSubmissionProgress(40);
       }
 
       // Upload video to S3 if exists
       let videoFileUrl = "";
       if (videoFile) {
+        setSubmissionProgress(50);
         videoFileUrl = await uploadFileToS3(videoFile, 'videos/');
+        setSubmissionProgress(60);
+      }
+      
+      // Upload renovation plan images to S3 if they exist
+      setSubmissionStatus('processing');
+      setSubmissionProgress(70);
+      const renovationPlansWithUrls = await Promise.all(
+        renovationPlans.map(async (plan) => {
+          if (plan.image) {
+            try {
+              console.log(`Uploading renovation plan image: ${plan.title}`);
+              const imageUrl = await uploadFileToS3(plan.image, 'renovation-plans/');
+              console.log(`Successfully uploaded renovation plan image to: ${imageUrl}`);
+              return { ...plan, imageUrl };
+            } catch (error) {
+              console.error(`Error uploading renovation plan image for ${plan.title}:`, error);
+              toast({
+                variant: "destructive",
+                title: "Upload Error",
+                description: `Failed to upload renovation plan image for ${plan.title}.`
+              });
+              return plan;
+            }
+          }
+          return plan;
+        })
+      );
+      
+      // Upload quote PDF if it exists
+      let quoteFileUrl = "";
+      if (quoteFile) {
+        try {
+          setSubmissionProgress(80);
+          console.log(`Uploading renovation quote PDF: ${quoteFileName}`);
+          quoteFileUrl = await uploadFileToS3(quoteFile, 'renovation-quotes/');
+          console.log(`Successfully uploaded renovation quote PDF to: ${quoteFileUrl}`);
+        } catch (error) {
+          console.error("Error uploading renovation quote PDF:", error);
+          toast({
+            variant: "destructive",
+            title: "Upload Error",
+            description: "Failed to upload renovation quote PDF."
+          });
+        }
+      }
+
+      // Define US bounds
+      const US_BOUNDS = {
+        north: 49.38, // Northern border with Canada
+        south: 24.52, // Southern tip of Florida
+        west: -125.0, // Western coast
+        east: -66.93  // Eastern coast
+      };
+
+      // Function to clamp coordinates to US bounds
+      const clampToUSBounds = (lat: number, lng: number): [number, number] => {
+        const clampedLat = Math.max(US_BOUNDS.south, Math.min(US_BOUNDS.north, lat || 0));
+        const clampedLng = Math.max(US_BOUNDS.west, Math.min(US_BOUNDS.east, lng || 0));
+        return [clampedLat, clampedLng];
+      };
+
+      // Ensure coordinates are within US bounds
+      let latitude = propertyDetails.latitude ? parseFloat(propertyDetails.latitude) : null;
+      let longitude = propertyDetails.longitude ? parseFloat(propertyDetails.longitude) : null;
+
+      // Only clamp if both values are provided
+      if (latitude !== null && longitude !== null) {
+        [latitude, longitude] = clampToUSBounds(latitude, longitude);
       }
 
       const listingData = {
@@ -196,14 +424,21 @@ export default function AddListingPage() {
         listingPrice: parseFloat(pricingTerms.listingPrice),
         afterRepairValue: parseFloat(pricingTerms.afterRepairValue),
         renovationCost: parseFloat(pricingTerms.renovationCost),
-        latitude: propertyDetails.latitude ? parseFloat(propertyDetails.latitude) : null,
-        longitude: propertyDetails.longitude ? parseFloat(propertyDetails.longitude) : null,
+        latitude: latitude,
+        longitude: longitude,
         videoUrl: videoFileUrl,
         virtualTourUrl,
         photos: photoUrls,
+        suggestedRenovations,
+        renovationPlans: renovationPlansWithUrls,
+        renovationSuggestions,
+        estimatedTimeframe,
+        suggestedContractor,
+        quoteFileUrl,
       };
 
       // Send data to API
+      setSubmissionProgress(90);
       const response = await fetch('/api/listings', {
         method: 'POST',
         headers: {
@@ -216,13 +451,19 @@ export default function AddListingPage() {
         throw new Error('Failed to submit listing');
       }
 
+      setSubmissionProgress(100);
+      setSubmissionStatus('success');
+      
       toast({
         title: "Success",
         description: "Listing submitted successfully! It will be reviewed by our team."
       });
-      router.push('/dashboard');
+      
+      // Don't immediately redirect, let the user see the success state
+      
     } catch (error) {
       console.error('Error submitting listing:', error);
+      setSubmissionStatus('error');
       toast({
         variant: "destructive",
         title: "Error",
@@ -243,8 +484,81 @@ export default function AddListingPage() {
     }).format(parseFloat(amount.toString()));
   };
 
+  // Render submission status component
+  const renderSubmissionStatus = () => {
+    if (submissionStatus === 'idle') return null;
+    
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 max-w-md w-full">
+          {submissionStatus === 'error' ? (
+            <div className="text-center">
+              <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Submission Failed</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                There was an error submitting your listing. Please try again.
+              </p>
+              <Button 
+                className="mt-4 w-full" 
+                onClick={() => setSubmissionStatus('idle')}
+              >
+                Try Again
+              </Button>
+            </div>
+          ) : submissionStatus === 'success' ? (
+            <div className="text-center">
+              <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">Listing Submitted!</h3>
+              <p className="mt-2 text-sm text-gray-500">
+                Your listing has been submitted successfully and will be reviewed by our team.
+              </p>
+              <div className="mt-4 flex space-x-3">
+                <Button 
+                  className="flex-1" 
+                  variant="outline" 
+                  onClick={() => router.push('/dashboard')}
+                >
+                  Go to Dashboard
+                </Button>
+                <Button 
+                  className="flex-1" 
+                  onClick={resetForm}
+                >
+                  Add Another Listing
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center">
+              <Loader2 className="mx-auto h-12 w-12 text-blue-500 animate-spin" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900">
+                {submissionStatus === 'uploading' ? 'Uploading Files...' : 'Processing Listing...'}
+              </h3>
+              <div className="mt-4">
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div 
+                    className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                    style={{ width: `${submissionProgress}%` }}
+                  ></div>
+                </div>
+                <p className="mt-2 text-sm text-gray-500">
+                  {submissionProgress}% complete
+                </p>
+              </div>
+              <p className="mt-4 text-xs text-gray-500">
+                Please don't close this page while your listing is being submitted.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6">
+      {renderSubmissionStatus()}
+      
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Create Listing</h2>
         <p className="text-muted-foreground">
@@ -301,7 +615,8 @@ export default function AddListingPage() {
             {currentStep === 1 && "Enter the basic property information"}
             {currentStep === 2 && "Set pricing and terms for the property"}
             {currentStep === 3 && "Upload photos and media content"}
-            {currentStep === 4 && "Review your listing before submission"}
+            {currentStep === 4 && "Add renovation details and plans"}
+            {currentStep === 5 && "Review your listing before submission"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -420,25 +735,73 @@ export default function AddListingPage() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="latitude">Latitude</Label>
-                  <Input 
-                    id="latitude" 
-                    type="number" 
-                    step="any"
-                    placeholder="e.g., 37.7749" 
-                    value={propertyDetails.latitude}
-                    onChange={handlePropertyDetailsChange}
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="latitude" 
+                      type="number" 
+                      step="any"
+                      placeholder="e.g., 25.324 to 49.391" 
+                      value={propertyDetails.latitude}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPropertyDetails(prev => ({ ...prev, latitude: value }));
+                      }}
+                      min="24.52"
+                      max="49.38"
+                      className={propertyDetails.latitude && !isWithinUSBounds(
+                        parseFloat(propertyDetails.latitude || "0"), 
+                        parseFloat(propertyDetails.longitude || "0")
+                      ) ? "border-red-300 pr-10" : ""}
+                    />
+                    {propertyDetails.latitude && !isWithinUSBounds(
+                      parseFloat(propertyDetails.latitude || "0"), 
+                      parseFloat(propertyDetails.longitude || "0")
+                    ) && (
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Valid range: 24.52 (Southern Florida) to 49.38 (Northern border)
+                  </p>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="longitude">Longitude</Label>
-                  <Input 
-                    id="longitude" 
-                    type="number" 
-                    step="any"
-                    placeholder="e.g., -122.4194" 
-                    value={propertyDetails.longitude}
-                    onChange={handlePropertyDetailsChange}
-                  />
+                  <div className="relative">
+                    <Input 
+                      id="longitude" 
+                      type="number" 
+                      step="any"
+                      placeholder="e.g., -67.324 to -125.391" 
+                      value={propertyDetails.longitude}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPropertyDetails(prev => ({ ...prev, longitude: value }));
+                      }}
+                      min="-125.0"
+                      max="-66.93"
+                      className={propertyDetails.longitude && !isWithinUSBounds(
+                        parseFloat(propertyDetails.latitude || "0"), 
+                        parseFloat(propertyDetails.longitude || "0")
+                      ) ? "border-red-300 pr-10" : ""}
+                    />
+                    {propertyDetails.longitude && !isWithinUSBounds(
+                      parseFloat(propertyDetails.latitude || "0"), 
+                      parseFloat(propertyDetails.longitude || "0")
+                    ) && (
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Valid range: -125.0 (Western coast) to -66.93 (Eastern coast)
+                  </p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -511,6 +874,7 @@ export default function AddListingPage() {
                       <SelectItem value="fha">FHA</SelectItem>
                       <SelectItem value="va">VA</SelectItem>
                       <SelectItem value="owner">Owner Financing</SelectItem>
+                      <SelectItem value="ns">Not Specified</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -535,7 +899,7 @@ export default function AddListingPage() {
                   <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">Property Photos</h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    Upload high-quality photos of the property (max 0.5MB each). Include exterior, interior, and any areas needing renovation.
+                    Upload high-quality photos of the property (max 5MB each). Include exterior, interior, and any areas needing renovation.
                   </p>
                 </div>
                 <input
@@ -591,7 +955,7 @@ export default function AddListingPage() {
                   <Video className="mx-auto h-12 w-12 text-gray-400" />
                   <h3 className="mt-2 text-sm font-medium text-gray-900">Property Video</h3>
                   <p className="mt-1 text-xs text-gray-500">
-                    Upload a video tour of the property (max 5MB, optional)
+                    Upload a video tour of the property (max 50MB, optional)
                   </p>
                 </div>
                 <input
@@ -635,6 +999,425 @@ export default function AddListingPage() {
           )}
 
           {currentStep === 4 && (
+            <div className="space-y-6">
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-900 border-b pb-2">Suggested Renovations</h3>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="kitchen"
+                      checked={suggestedRenovations.kitchen}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, kitchen: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="kitchen">Kitchen</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="bathrooms"
+                      checked={suggestedRenovations.bathrooms}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, bathrooms: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="bathrooms">Bathrooms</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="floors"
+                      checked={suggestedRenovations.floors}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, floors: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="floors">Floors</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="windows"
+                      checked={suggestedRenovations.windows}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, windows: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="windows">Windows</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="roofing"
+                      checked={suggestedRenovations.roofing}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, roofing: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="roofing">Roofing</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="electrical"
+                      checked={suggestedRenovations.electrical}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, electrical: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="electrical">Electrical</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="plumbing"
+                      checked={suggestedRenovations.plumbing}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, plumbing: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="plumbing">Plumbing</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="painting"
+                      checked={suggestedRenovations.painting}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, painting: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="painting">Painting</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="landscaping"
+                      checked={suggestedRenovations.landscaping}
+                      onChange={(e) => setSuggestedRenovations(prev => ({ ...prev, landscaping: e.target.checked }))}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <Label htmlFor="landscaping">Landscaping</Label>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4 mt-6">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="font-medium text-gray-900">Renovation Suggestions</h3>
+                  {renovationSuggestions.length < 8 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (renovationSuggestions.length < 8) {
+                          setRenovationSuggestions([
+                            ...renovationSuggestions,
+                            {
+                              title: "",
+                              description: ""
+                            },
+                          ]);
+                        }
+                      }}
+                      className="text-sm"
+                    >
+                      Add Suggestion
+                    </Button>
+                  )}
+                </div>
+                
+                {renovationSuggestions.map((suggestion, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium">Suggestion {index + 1}</h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setRenovationSuggestions(renovationSuggestions.filter((_, i) => i !== index));
+                        }}
+                        className="text-red-500 h-8 px-2"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor={`suggestion-title-${index}`}>Title</Label>
+                      <Input
+                        id={`suggestion-title-${index}`}
+                        placeholder="e.g., Kitchen Remodel"
+                        value={suggestion.title}
+                        onChange={(e) => {
+                          const newSuggestions = [...renovationSuggestions];
+                          newSuggestions[index].title = e.target.value;
+                          setRenovationSuggestions(newSuggestions);
+                        }}
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor={`suggestion-description-${index}`}>Description</Label>
+                      <Textarea
+                        id={`suggestion-description-${index}`}
+                        placeholder="Enter suggestion details"
+                        rows={2}
+                        value={suggestion.description}
+                        onChange={(e) => {
+                          const newSuggestions = [...renovationSuggestions];
+                          newSuggestions[index].description = e.target.value;
+                          setRenovationSuggestions(newSuggestions);
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="space-y-4 mt-6">
+                <h3 className="font-medium text-gray-900 border-b pb-2">Estimated Project Timeframe</h3>
+                <div className="space-y-2">
+                  <Label htmlFor="timeframe">Estimated Completion Time</Label>
+                  <Select 
+                    value={estimatedTimeframe} 
+                    onValueChange={setEstimatedTimeframe}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select estimated timeframe" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1-2 weeks">1-2 weeks</SelectItem>
+                      <SelectItem value="2-4 weeks">2-4 weeks</SelectItem>
+                      <SelectItem value="1-2 months">1-2 months</SelectItem>
+                      <SelectItem value="2-3 months">2-3 months</SelectItem>
+                      <SelectItem value="3-6 months">3-6 months</SelectItem>
+                      <SelectItem value="6+ months">6+ months</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-4 mt-6">
+                <h3 className="font-medium text-gray-900 border-b pb-2">Suggested Contractor Information</h3>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="contractor-name">Name of Contractor</Label>
+                    <Input
+                      id="contractor-name"
+                      placeholder="Enter contractor name"
+                      value={suggestedContractor.name}
+                      onChange={(e) => setSuggestedContractor(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contractor-phone">Phone Number</Label>
+                    <Input
+                      id="contractor-phone"
+                      placeholder="Enter phone number"
+                      value={suggestedContractor.phone}
+                      onChange={(e) => setSuggestedContractor(prev => ({ ...prev, phone: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contractor-email">Email Address</Label>
+                    <Input
+                      id="contractor-email"
+                      placeholder="Enter email address"
+                      value={suggestedContractor.email}
+                      onChange={(e) => setSuggestedContractor(prev => ({ ...prev, email: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="contractor-social">Social Media Accounts</Label>
+                    <Input
+                      id="contractor-social"
+                      placeholder="Enter social media handles"
+                      value={suggestedContractor.socialMedia}
+                      onChange={(e) => setSuggestedContractor(prev => ({ ...prev, socialMedia: e.target.value }))}
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="space-y-4 mt-6">
+                <h3 className="font-medium text-gray-900 border-b pb-2">Renovation Quote</h3>
+                <div className="space-y-2">
+                  <Label>Upload Renovation Quote PDF</Label>
+                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                      <ImageIcon className="h-8 w-8 text-gray-400" />
+                      <p className="text-sm text-gray-500">Upload renovation quote PDF (Max: 2GB)</p>
+                      <input
+                        ref={quoteFileInputRef}
+                        type="file"
+                        accept="application/pdf"
+                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setQuoteFile(file);
+                            setQuoteFileName(file.name);
+                            setQuoteFileSize((file.size / (1024 * 1024)).toFixed(2) + " MB");
+                          }
+                        }}
+                      />
+                    </div>
+                    {quoteFileName && (
+                      <div className="mt-2 flex items-center justify-between text-sm">
+                        <span className="text-gray-700">{quoteFileName}</span>
+                        <span className="text-gray-500">{quoteFileSize}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="font-medium text-gray-900">Renovation Plans</h3>
+                  {renovationPlans.length < 6 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        if (renovationPlans.length < 6) {
+                          setRenovationPlans([
+                            ...renovationPlans,
+                            {
+                              id: Date.now().toString(),
+                              title: "",
+                              price: "",
+                              size: "",
+                              description: "",
+                              image: null,
+                              imageName: "",
+                              imageSize: "",
+                            },
+                          ]);
+                        }
+                      }}
+                      className="text-sm"
+                    >
+                      Add Plan
+                    </Button>
+                  )}
+                </div>
+                
+                {renovationPlans.map((plan, index) => (
+                  <div key={plan.id} className="border rounded-lg p-4 space-y-4">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium">Plan {index + 1}</h4>
+                      {renovationPlans.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setRenovationPlans(renovationPlans.filter((_, i) => i !== index));
+                          }}
+                          className="text-red-500 h-8 px-2"
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                    
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label htmlFor={`plan-title-${index}`}>Plan Title</Label>
+                        <Input
+                          id={`plan-title-${index}`}
+                          placeholder="e.g., Kitchen Remodel Plan"
+                          value={plan.title}
+                          onChange={(e) => {
+                            const newPlans = [...renovationPlans];
+                            newPlans[index].title = e.target.value;
+                            setRenovationPlans(newPlans);
+                          }}
+                        />
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`plan-price-${index}`}>Price</Label>
+                        <div className="relative">
+                          <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                          <Input
+                            id={`plan-price-${index}`}
+                            placeholder="e.g., 5000"
+                            className="pl-9"
+                            value={plan.price}
+                            onChange={(e) => {
+                              const newPlans = [...renovationPlans];
+                              newPlans[index].price = e.target.value;
+                              setRenovationPlans(newPlans);
+                            }}
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-2">
+                        <Label htmlFor={`plan-size-${index}`}>Plan Size</Label>
+                        <Input
+                          id={`plan-size-${index}`}
+                          placeholder="e.g., 10x12 feet"
+                          value={plan.size}
+                          onChange={(e) => {
+                            const newPlans = [...renovationPlans];
+                            newPlans[index].size = e.target.value;
+                            setRenovationPlans(newPlans);
+                          }}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Plan Image</Label>
+                      <div className="border-2 border-dashed border-gray-200 rounded-lg p-4">
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <ImageIcon className="h-8 w-8 text-gray-400" />
+                          <p className="text-sm text-gray-500">Upload plan image (Max: 2GB)</p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const newPlans = [...renovationPlans];
+                                newPlans[index].image = file;
+                                newPlans[index].imageName = file.name;
+                                newPlans[index].imageSize = (file.size / (1024 * 1024)).toFixed(2) + " MB";
+                                setRenovationPlans(newPlans);
+                              }
+                            }}
+                          />
+                        </div>
+                        {plan.imageName && (
+                          <div className="mt-2 flex items-center justify-between text-sm">
+                            <span className="text-gray-700">{plan.imageName}</span>
+                            <span className="text-gray-500">{plan.imageSize}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor={`plan-description-${index}`}>Description</Label>
+                      <Textarea
+                        id={`plan-description-${index}`}
+                        placeholder="Enter plan description"
+                        rows={3}
+                        value={plan.description}
+                        onChange={(e) => {
+                          const newPlans = [...renovationPlans];
+                          newPlans[index].description = e.target.value;
+                          setRenovationPlans(newPlans);
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {currentStep === 5 && (
             <div className="space-y-6">
               <div className="rounded-lg bg-blue-50 p-4 border border-blue-100">
                 <h3 className="font-medium text-blue-800 mb-2">Review your listing details</h3>
@@ -744,6 +1527,42 @@ export default function AddListingPage() {
                 </div>
               </div>
               
+              {/* Renovation Planning Summary */}
+              <div className="space-y-4">
+                <h3 className="font-medium text-gray-900 border-b pb-2">Renovation Planning</h3>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm text-gray-500">Suggested Renovations:</span>
+                    <p className="font-medium">
+                      {Object.entries(suggestedRenovations)
+                        .filter(([_, isSelected]) => isSelected)
+                        .map(([key]) => key.charAt(0).toUpperCase() + key.slice(1))
+                        .join(", ") || "None selected"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Renovation Plans:</span>
+                    <p className="font-medium">{renovationPlans.filter(plan => plan.title).length} plans added</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Renovation Suggestions:</span>
+                    <p className="font-medium">{renovationSuggestions.filter(suggestion => suggestion.title).length} suggestions added</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Estimated Timeframe:</span>
+                    <p className="font-medium">{estimatedTimeframe || "Not specified"}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Suggested Contractor:</span>
+                    <p className="font-medium">{suggestedContractor.name || "Not specified"}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-500">Quote Document:</span>
+                    <p className="font-medium">{quoteFileName || "None uploaded"}</p>
+                  </div>
+                </div>
+              </div>
+              
               <div className="rounded-lg bg-yellow-50 p-4 border border-yellow-100">
                 <div className="flex items-start gap-3">
                   <div className="flex-shrink-0">
@@ -764,7 +1583,7 @@ export default function AddListingPage() {
             <Button
               variant="outline"
               onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-              disabled={currentStep === 1}
+              disabled={currentStep === 1 || isSubmitting}
             >
               Previous
             </Button>

@@ -6,7 +6,7 @@ const ModernFeaturePage: React.FC = () => {
   return (
     <div
       id="modern-feature-section"
-      className="bg-gray-50 min-h-screen px-4 sm:px-6 md:px-12 pb-8 sm:pb-12 pt-10 sm:pt-14 w-full overflow-hidden"
+      className="bg-gray-50 h-full px-4 sm:px-6 md:px-12 pb-8 sm:pb-12 pt-10 sm:pt-14 w-full overflow-hidden"
     >
       {/* Header Section */}
       <header className="text-center mb-8 sm:mb-12 md:mb-16">
@@ -127,7 +127,7 @@ const ModernFeaturePage: React.FC = () => {
             target="_blank"
             className="text-[#0C71C3] text-sm sm:text-base font-semibold hover:underline transition"
           >
-            watch Buyer video
+            watch buyer video
           </Link>
         </div>
       </div>

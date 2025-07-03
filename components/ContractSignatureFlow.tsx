@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Pen, Mail, Check, Clock, AlertCircle } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import SignatureDialog from "@/components/SignatureDialog";
 import { ContractRole } from "@/lib/contracts/contractService";
 
@@ -324,58 +324,63 @@ export default function ContractSignatureFlow({
               </CardHeader>
               <CardContent>
                 <div className="space-y-8">
-                  {Object.values(signingParties).map(party => (
-                    <div key={party.role} className="space-y-4">
-                      <h3 className="font-medium">{party.role.charAt(0) + party.role.slice(1).toLowerCase()}</h3>
-                      
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <div className="space-y-2">
-                          <Label htmlFor={`${party.role}-name`}>Name</Label>
-                          <Input
-                            id={`${party.role}-name`}
-                            value={party.name}
-                            onChange={(e) => updateSigningParty(party.role, "name", e.target.value)}
-                            placeholder={`${party.role.charAt(0) + party.role.slice(1).toLowerCase()} name`}
-                          />
+                  {Object.entries(sectionsByRole).map(([role, sections]) => {
+                    // Only show roles that have pending signatures
+                    const hasPendingSignatures = sections.some(section => section.status === "PENDING");
+                    if (!hasPendingSignatures) return null;
+                    
+                    const party = signingParties[role as ContractRole];
+                    return (
+                      <div key={role} className="space-y-4">
+                        <h3 className="font-medium">{role.charAt(0) + role.slice(1).toLowerCase()}</h3>
+                        
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label htmlFor={`${role}-name`}>Name</Label>
+                            <Input
+                              id={`${role}-name`}
+                              value={party.name}
+                              onChange={(e) => updateSigningParty(party.role, "name", e.target.value)}
+                              placeholder={`${role.charAt(0) + role.slice(1).toLowerCase()} name`}
+                            />
+                          </div>
+                          
+                          <div className="space-y-2">
+                            <Label htmlFor={`${role}-email`}>Email</Label>
+                            <Input
+                              id={`${role}-email`}
+                              type="email"
+                              value={party.email}
+                              onChange={(e) => updateSigningParty(party.role, "email", e.target.value)}
+                              placeholder={`${role.charAt(0) + role.slice(1).toLowerCase()} email`}
+                            />
+                          </div>
                         </div>
                         
-                        <div className="space-y-2">
-                          <Label htmlFor={`${party.role}-email`}>Email</Label>
-                          <Input
-                            id={`${party.role}-email`}
-                            type="email"
-                            value={party.email}
-                            onChange={(e) => updateSigningParty(party.role, "email", e.target.value)}
-                            placeholder={`${party.role.charAt(0) + party.role.slice(1).toLowerCase()} email`}
-                          />
+                        <div className="flex justify-end">
+                          <Button
+                            onClick={() => handleSendSigningLink(party.role)}
+                            disabled={!party.email || !party.name || sendingEmail || sentEmails[party.role]}
+                            variant={sentEmails[party.role] ? "outline" : "default"}
+                          >
+                            {sentEmails[party.role] ? (
+                              <>
+                                <Check className="mr-2 h-4 w-4" />
+                                Link Sent
+                              </>
+                            ) : (
+                              <>
+                                <Mail className="mr-2 h-4 w-4" />
+                                Send Signing Link
+                              </>
+                            )}
+                          </Button>
                         </div>
-                      </div>
-                      
-                      <div className="flex justify-end">
-                        <Button
-                          onClick={() => handleSendSigningLink(party.role)}
-                          disabled={!party.email || !party.name || sendingEmail || sentEmails[party.role]}
-                          variant={sentEmails[party.role] ? "outline" : "default"}
-                        >
-                          {sentEmails[party.role] ? (
-                            <>
-                              <Check className="mr-2 h-4 w-4" />
-                              Link Sent
-                            </>
-                          ) : (
-                            <>
-                              <Mail className="mr-2 h-4 w-4" />
-                              Send Signing Link
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                      
-                      {sectionsByRole[party.role] && (
+                        
                         <div className="mt-2">
                           <h4 className="text-sm font-medium mb-2">Assigned Sections</h4>
                           <div className="space-y-2">
-                            {sectionsByRole[party.role].map(section => (
+                            {sections.map(section => (
                               <div key={section.id} className="flex items-center justify-between text-sm p-2 border rounded-md">
                                 <span>{section.title} (Page {section.pageNumber})</span>
                                 {section.status === "SIGNED" ? (
@@ -393,9 +398,9 @@ export default function ContractSignatureFlow({
                             ))}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

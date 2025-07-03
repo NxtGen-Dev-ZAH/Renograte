@@ -204,7 +204,7 @@ export function PropertyListingsPage() {
           </h1>
           <div className="flex items-center justify-center gap-2">
             <p className="text-base sm:text-lg md:text-xl text-gray-600">
-              Browse properties listed on the MLS with approved renovation allowances
+              Browse properties listed on the MLS with estimated renovation allowances
             </p>
             <TooltipProvider>
               <Tooltip delayDuration={100}>

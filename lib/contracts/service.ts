@@ -10,6 +10,7 @@ export interface TermSheet {
   date: string;
   terms: string;
   data: Record<string, any>;
+  documentUrl?: string;
   signatureOne?: string;
   signatureTwo?: string;
   createdAt: string;
@@ -17,6 +18,11 @@ export interface TermSheet {
 
 // Local storage key
 const TERM_SHEETS_STORAGE_KEY = "renograte_term_sheets";
+
+// Generate a unique ID
+const generateId = (): string => {
+  return `ts-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
 
 // Get all term sheets
 export const getAllTermSheets = (): TermSheet[] => {
@@ -120,9 +126,4 @@ const saveTermSheetsToStorage = (termSheets: TermSheet[]): void => {
   }
   
   localStorage.setItem(TERM_SHEETS_STORAGE_KEY, JSON.stringify(termSheets));
-};
-
-// Helper function to generate a unique ID
-const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
 }; 

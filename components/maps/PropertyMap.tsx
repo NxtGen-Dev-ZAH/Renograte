@@ -23,6 +23,31 @@ const fixLeafletIcon = () => {
   });
 };
 
+// Define US bounds
+const US_BOUNDS = {
+  north: 49.38, // Northern border with Canada
+  south: 24.52, // Southern tip of Florida
+  west: -125.0, // Western coast
+  east: -66.93  // Eastern coast
+};
+
+// Function to check if coordinates are within US bounds
+const isWithinUSBounds = (lat: number, lng: number): boolean => {
+  return (
+    lat >= US_BOUNDS.south &&
+    lat <= US_BOUNDS.north &&
+    lng >= US_BOUNDS.west &&
+    lng <= US_BOUNDS.east
+  );
+};
+
+// Function to clamp coordinates to US bounds
+const clampToUSBounds = (lat: number, lng: number): [number, number] => {
+  const clampedLat = Math.max(US_BOUNDS.south, Math.min(US_BOUNDS.north, lat));
+  const clampedLng = Math.max(US_BOUNDS.west, Math.min(US_BOUNDS.east, lng));
+  return [clampedLat, clampedLng];
+};
+
 interface PropertyMapProps {
   properties: Property[];
   height?: string;
@@ -63,18 +88,25 @@ export default function PropertyMap({
       fixLeafletIcon();
 
       // Find center of properties or default to a location
-      let center: [number, number] = initialCenter || [33.4484, -112.0740]; // Default to Phoenix, AZ
+      let center: [number, number] = initialCenter || [33.8283, -112.5795]; // Default to geographic center of the US
       
       if (!initialCenter && properties.length > 0) {
-        const validProperties = properties.filter(p => p.Latitude && p.Longitude);
+        const validProperties = properties.filter(p => {
+          const lat = p.Latitude || 0;
+          const lng = p.Longitude || 0;
+          return isWithinUSBounds(lat, lng);
+        });
         
         if (validProperties.length > 0) {
           // Calculate the average of lat/lng for properties
-          const avgLat = validProperties.reduce((sum, p) => sum + p.Latitude, 0) / validProperties.length;
-          const avgLng = validProperties.reduce((sum, p) => sum + p.Longitude, 0) / validProperties.length;
+          const avgLat = validProperties.reduce((sum, p) => sum + (p.Latitude || 0), 0) / validProperties.length;
+          const avgLng = validProperties.reduce((sum, p) => sum + (p.Longitude || 0), 0) / validProperties.length;
           center = [avgLat, avgLng];
         }
       }
+      
+      // Ensure center is within US bounds
+      center = clampToUSBounds(center[0], center[1]);
 
       const newMap = L.map(mapRef.current, {
         attributionControl: false,
@@ -85,7 +117,11 @@ export default function PropertyMap({
         zoomSnap: 0.5,
         zoomDelta: 0.5,
         wheelDebounceTime: 40,
-        wheelPxPerZoomLevel: 80
+        wheelPxPerZoomLevel: 80,
+        maxBounds: L.latLngBounds(
+          L.latLng(US_BOUNDS.south - 5, US_BOUNDS.west - 5), // Add some padding
+          L.latLng(US_BOUNDS.north + 5, US_BOUNDS.east + 5)
+        )
       }).setView(center, initialZoom || 10);
       
       // Add tile layer (OpenStreetMap)
@@ -171,10 +207,18 @@ export default function PropertyMap({
     
     // Add new price tags
     const newPriceTags = properties
-      .filter(property => property.Latitude && property.Longitude)
-      .map(property => {
+      .filter(property => {
         const lat = property.Latitude || 0;
         const lng = property.Longitude || 0;
+        return isWithinUSBounds(lat, lng);
+      })
+      .map(property => {
+        // Get latitude and longitude, ensuring they're within US bounds
+        let lat = property.Latitude || 0;
+        let lng = property.Longitude || 0;
+        
+        // Clamp coordinates to US bounds
+        [lat, lng] = clampToUSBounds(lat, lng);
         
         // Create a formatted price for the popup
         const formattedPrice = new Intl.NumberFormat('en-US', {

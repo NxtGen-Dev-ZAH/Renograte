@@ -37,7 +37,7 @@ interface Task {
   id: string;
   title: string;
   description?: string;
-  dueDate?: string;
+  dueDate?: string | Date;
   priority: string;
   status: string;
   createdAt: string;
@@ -97,6 +97,13 @@ export default function TaskList() {
     }
 
     try {
+      // Create a copy of the task data with properly formatted dueDate
+      const taskData = {
+        ...currentTask,
+        // Convert string date to a Date object if it exists, otherwise keep it undefined
+        dueDate: currentTask.dueDate ? new Date(currentTask.dueDate) : undefined
+      };
+      
       let response;
       
       if (isEditing && currentTask.id) {
@@ -106,7 +113,7 @@ export default function TaskList() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(currentTask),
+          body: JSON.stringify(taskData),
         });
       } else {
         // Create new task
@@ -115,7 +122,7 @@ export default function TaskList() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(currentTask),
+          body: JSON.stringify(taskData),
         });
       }
 

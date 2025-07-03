@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2, Play, CheckCircle, ArrowLeft, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import React from "react";
+import { use } from "react";
 
 interface CourseVideo {
   id: string;
@@ -33,9 +33,9 @@ interface Course {
   videos: CourseVideo[];
 }
 
-export default function CourseDetailsPage({ params }: { params: { courseId: string | Promise<string> } }) {
-  const unwrappedParams = React.use(Promise.resolve(params)); 
-  const courseId = unwrappedParams.courseId;
+export default function CourseDetailsPage(props: { params: Promise<{ courseId: string }> }) {
+  // Use React.use() to unwrap the params Promise in a client component
+  const { courseId } = use(props.params);
   const router = useRouter();
   const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);

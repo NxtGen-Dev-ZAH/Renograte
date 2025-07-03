@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, BarChart3, Settings, Home, ListFilter, Clock, FileText, BookOpen } from "lucide-react";
+import { Users, BarChart3, Settings, Home, ListFilter, Clock, FileText, BookOpen, Megaphone } from "lucide-react";
 
 export default function AdminDashboard() {
   const [leadCount, setLeadCount] = useState<number | null>(null);
@@ -116,6 +116,26 @@ export default function AdminDashboard() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div>
+                <p className="text-sm font-medium text-gray-600">Marketing</p>
+                <h3 className="text-3xl font-bold text-gray-900 mt-2">Campaigns</h3>
+              </div>
+              <div className="bg-purple-50 p-3 rounded-full">
+                <Megaphone className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Link 
+                href="/admin/marketing" 
+                className="text-sm text-purple-600 hover:text-purple-800"
+              >
+                Manage marketing →
+              </Link>
+            </div>
+          </div>
+          
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div>
                 <p className="text-sm font-medium text-gray-600">Reports</p>
                 <h3 className="text-3xl font-bold text-gray-900 mt-2">Analytics</h3>
               </div>
@@ -126,23 +146,6 @@ export default function AdminDashboard() {
             <div className="mt-4">
               <span className="text-sm text-gray-500">
                 Analytics coming soon
-              </span>
-            </div>
-          </div>
-          
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600">Settings</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-2">Configuration</h3>
-              </div>
-              <div className="bg-purple-50 p-3 rounded-full">
-                <Settings className="w-6 h-6 text-purple-600" />
-              </div>
-            </div>
-            <div className="mt-4">
-              <span className="text-sm text-gray-500">
-                Settings coming soon
               </span>
             </div>
           </div>
@@ -204,6 +207,19 @@ export default function AdminDashboard() {
                   <p className="text-sm text-gray-500">Manage educational content</p>
                 </div>
               </Link>
+
+              <Link 
+                href="/admin/marketing"
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-200 transition-colors"
+              >
+                <div className="rounded-full bg-purple-100 p-3 mr-4">
+                  <Megaphone className="w-5 h-5 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">Marketing</h3>
+                  <p className="text-sm text-gray-500">Manage campaigns and assets</p>
+                </div>
+              </Link>
               
               <div className="flex items-center p-4 border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
                 <div className="rounded-full bg-gray-200 p-3 mr-4">
@@ -255,7 +271,7 @@ export default function AdminDashboard() {
                     {loading ? "..." : listingCounts.approved}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Listings visible on the website</p>
+                <p className="text-sm text-gray-500 mb-4">Active property listings</p>
                 <Link 
                   href="/admin/listings?tab=approved"
                   className="text-sm text-green-600 hover:text-green-800"
@@ -271,7 +287,7 @@ export default function AdminDashboard() {
                     {loading ? "..." : listingCounts.rejected}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Listings that need revision</p>
+                <p className="text-sm text-gray-500 mb-4">Listings that were rejected</p>
                 <Link 
                   href="/admin/listings?tab=rejected"
                   className="text-sm text-red-600 hover:text-red-800"
@@ -282,13 +298,65 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        
-        {/* Recent activity - placeholder for future expansion */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+
+        {/* Marketing overview */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           <div className="p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">Recent Activity</h2>
-            <div className="text-center py-10 text-gray-500">
-              <p>Activity tracking coming soon</p>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-800">Marketing</h2>
+              <Link 
+                href="/admin/marketing"
+                className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200"
+              >
+                View All
+              </Link>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-gray-900">Campaigns</h3>
+                  <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                    Manage
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">Create and manage marketing campaigns</p>
+                <Link 
+                  href="/admin/marketing/campaigns"
+                  className="text-sm text-purple-600 hover:text-purple-800"
+                >
+                  View campaigns →
+                </Link>
+              </div>
+              
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-gray-900">Assets</h3>
+                  <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                    Manage
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">Upload and manage marketing assets</p>
+                <Link 
+                  href="/admin/marketing/assets"
+                  className="text-sm text-blue-600 hover:text-blue-800"
+                >
+                  View assets →
+                </Link>
+              </div>
+              
+              <div className="border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <h3 className="font-medium text-gray-900">Analytics</h3>
+                  <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-medium">
+                    Coming Soon
+                  </span>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">Track marketing performance</p>
+                <span className="text-sm text-gray-400">
+                  Analytics coming soon →
+                </span>
+              </div>
             </div>
           </div>
         </div>

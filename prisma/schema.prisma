@@ -24,6 +24,8 @@ model User {
   tasks              Task[]
   courseProgress     UserCourseProgress[]
   customFields       UserCustomFields?
+  termSheets         TermSheet[]
+  agreements         Agreement[]
 }
 
 model Account {
@@ -115,6 +117,15 @@ model Listing {
   updatedAt        DateTime  @updatedAt
   latitude         Float?
   longitude        Float?
+  
+  // Renovation-related fields
+  suggestedRenovations Json?
+  renovationPlans      Json?
+  renovationSuggestions Json?
+  estimatedTimeframe   String?
+  suggestedContractor  Json?
+  quoteFileUrl         String?
+  
   agent            User      @relation(fields: [agentId], references: [id], onDelete: Cascade)
 }
 
@@ -308,4 +319,121 @@ model Task {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model TermSheet {
+  id                  String   @id @default(cuid())
+  dateIssued         String
+  termSheetId        String   @unique
+  
+  // Property Information
+  propertyAddress    String
+  propertyCondition  String
+  
+  // Parties Involved
+  sellerName        String
+  buyerName         String
+  realEstateAgent   String?
+  proposedContractor String?
+  
+  // Transaction Framework
+  estimatedSalePrice String
+  currentMarketValue String
+  renovationAllowance String
+  allowanceSource    String
+  otherAllowanceSource String?
+  renovationTimeline String
+  targetClosingDate  String
+  
+  // Option Structure
+  optionFee         String
+  optionPeriod      String
+  propertyAccess    Boolean
+  contingencyTerms  String?
+  
+  // Renovation Scope
+  generalScope      String[]
+  otherGeneralScope String?
+  preliminaryEstimate String
+  
+  // Signatures
+  buyerName_sign    String?
+  sellerName_sign   String?
+  agentName_sign    String?
+  
+  // Metadata
+  status           String    @default("PENDING")
+  adminFeedback    String?
+  reviewedAt       DateTime?
+  reviewedBy       String?
+  userId           String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model MarketingAsset {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  type        String    // e.g., "email_template", "social_post", "flyer", "brochure", "video"
+  category    String    // e.g., "Property Marketing", "Brand Assets", "Email Templates"
+  fileUrl     String
+  thumbnail   String?
+  status      String    @default("active") // active, archived
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  campaigns   CampaignAsset[]
+}
+
+model Campaign {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      String    @default("draft") // draft, active, archived
+  startDate   DateTime?
+  endDate     DateTime?
+  createdBy   String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  assets      CampaignAsset[]
+}
+
+model CampaignAsset {
+  id            String    @id @default(cuid())
+  campaignId    String
+  assetId       String
+  order         Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  campaign      Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  asset         MarketingAsset @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([campaignId])
+  @@index([assetId])
+}
+
+model Agreement {
+  id              String   @id @default(cuid())
+  agreementId     String   @unique
+  type            String   // option-contract, service-provider, lease-option, joint-venture
+  title           String?
+  status          String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  documentUrl     String?
+  data            Json     // Store all form data as JSON
+  userId          String?
+  createdBy       String?
+  reviewedBy      String?
+  reviewedAt      DateTime?
+  adminFeedback   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  user            User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
 }

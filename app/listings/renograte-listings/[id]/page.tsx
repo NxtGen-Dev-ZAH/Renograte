@@ -26,7 +26,8 @@ import {
   Play,
   Maximize,
   Image as ImageIcon,
-  Video
+  Video,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,11 +35,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getSignedFileUrl } from "@/lib/s3";
 import dynamic from 'next/dynamic';
 import RoleProtected from '@/components/RoleProtected';
+import { PDFViewer } from '@/components/PDFViewer';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
   ssr: false,
   loading: () => (
-    <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+    <div className="w-full h-full bg-gray-100 flex items-center justify-center ">
       <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
     </div>
   )
@@ -74,11 +89,45 @@ interface Listing {
   virtualTourUrl?: string;
   latitude?: string;
   longitude?: string;
+  
+  // Renovation planning fields
+  suggestedRenovations?: {
+    kitchen?: boolean;
+    bathrooms?: boolean;
+    floors?: boolean;
+    windows?: boolean;
+    roofing?: boolean;
+    electrical?: boolean;
+    plumbing?: boolean;
+    painting?: boolean;
+    landscaping?: boolean;
+  };
+  renovationPlans?: Array<{
+    id: string;
+    title: string;
+    price: string;
+    size: string;
+    description: string;
+    imageUrl?: string;
+  }>;
+  renovationSuggestions?: Array<{
+    title: string;
+    description: string;
+  }>;
+  estimatedTimeframe?: string;
+  suggestedContractor?: {
+    name: string;
+    phone: string;
+    email: string;
+    socialMedia: string;
+  };
+  quoteFileUrl?: string;
 }
 
 export function ListingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +136,16 @@ export function ListingDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showImageModal, setShowImageModal] = useState(false);
   const [showVideoModal, setShowVideoModal] = useState(false);
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [consultationForm, setConsultationForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    date: "",
+    time: "",
+    message: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchListing = async () => {
@@ -131,12 +190,58 @@ export function ListingDetailPage() {
         const signedVideoUrl = await getSignedFileUrl(listing.videoUrl);
         setVideoUrl(signedVideoUrl);
       }
+      
+      // Load renovation plan images if they exist
+      if (listing?.renovationPlans?.length) {
+        const updatedPlans = await Promise.all(
+          listing.renovationPlans.map(async (plan) => {
+            if (plan.imageUrl) {
+              // Check if the image URL is already a renovation-plans/ path
+              if (plan.imageUrl.startsWith('renovation-plans/')) {
+                // Return as is - we'll handle this in the render with the S3 proxy
+                return { ...plan };
+              } else {
+                const signedUrl = await getSignedFileUrl(plan.imageUrl);
+                return { ...plan, imageUrl: signedUrl };
+              }
+            }
+            return plan;
+          })
+        );
+        
+        // Update the listing with signed URLs for renovation plan images
+        setListing(prev => ({
+          ...prev!,
+          renovationPlans: updatedPlans
+        }));
+      }
+      
+      // Load quote file URL if it exists
+      if (listing?.quoteFileUrl) {
+        try {
+          console.log("Getting signed URL for quote file:", listing.quoteFileUrl);
+          // Check if the quote URL is already a renovation-quotes/ path
+          if (listing.quoteFileUrl.startsWith('renovation-quotes/')) {
+            // We'll handle this in the render with the S3 proxy
+            console.log("Quote file is a renovation-quotes/ path, will use S3 proxy");
+          } else {
+            const signedQuoteUrl = await getSignedFileUrl(listing.quoteFileUrl);
+            console.log("Received signed URL for quote file:", signedQuoteUrl);
+            setListing(prev => ({
+              ...prev!,
+              quoteFileUrl: signedQuoteUrl
+            }));
+          }
+        } catch (error) {
+          console.error("Error getting signed URL for quote file:", error);
+        }
+      }
     };
 
     if (listing) {
       loadMediaUrls();
     }
-  }, [listing]);
+  }, [listing?.id]);
 
   const formatCurrency = (amount: number): string => {  
     return new Intl.NumberFormat('en-US', { 
@@ -175,7 +280,7 @@ export function ListingDetailPage() {
     }
 
     return (
-      <div className="relative">
+      <div className="relative ">
         {/* Property Title and Address */}
         <div className="mb-6 mx-4 mt-4">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">{listing?.title}</h1>
@@ -382,9 +487,201 @@ export function ListingDetailPage() {
     );
   };
 
+  const handleConsultationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    
+    try {
+      // Send the consultation request to the API
+      const response = await fetch('/api/consultations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          // User input data
+          name: consultationForm.name,
+          email: consultationForm.email,
+          phone: consultationForm.phone,
+          date: consultationForm.date,
+          time: consultationForm.time,
+          message: consultationForm.message,
+          
+          // Property data
+          propertyTitle: listing?.title || '',
+          propertyAddress: listing ? `${listing.address}, ${listing.city}, ${listing.state} ${listing.zipCode}` : '',
+          
+          // Contractor data
+          contractorName: listing?.suggestedContractor?.name || '',
+          contractorEmail: listing?.suggestedContractor?.email || '',
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to schedule consultation');
+      }
+      
+      toast({
+        title: "Success",
+        description: "Consultation scheduled successfully! The contractor will contact you shortly."
+      });
+      setShowConsultationModal(false);
+      setConsultationForm({
+        name: "",
+        email: "",
+        phone: "",
+        date: "",
+        time: "",
+        message: "",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to schedule consultation. Please try again."
+      });
+      console.error("Error scheduling consultation:", error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Consultation Modal
+  const renderConsultationModal = () => {
+    if (!showConsultationModal || !listing?.suggestedContractor) return null;
+
+    return (
+      <Dialog open={showConsultationModal} onOpenChange={setShowConsultationModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Schedule a Renovation Consultation</DialogTitle>
+            <DialogDescription>
+              Complete the form below to schedule a consultation with {listing.suggestedContractor.name}.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleConsultationSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-1 gap-2">
+                <Label htmlFor="name">Your Name</Label>
+                <Input
+                  id="name"
+                  value={consultationForm.name}
+                  onChange={(e) => setConsultationForm({ ...consultationForm, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={consultationForm.email}
+                    onChange={(e) => setConsultationForm({ ...consultationForm, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={consultationForm.phone}
+                    onChange={(e) => setConsultationForm({ ...consultationForm, phone: e.target.value })}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="date">Preferred Date</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={consultationForm.date}
+                    onChange={(e) => setConsultationForm({ ...consultationForm, date: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="time">Preferred Time</Label>
+                  <Select
+                    onValueChange={(value) => setConsultationForm({ ...consultationForm, time: value })}
+                    defaultValue={consultationForm.time}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select time" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="morning">Morning (9AM - 12PM)</SelectItem>
+                      <SelectItem value="afternoon">Afternoon (12PM - 5PM)</SelectItem>
+                      <SelectItem value="evening">Evening (5PM - 8PM)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="message">Message (Optional)</Label>
+                <Textarea
+                  id="message"
+                  placeholder="Any specific details about your renovation needs..."
+                  value={consultationForm.message}
+                  onChange={(e) => setConsultationForm({ ...consultationForm, message: e.target.value })}
+                  className="min-h-[100px]"
+                />
+              </div>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-800 mb-2">Consultation with:</h4>
+                <div className="text-sm">
+                  <p className="font-medium">{listing.suggestedContractor.name}</p>
+                  {listing.suggestedContractor.phone && (
+                    <div className="flex items-center mt-1">
+                      <Phone className="h-3 w-3 text-blue-600 mr-2" />
+                      <span>{listing.suggestedContractor.phone}</span>
+                    </div>
+                  )}
+                  {listing.suggestedContractor.email && (
+                    <div className="flex items-center mt-1">
+                      <Mail className="h-3 w-3 text-blue-600 mr-2" />
+                      <span>{listing.suggestedContractor.email}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setShowConsultationModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={submitting}
+                className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Scheduling...
+                  </>
+                ) : (
+                  "Schedule Consultation"
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    );
+  };
+
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-16 mt-10 flex justify-center">
+      <div className="container mx-auto px-4 py-16 mt-10 flex justify-center items-center min-h-screen">
         <div className="flex flex-col items-center">
           <Loader2 className="h-12 w-12 text-blue-500 animate-spin mb-4" />
           <p className="text-gray-600">Loading property details...</p>
@@ -591,61 +888,232 @@ export function ListingDetailPage() {
                 </Card>
               </div>
               
-              {/* <h3 className="text-lg font-semibold mb-2">Potential ROI Analysis</h3>
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <div className="grid grid-cols-2 gap-4">
-                   <div>
-                    <p className="text-sm text-gray-500 mb-1">Total Investment</p>
-                    <p className="font-bold">{formatCurrency(listing.listingPrice + listing.renovationCost)}</p>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">Potential Profit</p>
-                    <p className="font-bold text-green-600">
-                      {formatCurrency(listing.afterRepairValue - (listing.listingPrice + listing.renovationCost))}
-                    </p>
-                  </div> 
-                  <div>
-                    <p className="text-sm text-gray-500 mb-1">ROI Percentage</p>
-                    <p className="font-bold text-blue-600">
-                      {Math.round(((listing.afterRepairValue - (listing.listingPrice + listing.renovationCost)) / (listing.listingPrice + listing.renovationCost)) * 100)}%
-                    </p>
+              {listing.estimatedTimeframe && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Estimated Timeframe</h3>
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <div className="flex items-center">
+                      <Clock className="h-5 w-5 text-blue-500 mr-2" />
+                      <p>{listing.estimatedTimeframe}</p>
+                    </div>
                   </div>
                 </div>
-              </div> */}
+              )}
+
+              {/* Suggested Renovations */}
+              {listing.suggestedRenovations && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Suggested Renovations</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {listing.suggestedRenovations.kitchen && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Kitchen</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.bathrooms && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Bathrooms</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.floors && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Floors</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.windows && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Windows</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.roofing && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Roofing</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.electrical && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Electrical</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.plumbing && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Plumbing</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.painting && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Painting</span>
+                      </div>
+                    )}
+                    {listing.suggestedRenovations.landscaping && (
+                      <div className="bg-green-50 p-3 rounded-lg flex items-center">
+                        <Check className="h-5 w-5 text-green-500 mr-2" />
+                        <span>Landscaping</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Renovation Plans */}
+              {listing.renovationPlans && listing.renovationPlans.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-4">Renovation Plans</h3>
+                  <div className="space-y-4">
+                    {listing.renovationPlans.map((plan, index) => (
+                      <Card key={plan.id || index}>
+                        <CardContent className="p-4">
+                          <div className="flex flex-col md:flex-row gap-4">
+                            {plan.imageUrl && (
+                              <div className="w-full md:w-1/4">
+                                <div className="relative aspect-square rounded-md overflow-hidden">
+                                  <Image
+                                    src={plan.imageUrl.startsWith('renovation-plans/') 
+                                      ? `/api/s3-proxy?key=${encodeURIComponent(plan.imageUrl)}`
+                                      : plan.imageUrl}
+                                    alt={plan.title}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                            <div className="flex-1">
+                              <h4 className="font-medium text-lg">{plan.title}</h4>
+                              <div className="grid grid-cols-2 gap-2 mt-2 mb-3">
+                                <div>
+                                  <p className="text-sm text-gray-500">Price</p>
+                                  <p className="font-medium">{plan.price}</p>
+                                </div>
+                                <div>
+                                  <p className="text-sm text-gray-500">Size</p>
+                                  <p className="font-medium">{plan.size}</p>
+                                </div>
+                              </div>
+                              <p className="text-gray-700">{plan.description}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Suggested Contractor */}
+              {listing.suggestedContractor && listing.suggestedContractor.name && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Suggested Contractor</h3>
+                  <Card>
+                    <CardContent className="p-4">
+                      <h4 className="font-medium">{listing.suggestedContractor.name}</h4>
+                      <div className="mt-2 space-y-1">
+                        {listing.suggestedContractor.phone && (
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 text-gray-500 mr-2" />
+                            <span>{listing.suggestedContractor.phone}</span>
+                          </div>
+                        )}
+                        {listing.suggestedContractor.email && (
+                          <div className="flex items-center">
+                            <Mail className="h-4 w-4 text-gray-500 mr-2" />
+                            <span>{listing.suggestedContractor.email}</span>
+                          </div>
+                        )}
+                        {listing.suggestedContractor.socialMedia && (
+                          <div className="flex items-center">
+                            <span className="text-gray-500 mr-2">@</span>
+                            <span>{listing.suggestedContractor.socialMedia}</span>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Quote File */}
+              {listing.quoteFileUrl && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold mb-2">Renovation Quote</h3>
+                  <div className="mt-4">
+                    {listing.quoteFileUrl.startsWith('renovation-quotes/') ? (
+                      <PDFViewer url={`/api/s3-proxy?key=${encodeURIComponent(listing.quoteFileUrl)}`} />
+                    ) : (
+                      <PDFViewer url={listing.quoteFileUrl} />
+                    )}
+                  </div>
+                </div>
+              )}
               
               <h3 className="text-lg font-semibold mb-2">Renovation Suggestions</h3>
               <ul className="space-y-2 mb-6">
-                <li className="flex items-start">
-                  <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-                  <div>
-                    <span className="font-medium">Kitchen Remodel</span>
-                    <p className="text-sm text-gray-600">Modern appliances, new countertops, and updated cabinetry</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-                  <div>
-                    <span className="font-medium">Bathroom Upgrades</span>
-                    <p className="text-sm text-gray-600">New fixtures, tiling, and modern vanities</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-                  <div>
-                    <span className="font-medium">Flooring Replacement</span>
-                    <p className="text-sm text-gray-600">Hardwood or luxury vinyl throughout main living areas</p>
-                  </div>
-                </li>
-                <li className="flex items-start">
-                  <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
-                  <div>
-                    <span className="font-medium">Fresh Paint</span>
-                    <p className="text-sm text-gray-600">Interior and exterior painting with modern colors</p>
-                  </div>
-                </li>
+                {listing.renovationSuggestions && listing.renovationSuggestions.length > 0 ? (
+                  listing.renovationSuggestions.map((suggestion, index) => (
+                    <li key={index} className="flex items-start">
+                      <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                      <div>
+                        <span className="font-medium">{suggestion.title}</span>
+                        <p className="text-sm text-gray-600">{suggestion.description}</p>
+                      </div>
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li className="flex items-start">
+                      <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                      <div>
+                        <span className="font-medium">Kitchen Remodel</span>
+                        <p className="text-sm text-gray-600">Modern appliances, new countertops, and updated cabinetry</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                      <div>
+                        <span className="font-medium">Bathroom Upgrades</span>
+                        <p className="text-sm text-gray-600">New fixtures, tiling, and modern vanities</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                      <div>
+                        <span className="font-medium">Flooring Replacement</span>
+                        <p className="text-sm text-gray-600">Hardwood or luxury vinyl throughout main living areas</p>
+                      </div>
+                    </li>
+                    <li className="flex items-start">
+                      <Hammer className="h-5 w-5 text-blue-500 mr-2 mt-0.5" />
+                      <div>
+                        <span className="font-medium">Fresh Paint</span>
+                        <p className="text-sm text-gray-600">Interior and exterior painting with modern colors</p>
+                      </div>
+                    </li>
+                  </>
+                )}
               </ul>
               
-              <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700">
+              <Button 
+                className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700"
+                onClick={() => {
+                  if (listing?.suggestedContractor?.name) {
+                    setShowConsultationModal(true);
+                  } else {
+                    toast({
+                      variant: "destructive",
+                      title: "Error",
+                      description: "No contractor information available for this property."
+                    });
+                  }
+                }}
+              >
                 Schedule a Renovation Consultation
               </Button>
             </TabsContent>
@@ -765,6 +1233,7 @@ export function ListingDetailPage() {
       {/* Modals */}
       {renderImageModal()}
       {renderVideoModal()}
+      {renderConsultationModal()}
     </div>
   );
 }

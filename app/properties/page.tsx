@@ -24,6 +24,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import RoleProtected from '@/components/RoleProtected';
+import { useToast } from "@/hooks/use-toast";
 
 // ===============================================================
 // COMPONENT DEFINITIONS
@@ -171,6 +172,7 @@ function PropertiesPage() {
   // Router and auth
   const router = useRouter();
   const { isAuthenticated } = useAuth();
+  const { toast } = useToast();
 
   // ---------------------------------------------------------------
   // Property Data Constants & Utilities
@@ -259,9 +261,17 @@ function PropertiesPage() {
     const maxPrice = priceRange[1] || 1000000;
     filters.push(`ListPrice ge ${minPrice} and ListPrice le ${maxPrice}`);
     
-    // Add location filter if provided
+    // Enhanced location search
     if (locationSearch.trim()) {
-      filters.push(`(contains(tolower(City), tolower('${locationSearch}')) or contains(PostalCode, '${locationSearch}'))`);
+      const searchTerms = locationSearch.trim();
+      const locationFilters = [
+        `City eq '${searchTerms}'`,
+        `StateOrProvince eq '${searchTerms}'`,
+        `PostalCode eq '${searchTerms}'`,
+        `contains(StreetName,'${searchTerms}')`,
+        `contains(SubdivisionName,'${searchTerms}')`
+      ];
+      filters.push(`(${locationFilters.join(' or ')})`);
     }
     
     // Add bedrooms filter
@@ -322,6 +332,10 @@ function PropertiesPage() {
     setIsSearching(true);
     setCurrentPage(1);
     buildQuery(0);
+    toast({
+      title: "Searching properties",
+      description: "Finding properties that match your criteria..."
+    });
   };
   
   // Load more properties
@@ -545,6 +559,15 @@ function PropertiesPage() {
       setTotalCount(data['@odata.count'] ?? mappedProperties.length);
       setNextLink(data['@odata.nextLink'] || null);
       setIsSearching(false);
+      
+      // Show success toast when properties are loaded
+      if (!isLoadingMore) {
+        const count = data['@odata.count'] ?? mappedProperties.length;
+        toast({
+          title: "Properties found",
+          description: `Found ${count} properties matching your criteria.`
+        });
+      }
     }
   }, [data]);
 
@@ -617,7 +640,7 @@ function PropertiesPage() {
           <div className="relative col-span-3 md:col-span-1">
             <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <Input 
-              placeholder="Search location or zipcode..." 
+              placeholder="Search by city, state, zip, street name, or neighborhood..." 
               className="pl-10" 
               value={locationSearch}
               onChange={(e) => setLocationSearch(e.target.value)}

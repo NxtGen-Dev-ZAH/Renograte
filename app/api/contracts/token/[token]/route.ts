@@ -9,7 +9,7 @@ export async function GET(
 ) {
   try {
     // Get token from params
-    const token = params.token;
+    const token = await params.token;
     
     // URL decode the token first
     const decodedToken = decodeURIComponent(token);

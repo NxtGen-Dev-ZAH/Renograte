@@ -10,14 +10,14 @@ export async function GET(
 ) {
   try {
     // Ensure params.id exists
-    if (!params || !params.id) {
+    if (!params || await !params.id) {
       return NextResponse.json(
         { error: 'Listing ID is required' },
         { status: 400 }
       );
     }
     
-    const id = params.id;
+    const id = (await params).id;
     
     // Using any type for prisma until proper setup
     const prismaAny = prisma as any;

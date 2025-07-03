@@ -1,86 +1,212 @@
 export interface ContractTemplate {
   id: string;
   name: string;
-  template: (data: any) => string;
+  description: string;
+  template: (data: Record<string, any>) => string;
 }
 
-export const purchaseAgreementTemplate = (data: any): string => {
+export const serviceProviderAgreementTemplate = (data: any): string => {
   return `
-    REAL ESTATE PURCHASE AGREEMENT
+    RENOGRATE® SERVICE PROVIDER AGREEMENT
 
-    THIS AGREEMENT made this ${data.date || '[DATE]'} by and between:
-
-    ${data.partyOne || '[SELLER NAME]'} (hereinafter called "SELLER")
-    
-    AND
-    
-    ${data.partyTwo || '[BUYER NAME]'} (hereinafter called "BUYER")
-
-    WITNESSETH: That the SELLER agrees to sell and the BUYER agrees to buy the following described real estate:
+    This Service Provider Agreement ("Agreement") is entered into by and between the
+    Contractor or Service Provider ("Contractor"), the Property Owner ("Seller"), and/or the
+    Prospective Buyer ("Buyer") of the real property listed below. This Agreement governs the
+    scope of work, payment terms, warranties, and legal protections for renovation services
+    performed prior to or during the sale process of the identified property.
 
     Property Address: ${data.propertyAddress || '[PROPERTY ADDRESS]'}
 
-    1. PURCHASE PRICE: The purchase price is $${data.purchasePrice || '[AMOUNT]'} payable as follows:
-       a) Earnest Money Deposit: $${data.earnestMoney || '[AMOUNT]'} upon execution of this Agreement.
-       b) Balance Due at Closing: $${data.balanceDue || '[AMOUNT]'} payable at closing.
+    1. Scope of Work
+    The Contractor shall provide renovation services as agreed upon in a separate, signed Work
+    Order approved by the Buyer and Seller before work begins.
 
-    2. CLOSING DATE: The closing shall take place on or before ${data.closingDate || '[DATE]'}.
+    2. Work Schedule
+    Start Date: ${data.startDate || '[START DATE]'}
+    Estimated Completion Date: ${data.completionDate || '[COMPLETION DATE]'}
 
-    3. POSSESSION: Possession shall be delivered to BUYER on ${data.possessionDate || '[DATE]'}.
+    3. Compensation and Payment Terms
+    Contractor shall be paid in full at the closing of the sale using proceeds from the transaction.
+    An agreed portion of the Earnest Money Deposit (EMD), up to 50%, may be released to the
+    Contractor as a down payment if authorized through escrow instructions.
 
-    4. INSPECTIONS: BUYER shall have the right to conduct inspections of the property within ${data.inspectionDays || '[NUMBER]'} days after acceptance of this Agreement.
+    4. Approval and Quality Assurance
+    Buyer may inspect and approve all completed work prior to closing. Contractor must
+    address any deficiencies promptly.
 
-    5. TITLE: SELLER shall convey marketable title to the property by ${data.deedType || 'Warranty Deed'}.
+    5. Warranties & Insurance
+    Contractor warrants that all work will be performed in a professional, workmanlike manner
+    and compliant with applicable codes. Contractor affirms possession of proper licensing,
+    general liability insurance, and workers' compensation coverage, and shall provide proof
+    upon request.
 
-    6. ADDITIONAL TERMS: ${data.terms || '[ADDITIONAL TERMS]'}
+    6. Independent Contractor Status
+    Contractor is not an employee or agent of Renograte LLC or any real estate professional.
+    Contractor is solely responsible for legal and tax obligations.
 
-    IN WITNESS WHEREOF, the parties hereto have executed this Agreement on the date first above written.
+    7. Hold Harmless and Indemnification
+    All Parties agree to hold harmless and indemnify Renograte LLC, the brokerage, and any
+    licensed real estate agents involved from any claim arising out of renovation work,
+    including but not limited to property damage, injury, delays, or disputes over payments or
+    workmanship.
 
-    SELLER: ________________________________     Date: ________________
-           ${data.partyOne || '[SELLER NAME]'}
+    8. Contingency Events
+    If the Buyer defaults on the Option Agreement or Purchase and Sale Agreement:
+    - The Seller shall become liable to pay the Contractor the full amount for all renovation
+    work performed, due either:
+    - At the time of the next sale of the Property to a new buyer, or
+    - At closing if the Seller re-lists and sells the Property.
+    - The Seller shall retain the Earnest Money Deposit (EMD) from the defaulting Buyer, which
+    may be used to offset Contractor payment.
+    - Contractor may file a mechanic's lien as permitted by local law.
 
-    BUYER: _________________________________     Date: ________________
-           ${data.partyTwo || '[BUYER NAME]'}
+    If the Seller cancels or breaches the sale without Buyer fault:
+    - Seller is immediately liable for full payment to the Contractor.
+    - Contractor may pursue collection and lien rights.
+
+    If both Parties mutually terminate:
+    - Contractor is paid from escrowed funds if available.
+    - Any balance becomes the Seller's liability and may be paid at the next closing.
+    - Contractor may pursue lien rights for unpaid work.
+
+    9. Legal Review and Acknowledgment
+    Each Party acknowledges that they have reviewed and understand this Agreement and had
+    an opportunity to seek legal advice.
+
+    10. Signatures
+    Seller Signature: ________________________________ Date: ________________
+
+    Buyer Signature: ________________________________ Date: ________________
+
+    Contractor Signature: ________________________________ Date: ________________
   `;
 };
 
-export const renovationContractTemplate = (data: any): string => {
+export const optionContractTemplate = (data: any): string => {
   return `
-    RENOVATION CONTRACT
+    RENOGRATE® OPTION AGREEMENT TO RENOVATE REAL ESTATE BEFORE SALE OF PROPERTY
 
-    THIS AGREEMENT made this ${data.date || '[DATE]'} by and between:
+    (Addendum to Real Estate Purchase and Sale Agreement)
 
-    ${data.partyOne || '[PROPERTY OWNER]'} (hereinafter called "OWNER")
-    
-    AND
-    
-    ${data.partyTwo || '[CONTRACTOR]'} (hereinafter called "CONTRACTOR")
+    Date: ${data.date || '[DATE]'}
 
-    PROPERTY ADDRESS: ${data.propertyAddress || '[PROPERTY ADDRESS]'}
+    Seller Name(s): ${data.sellerName || '[SELLER NAME]'}
 
-    1. SCOPE OF WORK: CONTRACTOR agrees to furnish all labor, materials, equipment, and services necessary to complete the following renovation work:
-       ${data.scopeOfWork || '[DETAILED DESCRIPTION OF WORK]'}
+    Seller Address: ${data.sellerAddress || '[SELLER ADDRESS]'}
 
-    2. CONTRACT PRICE: OWNER agrees to pay CONTRACTOR the sum of $${data.contractPrice || '[AMOUNT]'} for the work specified.
+    Buyer Name(s): ${data.buyerName || '[BUYER NAME]'}
 
-    3. PAYMENT SCHEDULE:
-       a) Down Payment: $${data.downPayment || '[AMOUNT]'} upon execution of this Agreement.
-       b) Progress Payments: ${data.progressPayments || '[PAYMENT SCHEDULE]'}
-       c) Final Payment: $${data.finalPayment || '[AMOUNT]'} upon completion and final inspection.
+    Buyer Address: ${data.buyerAddress || '[BUYER ADDRESS]'}
 
-    4. COMPLETION DATE: CONTRACTOR shall substantially complete the work no later than ${data.completionDate || '[DATE]'}.
+    Property Address: ${data.propertyAddress || '[PROPERTY ADDRESS]'}
 
-    5. WARRANTIES: CONTRACTOR warrants all work to be free from defects in materials and workmanship for a period of ${data.warrantyPeriod || '[PERIOD]'}.
+    1. PURPOSE AND GRANT OF OPTION
+    The Seller grants the Buyer the right to access and control the Property prior to the closing
+    date for the limited purpose of facilitating renovations as agreed upon by the Parties and
+    their contractor, with the objective of achieving the mutually agreed After Renovation Value
+    (ARV) of the Property.
 
-    6. ADDITIONAL TERMS: ${data.terms || '[ADDITIONAL TERMS]'}
+    Upon completion of renovations:
+    • Buyer shall exercise the option to purchase the Property at the agreed ARV.
+    • A standard Real Estate Purchase and Sale Agreement ("PSA") shall govern the final sale.
 
-    IN WITNESS WHEREOF, the parties hereto have executed this Agreement on the date first above written.
+    Agreed ARV Sale Price: $${data.arvSalePrice || '[AMOUNT]'} USD
 
-    OWNER: ________________________________     Date: ________________
-           ${data.partyOne || '[PROPERTY OWNER]'}
+    2. EARNEST MONEY DEPOSIT (EMD) & ESCROW
+    The Buyer agrees to deposit the sum of $${data.earnestMoney || '[AMOUNT]'} USD as Earnest Money, held in escrow
+    by a mutually agreed Title or Escrow Agent. This Agreement becomes binding upon
+    confirmation of receipt of the EMD.
 
-    CONTRACTOR: _________________________________     Date: ________________
-                ${data.partyTwo || '[CONTRACTOR]'}
+    Release & Forfeiture Terms:
+    • If Buyer fails to close: Buyer forfeits EMD.
+    • If Seller fails to complete sale post-renovation: Buyer is refunded EMD.
+    • If both Parties mutually terminate: Seller assumes liability for renovation costs; EMD
+    refunded.
+
+    It is suggested that up to 50% of the EMD may be released to the Contractor as a down
+    payment per the Renograte Service Provider Agreement.
+
+    3. RENOVATION, PAYMENT, AND APPRAISAL ADJUSTMENTS
+    Buyer shall pay the full ARV at closing.
+    • Contractor shall receive payment at closing as per the Renograte Service Provider
+    Agreement.
+
+    If the final appraisal is less than the agreed ARV:
+    a. Parties may mutually agree to the lower value.
+    b. A second appraisal may be requested (requesting party bears cost); the final value shall
+    be the average of both.
+    c. Parties may renegotiate terms per the PSA and relevant local laws.
+
+    4. MORTGAGE EXPENSE ALLOWANCE (IF APPLICABLE)
+    Where agreed, Buyer will provide Seller with a mortgage expense allowance of $${data.mortgageAllowance || '[AMOUNT]'}
+    USD for ${data.mortgageMonths || '[NUMBER]'} month(s), either upfront or at closing, to cover the Seller's holding costs during
+    renovations.
+
+    5. RENOGRATE® ROLE, FEES, AND LIABILITY
+    Renograte LLC shall receive a $499 transaction/administration fee at closing.
+
+    Renograte LLC is not a party to this transaction beyond:
+    • Administrative coordination.
+    • Connection of Parties to licensed contractors and agents.
+    • Optional support or recommendations when requested.
+
+    Renograte LLC assumes no liability for:
+    • The condition of the Property.
+    • Work performed by third-party contractors.
+    • Any disputes arising from renovations or sale.
+
+    Release Clause: The Seller and Buyer hereby release Renograte LLC, its affiliates,
+    contractors, agents, and representatives from any present or future claims related to the
+    condition or transaction of the Property.
+
+    6. PROPERTY INSPECTION RIGHTS
+    Buyer shall have reasonable access to inspect the Property and may hire licensed
+    professionals for inspection, including general, structural, and pest assessments.
+
+    Notice of defects must be provided to the Seller within 10 calendar days of inspection report
+    receipt.
+
+    7. ACCEPTANCE OF PROPERTY CONDITION
+    Following completion of this Agreement, Buyer accepts the Property "as-is." The Seller is
+    not responsible for further improvements, except those included in the agreed renovation
+    scope.
+
+    8. BUSINESS PURPOSE AFFIDAVIT
+    Seller acknowledges that this transaction is conducted for business purposes, with full
+    understanding of the associated risks (e.g., final sale price variance).
+
+    Seller acknowledges that they are acting in a business capacity, not as a consumer, and
+    therefore waives any rights under consumer lending laws.
+
+    9. REALTOR PARTICIPATION & LISTING AGREEMENT
+    A licensed Realtor will:
+    • Execute a pre-sale listing agreement with the Seller.
+    • List the Property for the ARV post-renovation sale.
+    • Ensure that the Property cannot be listed at a higher price after renovations without
+    consent from the Parties.
+
+    10. LEGAL REVIEW AND ACKNOWLEDGEMENT
+    Each Party acknowledges that they have had the opportunity to review this Agreement,
+    seek legal advice, and fully understand its terms.
+
+    This document represents the full understanding and intent of the Parties regarding the
+    renovation and sale of the Property.
+
+    SIGNATURES
+    Seller Signature: ________________________________ Date: ________________
+
+    Seller Signature: ________________________________ Date: ________________
+
+    Buyer Signature: ________________________________ Date: ________________
+
+    Buyer Signature: ________________________________ Date: ________________
+
+    Real Estate Agent (Witness): __________________ Date: ________________
+
+    Notes:
+    This document is intended to be used with a Real Estate Purchase and Sale Agreement and a
+    Renograte Service Provider Agreement.
+    All parties are encouraged to review with counsel in the governing jurisdiction.
   `;
 };
 
@@ -166,25 +292,148 @@ export const leaseOptionAgreementTemplate = (data: any): string => {
 
 export const contractTemplates: ContractTemplate[] = [
   {
-    id: "purchase",
-    name: "Purchase Agreement",
-    template: purchaseAgreementTemplate,
+    id: "service-provider",
+    name: "Renograte Service Provider Agreement",
+    description: "Contract for service providers",
+    template: (data) => {
+      return `
+        # Renograte Service Provider Agreement
+        
+        This Service Provider Agreement ("Agreement") is entered into by and between:
+        
+        SELLER: ${data.sellerName || '[SELLER NAME]'}
+        Address: ${data.sellerAddress || '[SELLER ADDRESS]'}
+        
+        BUYER: ${data.buyerName || '[BUYER NAME]'}
+        Address: ${data.buyerAddress || '[BUYER ADDRESS]'}
+        
+        CONTRACTOR: ${data.contractorName || '[CONTRACTOR NAME]'}
+        Address: ${data.contractorAddress || '[CONTRACTOR ADDRESS]'}
+        
+        PROPERTY ADDRESS: ${data.propertyAddress || '[PROPERTY ADDRESS]'}
+        
+        AGREEMENT DATE: ${data.agreementDate || '[AGREEMENT DATE]'}
+        AGREEMENT ID: ${data.agreementId || '[AGREEMENT ID]'}
+        
+        WORK SCHEDULE:
+        Start Date: ${data.startDate || '[START DATE]'}
+        Estimated Completion Date: ${data.estimatedCompletionDate || '[COMPLETION DATE]'}
+        
+        This Agreement governs the scope of work, payment terms, warranties, and legal protections for renovation services performed prior to or during the sale process of the identified property.
+      `;
+    }
   },
   {
-    id: "renovation",
-    name: "Renovation Contract",
-    template: renovationContractTemplate,
+    id: "option-contract",
+    name: "Renograte Option Contract",
+    description: "Option agreement for property renovation",
+    template: (data) => {
+      return `
+        # Renograte Option Agreement
+        
+        This Option Agreement ("Agreement") is entered into by and between:
+        
+        SELLER: ${data.sellerName || '[SELLER NAME]'}
+        Address: ${data.sellerAddress || '[SELLER ADDRESS]'}
+        
+        BUYER: ${data.buyerName || '[BUYER NAME]'}
+        Address: ${data.buyerAddress || '[BUYER ADDRESS]'}
+        
+        PROPERTY ADDRESS: ${data.propertyAddress || '[PROPERTY ADDRESS]'}
+        
+        AGREEMENT DATE: ${data.agreementDate || '[AGREEMENT DATE]'}
+        AGREEMENT ID: ${data.agreementId || '[AGREEMENT ID]'}
+        
+        FINANCIAL DETAILS:
+        ARV Sale Price: $${data.arvSalePrice || '[ARV SALE PRICE]'}
+        Earnest Money Deposit: $${data.emdAmount || '[EMD AMOUNT]'}
+        Mortgage Allowance Amount: $${data.mortgageAllowanceAmount || '[MORTGAGE ALLOWANCE]'}
+        Mortgage Allowance Period: ${data.mortgageAllowanceMonths || '[MONTHS]'} month(s)
+        
+        AGENT INFORMATION:
+        Agent Name: ${data.agentName || '[AGENT NAME]'}
+        
+        This Agreement grants the Buyer the right to access and control the Property prior to the closing date for the purpose of facilitating renovations.
+      `;
+    }
   },
   {
     id: "joint-venture",
     name: "Joint Venture Agreement",
-    template: jointVentureAgreementTemplate,
+    description: "Joint venture partnership",
+    template: (data) => {
+      return `
+        # Joint Venture Agreement
+        
+        This Joint Venture Agreement ("Agreement") is entered into by and between:
+        
+        PARTNER 1: ${data.partner1Name || '[PARTNER 1 NAME]'}
+        Address: ${data.partner1Address || '[PARTNER 1 ADDRESS]'}
+        Contribution: $${data.partner1Contribution || '[CONTRIBUTION]'}
+        Ownership Percentage: ${data.partner1Percentage || '[PERCENTAGE]'}%
+        
+        PARTNER 2: ${data.partner2Name || '[PARTNER 2 NAME]'}
+        Address: ${data.partner2Address || '[PARTNER 2 ADDRESS]'}
+        Contribution: $${data.partner2Contribution || '[CONTRIBUTION]'}
+        Ownership Percentage: ${data.partner2Percentage || '[PERCENTAGE]'}%
+        
+        PROJECT INFORMATION:
+        Project Name: ${data.projectName || '[PROJECT NAME]'}
+        Project Address: ${data.projectAddress || '[PROJECT ADDRESS]'}
+        Project Description: ${data.projectDescription || '[PROJECT DESCRIPTION]'}
+        
+        TIMELINE:
+        Start Date: ${data.startDate || '[START DATE]'}
+        Estimated Completion Date: ${data.estimatedCompletionDate || '[COMPLETION DATE]'}
+        
+        FINANCIAL DETAILS:
+        Total Investment: $${data.totalInvestment || '[TOTAL INVESTMENT]'}
+        Profit Split Ratio: ${data.profitSplitRatio || '[PROFIT SPLIT RATIO]'}
+        
+        AGREEMENT DATE: ${data.agreementDate || '[AGREEMENT DATE]'}
+        AGREEMENT ID: ${data.agreementId || '[AGREEMENT ID]'}
+        
+        This Agreement establishes the terms and conditions for a joint venture partnership in real estate investment and development.
+      `;
+    }
   },
   {
     id: "lease-option",
     name: "Lease Option Agreement",
-    template: leaseOptionAgreementTemplate,
-  },
+    description: "Lease with purchase option",
+    template: (data) => {
+      return `
+        # Lease Option Agreement
+        
+        This Lease Option Agreement ("Agreement") is entered into by and between:
+        
+        LANDLORD: ${data.landlordName || '[LANDLORD NAME]'}
+        Address: ${data.landlordAddress || '[LANDLORD ADDRESS]'}
+        
+        TENANT: ${data.tenantName || '[TENANT NAME]'}
+        Address: ${data.tenantAddress || '[TENANT ADDRESS]'}
+        
+        PROPERTY ADDRESS: ${data.propertyAddress || '[PROPERTY ADDRESS]'}
+        
+        LEASE TERMS:
+        Lease Start Date: ${data.leaseStartDate || '[START DATE]'}
+        Lease End Date: ${data.leaseEndDate || '[END DATE]'}
+        Monthly Rent: $${data.monthlyRent || '[MONTHLY RENT]'}
+        Security Deposit: $${data.securityDeposit || '[SECURITY DEPOSIT]'}
+        
+        OPTION TERMS:
+        Option Period: ${data.optionPeriod || '[OPTION PERIOD]'} months
+        Purchase Price: $${data.purchasePrice || '[PURCHASE PRICE]'}
+        Option Fee: $${data.optionFee || '[OPTION FEE]'}
+        Rent Credit: $${data.rentCredit || '[RENT CREDIT]'} per month
+        
+        AGREEMENT DATE: ${data.agreementDate || '[AGREEMENT DATE]'}
+        AGREEMENT ID: ${data.agreementId || '[AGREEMENT ID]'}
+        
+        This Agreement establishes the terms and conditions for leasing the property with an option to purchase.
+      `;
+    }
+  }
 ];
 
 export const getTemplateById = (id: string): ContractTemplate | undefined => {

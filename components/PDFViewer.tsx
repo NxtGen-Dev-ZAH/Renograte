@@ -1,22 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, RefreshCw } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-// pagelook json
+import { ChevronLeft, ChevronRight, Download, ExternalLink } from "lucide-react";
+import { Skeleton } from '@/components/ui/skeleton';
+
 // Dynamically import react-pdf components with ssr: false
 const PDFDocument = dynamic(() => import("react-pdf").then(mod => mod.Document), {
   ssr: false,
-  loading: () => (
-    <div className="flex justify-center items-center py-10">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-        <p>Loading PDF viewer...</p>
-      </div>
-    </div>
-  ),
 });
 
 const PDFPage = dynamic(() => import("react-pdf").then(mod => mod.Page), {
@@ -26,49 +18,82 @@ const PDFPage = dynamic(() => import("react-pdf").then(mod => mod.Page), {
 // Import pdfjs for configuration
 import { pdfjs } from "react-pdf";
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Configure PDF.js worker - moved to useEffect to ensure it runs only in browser
+// This fixes the "WorkerMessageHandler" error
 
 interface PDFViewerProps {
   url: string;
+  fileName?: string;
 }
 
-export function PDFViewer({ url }: PDFViewerProps) {
-  const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1);
-  const [loadError, setLoadError] = useState<Error | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [retryCount, setRetryCount] = useState(0);
+export function PDFViewer({ url, fileName }: PDFViewerProps) {
+  const [numPages, setNumPages] = useState<number>(0);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [workerInitialized, setWorkerInitialized] = useState<boolean>(false);
 
-  // Reset state when URL changes
+  // Memoize the options object to prevent unnecessary reloads
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+    cMapPacked: true,
+    standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
+  }), []);
+
+  // Initialize PDF.js worker in useEffect to ensure it runs only in browser context
   useEffect(() => {
-    if (url) {
-      setLoadError(null);
-      setIsLoading(true);
-      setRetryCount(0);
+    // Only run in browser environment
+    if (typeof window !== 'undefined' && !workerInitialized) {
+      try {
+        const workerUrl = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+        
+        // Set the worker source
+        pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+        
+        // Create a script tag to preload the worker
+        const script = document.createElement('script');
+        script.src = workerUrl;
+        script.async = true;
+        script.onload = () => {
+          console.log('PDF.js worker script loaded successfully');
+          setWorkerInitialized(true);
+        };
+        script.onerror = (e) => {
+          console.error('Error loading PDF.js worker script:', e);
+          setError('Failed to initialize PDF viewer. Falling back to download option.');
+        };
+        
+        document.head.appendChild(script);
+        
+        return () => {
+          // Clean up the script tag if component unmounts before loading completes
+          if (script.parentNode) {
+            script.parentNode.removeChild(script);
+          }
+        };
+      } catch (err) {
+        console.error('Error initializing PDF worker:', err);
+        setError('Failed to initialize PDF viewer');
+      }
     }
-  }, [url]);
+  }, [workerInitialized]);
 
   function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
     setNumPages(numPages);
-    setIsLoading(false);
-    setLoadError(null);
+    setPageNumber(1);
+    setLoading(false);
   }
 
   function onDocumentLoadError(error: Error) {
-    console.error("Error loading PDF:", error);
-    setLoadError(error);
-    setIsLoading(false);
+    console.error('Error loading PDF:', error);
+    setError('Failed to load PDF document');
+    setLoading(false);
   }
 
   function changePage(offset: number) {
     setPageNumber(prevPageNumber => {
-      const newPageNumber = prevPageNumber + offset;
-      if (newPageNumber >= 1 && newPageNumber <= (numPages || 1)) {
-        return newPageNumber;
-      }
-      return prevPageNumber;
+      const newPage = prevPageNumber + offset;
+      return newPage >= 1 && newPage <= numPages ? newPage : prevPageNumber;
     });
   }
 
@@ -80,107 +105,109 @@ export function PDFViewer({ url }: PDFViewerProps) {
     changePage(1);
   }
 
-  function zoomIn() {
-    setScale(prevScale => Math.min(prevScale + 0.2, 2.5));
+  // If there's an error, show fallback UI with download and open in new tab options
+  if (error) {
+    return (
+      <div className="text-center p-6 bg-red-50 rounded-md border border-red-200 text-red-600">
+        <p>{error}</p>
+        <div className="flex justify-center gap-2 mt-4">
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            asChild
+          >
+            <a href={url} download={fileName || true}>
+              <Download className="h-4 w-4 mr-2" />
+              Download PDF
+            </a>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            asChild
+          >
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              Open in New Tab
+            </a>
+          </Button>
+        </div>
+      </div>
+    );
   }
 
-  function zoomOut() {
-    setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
-  }
-
-  function handleRetry() {
-    setIsLoading(true);
-    setLoadError(null);
-    setRetryCount(count => count + 1);
-    // Force re-render of Document component by using a cache-busting parameter
-    const cacheBuster = `?retry=${Date.now()}`;
-    const urlWithCacheBuster = url.includes('?') 
-      ? `${url}&cb=${Date.now()}` 
-      : `${url}?cb=${Date.now()}`;
-      
-    // Reload the page if we've tried more than 3 times
-    if (retryCount >= 2) {
-      window.location.reload();
-    }
+  // If we're still initializing the worker, show loading state
+  if (!workerInitialized && typeof window !== 'undefined') {
+    return <Skeleton className="w-full h-[400px] rounded-lg" />;
   }
 
   return (
     <div className="flex flex-col items-center">
-      <div className="bg-gray-100 p-4 rounded-lg overflow-auto max-h-[70vh] w-full">
-        {loadError ? (
-          <div className="flex flex-col items-center justify-center py-10 space-y-4">
-            <Alert variant="destructive">
-              <AlertDescription>
-                Failed to load document. The document may be unavailable or you may not have permission to view it.
-              </AlertDescription>
-            </Alert>
-            <Button onClick={handleRetry} className="flex items-center gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Retry Loading Document
-            </Button>
-          </div>
-        ) : (
+      {loading && (
+        <div className="w-full">
+          <Skeleton className="w-full h-[400px] rounded-lg" />
+        </div>
+      )}
+
+      {workerInitialized && (
+        <div className="w-full">
           <PDFDocument
             file={url}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex justify-center items-center py-10">
-                <div className="flex flex-col items-center space-y-4">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                  <p>Loading document...</p>
-                </div>
-              </div>
-            }
-            error={null} // We handle errors manually above
-            key={`pdf-${retryCount}`} // Force re-render on retry
+            loading={<div className="w-full h-[400px] flex items-center justify-center">Loading PDF...</div>}
+            options={pdfOptions}
           >
-            {numPages && (
-              <PDFPage
+            {!loading && (
+              <PDFPage 
                 pageNumber={pageNumber}
-                scale={scale}
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
+                className="mx-auto"
+                width={typeof window !== 'undefined' ? (window.innerWidth > 768 ? 600 : window.innerWidth - 40) : 600}
               />
             )}
           </PDFDocument>
-        )}
-      </div>
-      
-      {!loadError && numPages && (
-        <div className="flex items-center justify-between w-full mt-4">
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={previousPage}
-              disabled={pageNumber <= 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-sm">
-              Page {pageNumber} of {numPages || "-"}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={nextPage}
-              disabled={!numPages || pageNumber >= numPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" size="sm" onClick={zoomOut}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-sm">{Math.round(scale * 100)}%</span>
-            <Button variant="outline" size="sm" onClick={zoomIn}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
+      )}
+
+      {numPages > 0 && (
+        <div className="flex items-center justify-between w-full mt-4">
+          <Button
+            variant="outline"
+            onClick={previousPage}
+            disabled={pageNumber <= 1}
+          >
+            <ChevronLeft className="h-4 w-4 mr-2" />
+            Previous
+          </Button>
+          
+          <p className="text-sm">
+            Page {pageNumber} of {numPages}
+          </p>
+          
+          <Button
+            variant="outline"
+            onClick={nextPage}
+            disabled={pageNumber >= numPages}
+          >
+            Next
+            <ChevronRight className="h-4 w-4 ml-2" />
+          </Button>
+        </div>
+      )}
+
+      {!loading && (
+        <Button
+          variant="outline"
+          className="mt-4"
+          asChild
+        >
+          <a href={url} download={fileName || true}>
+            <Download className="h-4 w-4 mr-2" />
+            Download PDF
+          </a>
+        </Button>
       )}
     </div>
   );

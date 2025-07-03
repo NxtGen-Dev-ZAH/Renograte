@@ -54,10 +54,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Error creating listing:', error);
-    return NextResponse.json(
-      { error: 'Failed to create listing' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create listing' }, { status: 500 });
   }
 }
 
@@ -185,9 +182,6 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error('Error fetching listings:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch listings' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch listings' }, { status: 500 });
   }
 } 

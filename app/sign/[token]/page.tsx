@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import SignatureDialog from "@/components/SignatureDialog";
 import { ContractRole } from "@/lib/contracts/contractService";
 import { Pen, Check, Clock } from "lucide-react";
@@ -178,7 +178,7 @@ export default function SigningPage({ params }: { params: Promise<{ token: strin
 
   if (loading) {
     return (
-      <div className="container mx-auto py-10 space-y-6 my-12">
+      <div className="container mx-auto py-10 space-y-6 my-12 h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Loading Document...</h1>
           <p className="text-muted-foreground">Please wait while we prepare your document for signing.</p>
@@ -189,7 +189,7 @@ export default function SigningPage({ params }: { params: Promise<{ token: strin
 
   if (!contract) {
     return (
-      <div className="container mx-auto py-10 space-y-6 ">
+      <div className="container mx-auto py-10 space-y-6 h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold">Document Not Found</h1>
           <p className="text-muted-foreground">This signing link is invalid or has expired.</p>

@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 
 export function RootLayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isDashboardRoute = pathname?.includes("/dashboard") || pathname?.startsWith("/account") || pathname?.startsWith("/add-listing") || pathname?.startsWith("/calculator") || pathname?.startsWith("/university") || pathname?.startsWith("/directories") || pathname?.startsWith("/leads") || pathname?.startsWith("/term-sheet") || pathname?.startsWith("/distressed") || pathname?.startsWith("/contracts") || pathname?.startsWith("/perks") || pathname?.startsWith("/marketing")  || pathname?.startsWith("/create-offer") || pathname?.startsWith("/reports") ;
+  const isDashboardRoute = pathname?.includes("/dashboard") || pathname?.startsWith("/account") || pathname?.startsWith("/add-listing") || pathname?.startsWith("/calculator") || pathname?.startsWith("/university") || pathname?.startsWith("/directories") || pathname?.startsWith("/leads") || pathname?.startsWith("/agreements") || pathname?.startsWith("/distressed") || pathname?.startsWith("/my-agreements") || pathname?.startsWith("/perks") || pathname?.startsWith("/marketing")  || pathname?.startsWith("/create-termsheet") || pathname?.startsWith("/reports") ;
 
   if (isDashboardRoute) {
     return (

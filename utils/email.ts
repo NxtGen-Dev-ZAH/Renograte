@@ -140,14 +140,22 @@ export const sendEmailWithPdfAttachment = async (
       const response = await axios.get(`${baseUrl}${documentUrl}`, { 
         responseType: 'arraybuffer',
         headers: {
-          'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN}`
+          'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || ''}`
         }
       });
       pdfBuffer = Buffer.from(response.data);
     } else {
-      // If it's an S3 key, get a signed URL and fetch it
-      const signedUrl = await getSignedFileUrl(documentUrl);
-      const response = await axios.get(signedUrl, { responseType: 'arraybuffer' });
+      // If it's an S3 key, use the S3 proxy endpoint with proper authentication
+      const baseUrl = process.env.NODE_ENV === 'production' 
+        ? process.env.NEXT_PUBLIC_APP_URL || 'https://www.renograte.com'
+        : 'http://localhost:3000';
+      
+      const response = await axios.get(`${baseUrl}/api/s3-proxy?key=${encodeURIComponent(documentUrl)}`, { 
+        responseType: 'arraybuffer',
+        headers: {
+          'Authorization': `Bearer ${process.env.INTERNAL_API_TOKEN || ''}`
+        }
+      });
       pdfBuffer = Buffer.from(response.data);
     }
     
@@ -172,6 +180,30 @@ export const sendEmailWithPdfAttachment = async (
     return true;
   } catch (error) {
     console.error('Error sending email with PDF attachment:', error);
+    return false;
+  }
+};
+
+/**
+ * Send a simple email without attachments
+ * @param options Email options including to, subject, and html content
+ */
+export const sendEmail = async (options: {
+  to: string;
+  subject: string;
+  html: string;
+  from?: string;
+}): Promise<boolean> => {
+  try {
+    await transporter.sendMail({
+      from: options.from || '"Renograte" <info@renograte.com>',
+      to: options.to,
+      subject: options.subject,
+      html: options.html,
+    });
+    return true;
+  } catch (error) {
+    console.error('Error sending email:', error);
     return false;
   }
 }; 

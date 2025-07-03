@@ -99,33 +99,27 @@ export default function Header() {
                 </div>
                 {isListingsOpen && (
                   <div
-                    className="absolute left-0 mt-0 w-64 bg-white shadow-lg rounded-md py-2 z-50 border border-gray-100"
+                  className="absolute left-0 mt-0 w-max bg-white shadow-lg rounded-md py-2 z-50 border border-gray-100 flex flex-col" // Added 'fle x' here
+                >
+                  <Link
+                    href="/properties"
+                    className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
                   >
-                    <Link
-                      href="/properties"
-                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
-                    >
-                      Estimated Renovation Allowance
-                    </Link>
-                    {/* <Link
-                      href="/listings"
-                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
-                    >
-                      MLS Listings
-                    </Link> */}
-                    <Link
-                      href="/listings/renograte-listings"
-                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
-                    >
-                      Renograte Listings
-                    </Link>
-                    <Link
-                      href="/listings/distressed-homes"
-                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300"
-                    >
-                      Distressed Homes
-                    </Link>
-                  </div>
+                    Estimated Renovation Allowance Listings
+                  </Link>
+                  <Link
+                    href="/listings/renograte-listings"
+                    className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
+                  >
+                    Verified Renograte Listings
+                  </Link>
+                  <Link
+                    href="/listings/distressed-homes"
+                    className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
+                  >
+                    Distressed Homes
+                  </Link>
+                </div>
                 )}
               </li>
               <li>

@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     const overallProgress = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0;
     
     // Map progress to videos and generate signed URLs
-      const videosWithProgress = await Promise.all(videos.map(async (video: any) => {
+    const videosWithProgress = await Promise.all(videos.map(async (video: any) => {
       const videoProgress = progress.find((p: any) => p.videoId === video.id);
       
       // Generate signed URL for video

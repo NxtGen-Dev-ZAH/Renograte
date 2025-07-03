@@ -40,10 +40,10 @@ const quickActions = [
     bgColor: "bg-blue-50",
   },
   {
-    title: "Term Sheet & Agreements",
+    title: "Agreements",
     description: "Draft and manage property term sheets and agreements",
     icon: FileText,
-    href: "/term-sheet",
+    href: "/agreements",
     color: "text-purple-600",
     bgColor: "bg-purple-50",
   },
@@ -139,9 +139,9 @@ function DashboardPage() {
                 </Link>
               </Button>
               <Button variant="outline" className="w-full justify-start" asChild>
-                <Link href="/term-sheet/create">
+                <Link href="/agreements">
                   <FileText className="mr-2 h-4 w-4" />
-                  New Term Sheet
+                  New Agreement
                 </Link>
               </Button>
               <Button variant="outline" className="w-full justify-start" onClick={() => document.getElementById('add-task-button')?.click()}>

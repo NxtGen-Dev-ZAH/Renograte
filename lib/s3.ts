@@ -2,7 +2,8 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { v4 as uuidv4 } from 'uuid';
 
-const s3Client = new S3Client({
+// Only create the S3 client on the server side
+const s3Client = typeof window === 'undefined' ? new S3Client({
   region: process.env.NEXT_PUBLIC_AWS_REGION!,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
@@ -12,7 +13,7 @@ const s3Client = new S3Client({
   requestHandler: {
     requestTimeout: 15 * 60 * 1000, // 15 minutes
   },
-});
+}) : null;
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!;
 
@@ -24,6 +25,31 @@ export async function uploadFileToS3(file: File, prefix: string = 'listings/'): 
     const fileName = `${prefix}${uuidv4()}.${fileExtension}`;
 
     console.log(`Starting upload for file: ${originalName} (${file.size} bytes) to ${fileName}`);
+    
+    // Client-side: Use the API endpoint to handle the upload
+    if (typeof window !== 'undefined') {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('prefix', prefix);
+      
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to upload file');
+      }
+      
+      const data = await response.json();
+      return data.fileKey;
+    }
+    
+    // Server-side: Direct S3 upload (this code only runs on the server)
+    if (!s3Client) {
+      throw new Error('S3 client is not available on the client side');
+    }
     
     // Convert file to ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
@@ -76,6 +102,15 @@ export async function getSignedFileUrl(fileKey: string): Promise<string> {
     if (fileKey.startsWith('http') || fileKey.startsWith('/api')) {
       console.log('File key is already a URL, returning as is');
       return fileKey;
+    }
+    
+    // If on client side, use the API endpoint
+    if (typeof window !== 'undefined') {
+      return `/api/s3-proxy?key=${encodeURIComponent(fileKey)}`;
+    }
+    
+    if (!s3Client) {
+      throw new Error('S3 client is not available');
     }
     
     const command = new GetObjectCommand({

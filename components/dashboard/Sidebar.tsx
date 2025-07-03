@@ -30,15 +30,15 @@ const navigation = [
   { name: "My Account", href: "/account", icon: User },
   { name: "Create Listing", href: "/add-listing", icon: Plus },
   { name: "My Listings", href: "/dashboard/my-listings", icon: Home },
-  { name: "Create Offer", href: "/create-offer", icon: FileText },
-  { name: "Term Sheet", href: "/term-sheet", icon: FileText },
+  { name: "Create Term Sheet", href: "/create-termsheet", icon: FileText },
+  { name: "Agreements", href: "/agreements", icon: FileText },
   { name: "Calculator", href: "/calculator", icon: Calculator },
-  { name: "University", href: "/university", icon: Video },
+  { name: "University", href: "/university", icon: Video }, 
   { name: "Marketing", href: "/marketing", icon: Megaphone },
   { name: "Directories", href: "/directories", icon: Users },
   { name: "Property Perks", href: "/perks", icon: Gift },
   { name: "Distressed Homes", href: "/distressed", icon: AlertTriangle },
-  { name: "Contracts", href: "/contracts", icon: FileCheck },
+  { name: "My Agreements", href: "/my-agreements", icon: FileCheck },
 ];
 
 export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
