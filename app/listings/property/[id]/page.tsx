@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import RoleProtected from '@/components/RoleProtected';
 
 // Dynamically import map components with no SSR
-const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
+const PropertyMap = dynamic(() => import('@/components/maps/GooglePropertyMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
@@ -21,7 +21,7 @@ const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
   )
 });
 
-const PropertyMapOverlay = dynamic(() => import('@/components/maps/PropertyMapOverlay'), {
+const PropertyMapOverlay = dynamic(() => import('@/components/maps/GooglePropertyMapOverlay'), {
   ssr: false
 });
 
@@ -650,11 +650,11 @@ export function PropertyDetailPage() {
           {neighboringProperties.length > 0 ? (
             <div className="mt-6">
               <h3 className="text-lg font-semibold mb-3">Nearby Properties:</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {neighboringProperties.slice(0, 6).map((nearbyProperty) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">  
+                {neighboringProperties.slice(0, 9).map((nearbyProperty) => (
                   <div 
                     key={nearbyProperty.ListingKey}
-                    className={`border rounded p-3 hover:bg-blue-50 cursor-pointer transition-colors ${
+                    className={`border py-3 px-7 hover:bg-blue-50 cursor-pointer transition-colors  ${
                       hoveredPropertyId === nearbyProperty.ListingKey ? 'bg-blue-50 border-blue-400' : ''
                     }`}
                     onClick={() => handleMarkerClick(nearbyProperty.ListingKey)}

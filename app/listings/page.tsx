@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/tooltip";
 import RoleProtected from '@/components/RoleProtected';
 
-const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
+const PropertyMap = dynamic(() => import('@/components/maps/GooglePropertyMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
@@ -35,7 +35,7 @@ const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
   )
 });
 
-const PropertyMapOverlay = dynamic(() => import('@/components/maps/PropertyMapOverlay'), {
+const PropertyMapOverlay = dynamic(() => import('@/components/maps/GooglePropertyMapOverlay'), {
   ssr: false
 });
 

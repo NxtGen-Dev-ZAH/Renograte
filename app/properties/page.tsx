@@ -81,7 +81,7 @@ const RangeSlider = ({
 };
 
 // Map component with server-side rendering disabled
-const PropertyMap = dynamic(() => import('@/components/maps/PropertyMap'), {
+const PropertyMap = dynamic(() => import('@/components/maps/GooglePropertyMap'), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full bg-gray-100 flex items-center justify-center">
