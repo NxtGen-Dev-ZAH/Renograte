@@ -1,126 +1,35 @@
-## **Renograte Renovation Allowance Estimator – End-to-End Workflow**
+The workflow starts when the user enters a **property address**.
 
-### **1. User Input**
+1. **Property Lookup Agent**
 
-* **Frontend (React/Next.js or your framework)**
+   * The first agent RenograteAgent  decides whether to send the query to the SpecificPropertyAgent or the NeighbouringPropertiesAgent depending on whether the user gives a full address or just a street/neighborhood.
+   * If the entered address is relating to a specific property, then handsoff the working to the **SpecificPropertyAgent** otherwise to the neighbouringPropertyAgent
 
-  * User enters a property address in an input field.
-  * On form submission:
+2. **NeighbouringPropertyAgent (if no property is found)**
+   * This agent retrieves details of **nearby properties** based on the entered address.
 
-    * Call the backend API endpoint `/estimate-renovation-allowance`.
 
----
+I want you to implement the below workflow where The system then asks the user for missing details about their home if the handoff is made to the neigbouring agent 
 
-### **2. Address → Coordinates**
+     * Size (sq ft or m²)
+     * Number of bathrooms
+     * Number of bedrooms
+   * Using this input, the system finds the **closest matching properties** from the nearby properties data.
+   * The average listing price of these matches becomes the **CHV**.
 
-* **Backend Step 1: Geocoding**
+3. **ARV & Renovation Allowance Calculation**
 
-  * Use **Google Maps Geocoding API** (or an alternative like Mapbox or OpenStreetMap) to convert the address into latitude & longitude.
-  * Example API request:
+   * Search in the codebase for how **After Renovated Value (ARV)** and **Renovation Allowance** are calculated.
+   * Using the defined procedure:
 
-    ```
-    https://maps.googleapis.com/maps/api/geocode/json?address=123+Main+St&key=YOUR_KEY
-    ```
-  * Response contains:
+     * Compute **ARV** for the entered address property.
+     * Apply the Renograte Formula:
 
-    ```json
-    {
-      "lat": 38.8977,
-      "lng": -77.0365
-    }
-    ```
+     $$
+     \text{Renovation Allowance} = (\text{ARV} \times 87\%) - \text{CHV}
+     $$
 
----
+4. **Final Output**
 
-### **3. Identify Subject Property**
-
-* **Backend Step 2: Realtyna + Bright MLS**
-
-  * Use **Realtyna API** to search for the exact property by coordinates (radius = 0.05 miles for an exact match).
-  * Fetch:
-
-    * Square footage
-    * Lot size
-    * Bedrooms & bathrooms
-    * Year built
-    * Current listing status
-
----
-
-### **4. Find Comparable Properties**
-
-* **Backend Step 3: Bright MLS Nearby Search**
-
-  * From the subject property’s coordinates, query Bright MLS (via Realtyna API) for:
-
-    * **Renovated comps** → filter by recently sold, renovated condition, same property type, within 1-mile radius, similar size (±10%).
-    * **As-is comps** → filter by sold “as-is” or average condition, same parameters.
-
----
-
-### **5. Calculate ARV & CHV**
-
-* **ARV (After Renovated Value)**
-
-  * Take **average sale price of top 3 renovated comps**.
-
-* **CHV (Current Home Value)**
-
-  * Take **average sale price of top 3 as-is comps**.
-
----
-
-### **6. Apply Renograte Formula**
-
-$$
-\text{Renovation Allowance} = (\text{ARV} \times 87\%) - \text{CHV}
-$$
-
-* Example:
-
-  * ARV = \$1,000,000
-  * CHV = \$800,000
-  * Formula: `(1,000,000 × 0.87) - 800,000 = $70,000`
-
----
-
-### **7. Output & Lead Capture**
-
-* **Frontend display:**
-
-  * Show:
-
-    * Property Address
-    * ARV
-    * CHV
-    * Estimated Renovation Allowance (big, highlighted)
-  * Add:
-
-    * **Button** → “Contact a Renograte Agent” (opens lead form)
-    * **Link** → “Email Renograte” (pre-filled subject & details)
-  * Store lead in CRM via API.
-
----
-
-### **8. Optional AI Enhancement**
-
-* Integrate **Google Gemini, ChatGPT, or Custom AI** to:
-
-  * Automatically interpret Bright MLS data.
-  * Verify comps are truly “renovated” vs “as-is”.
-  * Provide a 1-paragraph property investment summary.
-
----
-
-### **Tech Stack Summary**
-
-* **Frontend:** Next.js/React
-* **Backend:** Node.js (Express/NestJS)
-* **APIs:**
-
-  * Google Maps Geocoding API
-  * Realtyna API (Bright MLS feed)
-  * AI API (optional)
-* **Database:** PostgreSQL/MySQL for lead storage
-* **CRM Integration:** HubSpot, Salesforce, or custom
+   * The **CHV**, **ARV**, and **Renovation Allowance** are displayed on the **Estimate Page**.
 

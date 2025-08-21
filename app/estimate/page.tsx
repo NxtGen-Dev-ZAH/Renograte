@@ -41,7 +41,23 @@ interface EstimationResult {
     arvFormula: string;
     chvFormula: string;
     renovationFormula: string;
-    calculationMethod: "mls_data" | "fallback_calculation";
+    calculationMethod: "agent_matching";
+  };
+  handoffEvent?: {
+    event_type: "require_property_details";
+    address: string;
+    reason: string;
+    default_assumptions: {
+      square_footage: number;
+      bedrooms: number;
+      bathrooms: number;
+    };
+  };
+  requiresUserInput?: boolean;
+  agentData: {
+    neighbouringProperties: any[];
+    matchingProperties?: any[];
+    agentWorkflow: "specific_property" | "neighbouring_properties";
   };
 }
 
@@ -56,6 +72,17 @@ export default function EstimatePage() {
   const [estimationResult, setEstimationResult] =
     useState<EstimationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Property details form state for handoff workflow
+  const [showPropertyForm, setShowPropertyForm] = useState(false);
+  const [propertyFormSubmitted, setPropertyFormSubmitted] = useState(false);
+  const [isProcessingDetails, setIsProcessingDetails] = useState(false);
+  const [propertyDetails, setPropertyDetails] = useState({
+    square_footage: "",
+    bedrooms: "",
+    bathrooms: "",
+  });
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -88,6 +115,23 @@ export default function EstimatePage() {
 
         const result = await response.json();
         setEstimationResult(result);
+
+        // Check if handoff event requires user input
+        if (result.requiresUserInput && result.handoffEvent) {
+          console.log("Handoff event detected, showing property form");
+          setShowPropertyForm(true);
+          // Pre-fill form with default assumptions
+          if (result.handoffEvent.default_assumptions) {
+            setPropertyDetails({
+              square_footage:
+                result.handoffEvent.default_assumptions.square_footage.toString(),
+              bedrooms:
+                result.handoffEvent.default_assumptions.bedrooms.toString(),
+              bathrooms:
+                result.handoffEvent.default_assumptions.bathrooms.toString(),
+            });
+          }
+        }
       } catch (error) {
         console.error("Estimation error:", error);
         setError(
@@ -97,13 +141,12 @@ export default function EstimatePage() {
         );
       } finally {
         setIsLoading(false);
-        // setShowLeadForm(false);
-        // setShowLeadForm(true);
       }
     };
 
     const timer = setTimeout(() => {
       fetchEstimation();
+      setShowLeadForm(true);
     }, 2500);
 
     const interval = setInterval(() => {
@@ -137,6 +180,67 @@ export default function EstimatePage() {
         ...prev,
         [name]: value,
       }));
+    }
+  };
+
+  // Handle property details form input changes
+  const handlePropertyDetailsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name, value } = e.target;
+    setPropertyDetails((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Submit property details and get updated estimation
+  const handlePropertyDetailsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessingDetails(true);
+
+    try {
+      const userDetails = {
+        square_footage: propertyDetails.square_footage
+          ? parseInt(propertyDetails.square_footage)
+          : undefined,
+        bedrooms: propertyDetails.bedrooms
+          ? parseInt(propertyDetails.bedrooms)
+          : undefined,
+        bathrooms: propertyDetails.bathrooms
+          ? parseInt(propertyDetails.bathrooms)
+          : undefined,
+      };
+
+      const response = await fetch("/api/estimate-renovation-allowance", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          address,
+          userDetails,
+          isFollowUp: true,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update estimate with property details");
+      }
+
+      const result = await response.json();
+      setEstimationResult(result);
+      setPropertyFormSubmitted(true);
+
+      // Hide the form after a delay
+      setTimeout(() => {
+        setShowPropertyForm(false);
+      }, 1500);
+    } catch (error) {
+      console.error("Error submitting property details:", error);
+      setError("Failed to update estimate with your property details");
+    } finally {
+      setIsProcessingDetails(false);
     }
   };
 
@@ -288,6 +392,132 @@ export default function EstimatePage() {
                     />
                   </div>
                 </div>
+              ) : showPropertyForm ? (
+                <motion.div
+                  className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-cyan-200 p-8"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  {propertyFormSubmitted ? (
+                    <div className="text-center py-8">
+                      <motion.div
+                        className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4"
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 260,
+                          damping: 20,
+                        }}
+                      >
+                        <Check className="w-8 h-8 text-green-500" />
+                      </motion.div>
+                      <h2 className="text-xl font-semibold text-gray-800 mb-2">
+                        Details Updated!
+                      </h2>
+                      <p className="text-gray-600">
+                        Your property details have been processed. Updating your
+                        estimate...
+                      </p>
+                    </div>
+                  ) : (
+                    <form
+                      onSubmit={handlePropertyDetailsSubmit}
+                      className="space-y-6"
+                    >
+                      <div className="text-center mb-8">
+                        <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+                          Help Us Find Exact Renovation Allowance Estimate
+                        </h2>
+                        <p className="text-gray-500">
+                          {estimationResult?.handoffEvent?.reason ||
+                            "We need some property details to find comparable properties in your area."}
+                        </p>
+                      </div>
+
+                      <div className="space-y-6">
+                        <div>
+                          <label
+                            htmlFor="square_footage"
+                            className="block text-sm font-medium text-gray-700 mb-1.5"
+                          >
+                            Square Footage
+                          </label>
+                          <input
+                            type="number"
+                            id="square_footage"
+                            name="square_footage"
+                            value={propertyDetails.square_footage}
+                            onChange={handlePropertyDetailsChange}
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all focus:outline-none duration-200 placeholder-gray-400"
+                            placeholder="e.g., 2000"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="bedrooms"
+                            className="block text-sm font-medium text-gray-700 mb-1.5"
+                          >
+                            Number of Bedrooms
+                          </label>
+                          <input
+                            type="number"
+                            id="bedrooms"
+                            name="bedrooms"
+                            value={propertyDetails.bedrooms}
+                            onChange={handlePropertyDetailsChange}
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all focus:outline-none duration-200 placeholder-gray-400"
+                            placeholder="e.g., 3"
+                          />
+                        </div>
+
+                        <div>
+                          <label
+                            htmlFor="bathrooms"
+                            className="block text-sm font-medium text-gray-700 mb-1.5"
+                          >
+                            Number of Bathrooms
+                          </label>
+                          <input
+                            type="number"
+                            id="bathrooms"
+                            name="bathrooms"
+                            step="0.5"
+                            value={propertyDetails.bathrooms}
+                            onChange={handlePropertyDetailsChange}
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all focus:outline-none duration-200 placeholder-gray-400"
+                            placeholder="e.g., 2.5"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={isProcessingDetails}
+                        className="w-full bg-gradient-to-r from-cyan-600 to-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:from-cyan-700 hover:to-blue-700 transition-all duration-300 shadow-sm hover:shadow-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        {isProcessingDetails ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Updating Estimate...
+                          </>
+                        ) : (
+                          <>
+                            <Calculator className="w-4 h-4" />
+                            Update My Estimate
+                          </>
+                        )}
+                      </button>
+
+                      <p className="text-xs text-gray-400 text-center mt-4">
+                        Don't worry - we're also calculating your estimate with
+                        default assumptions in the background.
+                      </p>
+                    </form>
+                  )}
+                </motion.div>
               ) : showLeadForm ? (
                 <motion.div
                   className="max-w-lg mx-auto bg-white rounded-2xl shadow-sm border border-gray-100 p-8"
@@ -585,18 +815,8 @@ export default function EstimatePage() {
                             <h3 className="text-lg font-semibold text-gray-800">
                               Property Details
                             </h3>
-                            <div
-                              className={`px-3 py-1 rounded-full text-xs font-medium ${
-                                estimationResult.calculationDetails
-                                  .calculationMethod === "mls_data"
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {estimationResult.calculationDetails
-                                .calculationMethod === "mls_data"
-                                ? "MLS Data"
-                                : "Fallback Calculation"}
+                            <div className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              AI Agent Match
                             </div>
                           </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -669,39 +889,69 @@ export default function EstimatePage() {
                         </div>
                       )}
 
-                      {estimationResult &&
-                        estimationResult.calculationDetails
-                          .calculationMethod === "fallback_calculation" && (
-                          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-6">
-                            <div className="flex items-start gap-3">
-                              <div className="w-6 h-6 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <svg
-                                  className="w-4 h-4 text-yellow-600"
-                                  fill="currentColor"
-                                  viewBox="0 0 20 20"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </div>
-                              <div>
-                                <h4 className="font-medium text-yellow-800 mb-1">
-                                  Fallback Calculation Used
-                                </h4>
-                                <p className="text-sm text-yellow-700">
-                                  Limited MLS data was available for this
-                                  property. The estimate is based on property
-                                  characteristics and market assumptions. For a
-                                  more accurate estimate, contact a Renograte
-                                  agent for a detailed analysis.
-                                </p>
-                              </div>
+                      {/* AI Agent Workflow Information */}
+                      {estimationResult && (
+                        <div className="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-100">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <svg
+                                className="w-4 h-4 text-blue-600"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
                             </div>
+                            <h3 className="text-lg font-semibold text-gray-800">
+                              AI Agent Analysis
+                            </h3>
                           </div>
-                        )}
+                          <div className="space-y-3">
+                            <p className="text-sm text-gray-600">
+                              <strong>Workflow:</strong>{" "}
+                              {estimationResult.agentData.agentWorkflow ===
+                              "specific_property"
+                                ? "Specific Property Analysis"
+                                : "Neighboring Properties Analysis"}
+                            </p>
+                            {estimationResult.agentData.agentWorkflow ===
+                              "neighbouring_properties" && (
+                              <>
+                                <p className="text-sm text-gray-600">
+                                  <strong>Properties Found:</strong>{" "}
+                                  {
+                                    estimationResult.agentData
+                                      .neighbouringProperties.length
+                                  }{" "}
+                                  neighboring properties
+                                </p>
+                                {estimationResult.agentData
+                                  .matchingProperties && (
+                                  <p className="text-sm text-gray-600">
+                                    <strong>Matches:</strong>{" "}
+                                    {
+                                      estimationResult.agentData
+                                        .matchingProperties.length
+                                    }{" "}
+                                    closest matches used for CHV calculation
+                                  </p>
+                                )}
+                              </>
+                            )}
+                            {/* <div className="mt-4 p-3 bg-white rounded-lg border border-blue-200">
+                               <p className="text-xs text-blue-800 font-medium">
+                                <strong>Renograte Formula:</strong>
+                                <br />
+                                Renovation Allowance = (ARV × 87%) - CHV
+                              </p> 
+                            </div> */}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 

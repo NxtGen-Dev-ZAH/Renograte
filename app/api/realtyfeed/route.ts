@@ -13,10 +13,19 @@ const TOKEN_BUFFER = 60 * 1000; // 1 minute buffer before expiry
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const resource = searchParams.get('resource');
+    let resource = searchParams.get('resource');
+    const postalCode = searchParams.get('postalCode'); // ✅ NEW
+
+    // ✅ If no resource is given but postalCode exists, build the resource automatically
+    if (!resource && postalCode) {
+      resource = `Property?$filter=PostalCode eq '${postalCode}'`;
+    }
 
     if (!resource) {
-      return NextResponse.json({ error: 'Resource parameter is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Either resource or postalCode parameter is required' },
+        { status: 400 }
+      );
     }
 
     // Get credentials from environment variables

@@ -640,7 +640,7 @@ function PropertiesPage() {
           <div className="relative col-span-3 md:col-span-1">
             <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <Input 
-              placeholder="Search by city, state, zip, street name, or neighborhood..." 
+              placeholder="Search by city, state, postal code, street name, or neighborhood..." 
               className="pl-10" 
               value={locationSearch}
               onChange={(e) => setLocationSearch(e.target.value)}
