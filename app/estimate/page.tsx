@@ -1015,13 +1015,13 @@ export default function EstimatePage() {
                           Email Renograte
                         </a>
 
-                        <a
-                          href="tel:+1234567890"
+                        <Link
+                          href="/agents"
                           className="flex items-center gap-3 w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
                         >
                           <Phone className="w-5 h-5" />
-                          Call Now
-                        </a>
+                          Contact Renograte Agent
+                        </Link>
                       </div>
 
                       {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg">

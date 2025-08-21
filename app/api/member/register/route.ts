@@ -46,13 +46,21 @@ export async function POST(request: Request) {
     const tempPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await hash(tempPassword, 12);
 
-    // Create user with member role
+    // Determine the appropriate role based on the plan type
+    let role = "member";
+    if (plan.toLowerCase().includes('agent')) {
+      role = 'agent';
+    } else if (plan.toLowerCase().includes('service provider') || plan.toLowerCase().includes('contractor')) {
+      role = 'contractor';
+    }
+
+    // Create user with determined role
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: "member",
+        role: role,
         // Add additional fields as needed
       }
     });

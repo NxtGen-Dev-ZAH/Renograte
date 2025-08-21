@@ -3,16 +3,28 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from "next/image";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CheckIcon, StarIcon } from "lucide-react";
-import { StripePaymentForm } from '@/components/StripePaymentForm';
-import { Elements } from '@stripe/react-stripe-js';
-import { stripePromise } from '@/lib/stripe';
+import { StripePaymentForm } from "@/components/StripePaymentForm";
+import { Elements } from "@stripe/react-stripe-js";
+import { stripePromise } from "@/lib/stripe";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -61,17 +73,17 @@ export default function BecomeMember() {
       // Fill in the form with user data
       form.setValue("name", user.name || "");
       form.setValue("email", user.email || "");
-      
+
       // Check if user has a phone number in their profile
       if (user.phone) {
         form.setValue("phone", user.phone);
       }
-      
+
       // If user has a company in their profile
       if (user.company) {
         form.setValue("company", user.company);
       }
-      
+
       // If user has a business type in their profile
       if (user.businessType) {
         form.setValue("businessType", user.businessType);
@@ -98,8 +110,8 @@ export default function BecomeMember() {
           "Document Sharing",
           "Streamlined Communication & Collaboration Tools",
           "Preferred Renograte Agent Ambassador Program",
-          "Renograte Conferences and Events"
-        ]
+          "Renograte Conferences and Events",
+        ],
       },
       {
         name: "Service Providers (Contractors) monthly membership",
@@ -118,9 +130,9 @@ export default function BecomeMember() {
           "Feedback and Reviews",
           "Blogs & Forums",
           "Dedicated Customer Support",
-          "Renograte Conferences and Events"
-        ]
-      }
+          "Renograte Conferences and Events",
+        ],
+      },
     ],
     annual: [
       {
@@ -140,8 +152,8 @@ export default function BecomeMember() {
           "Document Sharing",
           "Streamlined Communication & Collaboration Tools",
           "Preferred Renograte Agent Ambassador Program",
-          "Renograte Conferences and Events VIP"
-        ]
+          "Renograte Conferences and Events VIP",
+        ],
       },
       {
         name: "Service providers (Contractors) yearly membership",
@@ -160,19 +172,19 @@ export default function BecomeMember() {
           "Feedback and Reviews",
           "Dedicated Customer Support",
           "Blogs & Forums",
-          "Renograte Conferences and Events VIP"
-        ]
-      }
-    ]
+          "Renograte Conferences and Events VIP",
+        ],
+      },
+    ],
   };
 
   const handlePlanSelect = (plan: string, cycle: string) => {
     setActivePlan(plan);
     setSelectedPlan(cycle);
     // Scroll to registration form
-    document.getElementById("registration-form")?.scrollIntoView({ 
+    document.getElementById("registration-form")?.scrollIntoView({
       behavior: "smooth",
-      block: "start" 
+      block: "start",
     });
   };
 
@@ -180,7 +192,8 @@ export default function BecomeMember() {
     if (!selectedPlan || !activePlan) {
       toast({
         title: "Plan Selection Required",
-        description: "Please select a plan before proceeding with registration.",
+        description:
+          "Please select a plan before proceeding with registration.",
         variant: "destructive",
       });
       return;
@@ -195,23 +208,29 @@ export default function BecomeMember() {
       // Handle differently based on authentication status
       if (isAuthenticated && user) {
         // User is already logged in, check their role
-        if (user.role === 'member' || user.role === 'agent' || user.role === 'contractor' || user.role === 'admin') {
+        if (
+          user.role === "member" ||
+          user.role === "agent" ||
+          user.role === "contractor" ||
+          user.role === "admin"
+        ) {
           // User is already a member or has a higher role
           toast({
             title: "Already a Member",
-            description: "You already have membership access. Redirecting to dashboard.",
+            description:
+              "You already have membership access. Redirecting to dashboard.",
             variant: "default",
           });
-          setTimeout(() => router.push('/dashboard'), 2000);
+          setTimeout(() => router.push("/dashboard"), 2000);
           setIsLoading(false);
           return;
         }
 
         // User exists but is a regular user, just update their profile
-        const updateResponse = await fetch('/api/member/upgrade', {
-          method: 'POST',
+        const updateResponse = await fetch("/api/member/upgrade", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             userId: user.id,
@@ -222,16 +241,16 @@ export default function BecomeMember() {
         });
 
         responseData = await updateResponse.json();
-        
+
         if (!updateResponse.ok) {
-          throw new Error(responseData.error || 'Member upgrade failed');
+          throw new Error(responseData.error || "Member upgrade failed");
         }
       } else {
         // New user registration
-        const registrationResponse = await fetch('/api/member/register', {
-          method: 'POST',
+        const registrationResponse = await fetch("/api/member/register", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             ...data,
@@ -241,25 +260,29 @@ export default function BecomeMember() {
         });
 
         responseData = await registrationResponse.json();
-        
+
         if (!registrationResponse.ok) {
-          throw new Error(responseData.error || 'Registration failed');
+          throw new Error(responseData.error || "Registration failed");
         }
       }
 
       // Store registration data and mark registration as complete
       setRegistrationData(responseData);
       setRegistrationComplete(true);
-      
+
       // Create payment intent
-      const paymentResponse = await fetch('/api/create-payment-intent', {
-        method: 'POST',
+      const paymentResponse = await fetch("/api/create-payment-intent", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: parseInt(plans[selectedPlan as keyof typeof plans].find(p => p.name === activePlan)?.price.replace('$', '') || '0'),
-          currency: 'usd',
+          amount: parseInt(
+            plans[selectedPlan as keyof typeof plans]
+              .find((p) => p.name === activePlan)
+              ?.price.replace("$", "") || "0"
+          ),
+          currency: "usd",
           plan: activePlan,
           billingCycle: selectedPlan,
           userId: responseData.user.id,
@@ -267,24 +290,27 @@ export default function BecomeMember() {
       });
 
       const paymentData = await paymentResponse.json();
-      
+
       if (!paymentResponse.ok) {
-        throw new Error(paymentData.error || 'Payment initialization failed');
+        throw new Error(paymentData.error || "Payment initialization failed");
       }
 
       setClientSecret(paymentData.clientSecret);
-      
+
       toast({
         title: "Registration Successful",
-        description: "Please complete your payment to activate your membership.",
+        description:
+          "Please complete your payment to activate your membership.",
       });
-      
     } catch (error) {
       console.error("Error:", error);
-      setPaymentError(error instanceof Error ? error.message : 'An error occurred');
+      setPaymentError(
+        error instanceof Error ? error.message : "An error occurred"
+      );
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : 'An error occurred',
+        description:
+          error instanceof Error ? error.message : "An error occurred",
         variant: "destructive",
       });
     } finally {
@@ -293,28 +319,30 @@ export default function BecomeMember() {
   };
 
   const businessTypes = [
-    "Real Estate Agency", 
-    "Individual Agent", 
-    "Property Management", 
+    "Real Estate Agency",
+    "Individual Agent",
+    "Property Management",
     "Real Estate Investor",
     "Contractor",
-    "Other"
+    "Other",
   ];
 
   const createPaymentIntent = async () => {
     try {
-      const selectedPlanData = plans[selectedPlan as keyof typeof plans].find(p => p.name === activePlan);
+      const selectedPlanData = plans[selectedPlan as keyof typeof plans].find(
+        (p) => p.name === activePlan
+      );
       if (!selectedPlanData) return;
 
-      const amount = parseInt(selectedPlanData.price.replace('$', ''));
-      const response = await fetch('/api/create-payment-intent', {
-        method: 'POST',
+      const amount = parseInt(selectedPlanData.price.replace("$", ""));
+      const response = await fetch("/api/create-payment-intent", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           amount,
-          currency: 'usd',
+          currency: "usd",
           plan: activePlan,
           billingCycle: selectedPlan,
         }),
@@ -327,8 +355,8 @@ export default function BecomeMember() {
 
       setClientSecret(data.clientSecret);
     } catch (error) {
-      console.error('Error creating payment intent:', error);
-      setPaymentError('Failed to initialize payment. Please try again.');
+      console.error("Error creating payment intent:", error);
+      setPaymentError("Failed to initialize payment. Please try again.");
     }
   };
 
@@ -341,27 +369,31 @@ export default function BecomeMember() {
   const handlePaymentSuccess = async () => {
     try {
       // Update user role to 'member' in the database
-      const updateRoleResponse = await fetch('/api/member/update-role', {
-        method: 'POST',
+      const updateRoleResponse = await fetch("/api/member/update-role", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
+        credentials: "include", // Include cookies for authentication
         body: JSON.stringify({
           userId: registrationData?.user?.id,
-          newRole: 'member',
+          newRole: "member",
           planType: activePlan,
-          billingCycle: selectedPlan
+          billingCycle: selectedPlan,
         }),
       });
 
       if (!updateRoleResponse.ok) {
         const errorData = await updateRoleResponse.json();
-        throw new Error(errorData.error || 'Failed to update membership status');
+        throw new Error(
+          errorData.error || "Failed to update membership status"
+        );
       }
 
       toast({
         title: "Payment Successful",
-        description: "Your membership has been activated. You'll be redirected to login for a fresh session.",
+        description:
+          "Your membership has been activated. You'll be redirected to login for a fresh session.",
       });
 
       // Instead of trying to wait for the session to update (which can be unreliable),
@@ -369,33 +401,40 @@ export default function BecomeMember() {
       // This ensures they get a fresh session with the correct role
       try {
         // Try to sign out the user first
-        const res = await fetch('/api/auth/signout', {
-          method: 'POST',
+        const res = await fetch("/api/auth/signout", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
-          body: JSON.stringify({ redirect: false, callbackUrl: '/dashboard' }),
+          body: JSON.stringify({ redirect: false, callbackUrl: "/dashboard" }),
         });
-        
+
         if (res.ok) {
           // If successful, redirect to login with callback to dashboard
           setTimeout(() => {
-            router.push('/login?callbackUrl=/dashboard&message=membership_activated');
+            router.push(
+              "/login?callbackUrl=/dashboard&message=membership_activated"
+            );
           }, 1500);
         } else {
           // Fallback if signout fails
-          router.push('/login?callbackUrl=/dashboard&message=membership_activated');
+          router.push(
+            "/login?callbackUrl=/dashboard&message=membership_activated"
+          );
         }
       } catch (error) {
         // Fallback if the signout request fails
-        console.error('Error during signout:', error);
-        router.push('/login?callbackUrl=/dashboard&message=membership_activated');
+        console.error("Error during signout:", error);
+        router.push(
+          "/login?callbackUrl=/dashboard&message=membership_activated"
+        );
       }
     } catch (error) {
-      console.error('Error updating user role:', error);
+      console.error("Error updating user role:", error);
       toast({
         title: "Membership Update Error",
-        description: "Your payment was processed but we couldn't update your membership status. Please contact support.",
+        description:
+          "Your payment was processed but we couldn't update your membership status. Please contact support.",
         variant: "destructive",
       });
     }
@@ -419,7 +458,8 @@ export default function BecomeMember() {
             Join the Renograte Community
           </h1>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Select the plan that best fits your needs and start transforming your real estate business with renovation-ready properties
+            Select the plan that best fits your needs and start transforming
+            your real estate business with renovation-ready properties
           </p>
         </div>
 
@@ -428,67 +468,85 @@ export default function BecomeMember() {
           <Tabs defaultValue="monthly" className="w-full max-w-4xl mx-auto">
             <div className="flex justify-center mb-8">
               <TabsList className="grid w-[300px] sm:w-[360px] grid-cols-2 p-1 bg-gray-100">
-                <TabsTrigger 
-                  value="monthly" 
+                <TabsTrigger
+                  value="monthly"
                   onClick={() => setSelectedPlan("monthly")}
                   className="data-[state=active]:bg-[#0C71C3] data-[state=active]:text-white"
                 >
                   Monthly Billing
                 </TabsTrigger>
-                <TabsTrigger 
-                  value="annual" 
+                <TabsTrigger
+                  value="annual"
                   onClick={() => setSelectedPlan("annual")}
                   className="data-[state=active]:bg-[#0C71C3] data-[state=active]:text-white"
                 >
                   Annual Billing
-                  <span className="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">Save 20%</span>
+                  <span className="ml-2 bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded-full">
+                    Save 20%
+                  </span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
             {["monthly", "annual"].map((billingPeriod) => (
               <TabsContent key={billingPeriod} value={billingPeriod}>
-                <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8`}>
-                  {plans[billingPeriod as keyof typeof plans].map((plan, index) => (
-                    <Card 
-                      key={index} 
-                      className={`relative hover:shadow-xl transition-all duration-300 ${
-                        plan.name === activePlan
-                          ? "border-2 border-[#0C71C3] shadow-lg shadow-[#0C71C3]/10"
-                          : "border border-gray-200"
-                      }`}
-                    >
-                      <CardHeader>
-                        <CardTitle className="text-2xl font-bold">{plan.name}</CardTitle>
-                        <div className="mt-6">
-                          <div className="flex items-baseline">
-                            <span className="text-4xl font-extrabold">{plan.price}</span>
-                            <span className="text-gray-500 ml-1">{plan.period}</span>
+                <div
+                  className={`grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8`}
+                >
+                  {plans[billingPeriod as keyof typeof plans].map(
+                    (plan, index) => (
+                      <Card
+                        key={index}
+                        className={`relative hover:shadow-xl transition-all duration-300 ${
+                          plan.name === activePlan
+                            ? "border-2 border-[#0C71C3] shadow-lg shadow-[#0C71C3]/10"
+                            : "border border-gray-200"
+                        }`}
+                      >
+                        <CardHeader>
+                          <CardTitle className="text-2xl font-bold">
+                            {plan.name}
+                          </CardTitle>
+                          <div className="mt-6">
+                            <div className="flex items-baseline">
+                              <span className="text-4xl font-extrabold">
+                                {plan.price}
+                              </span>
+                              <span className="text-gray-500 ml-1">
+                                {plan.period}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-4">
-                        <ul className="space-y-3">
-                          {plan.features.map((feature, idx) => (
-                            <li key={idx} className="flex items-start">
-                              <CheckIcon className="h-5 w-5 text-[#0C71C3] mr-2 shrink-0 mt-0.5" />
-                              <span className="text-sm text-gray-700">{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                        <Button
-                          className={`w-full mt-8 ${
-                            plan.name === activePlan
-                              ? "bg-[#0C71C3] hover:bg-[#0A5A9C]" 
-                              : "bg-white text-[#0C71C3] border border-[#0C71C3] hover:bg-[#0C71C3] hover:text-white"
-                          }`}
-                          onClick={() => handlePlanSelect(plan.name, billingPeriod)}
-                        >
-                          {plan.name === activePlan ? "Selected" : "Select Plan"}
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        </CardHeader>
+                        <CardContent className="pt-4">
+                          <ul className="space-y-3">
+                            {plan.features.map((feature, idx) => (
+                              <li key={idx} className="flex items-start">
+                                <CheckIcon className="h-5 w-5 text-[#0C71C3] mr-2 shrink-0 mt-0.5" />
+                                <span className="text-sm text-gray-700">
+                                  {feature}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                          <Button
+                            className={`w-full mt-8 ${
+                              plan.name === activePlan
+                                ? "bg-[#0C71C3] hover:bg-[#0A5A9C]"
+                                : "bg-white text-[#0C71C3] border border-[#0C71C3] hover:bg-[#0C71C3] hover:text-white"
+                            }`}
+                            onClick={() =>
+                              handlePlanSelect(plan.name, billingPeriod)
+                            }
+                          >
+                            {plan.name === activePlan
+                              ? "Selected"
+                              : "Select Plan"}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    )
+                  )}
                 </div>
               </TabsContent>
             ))}
@@ -499,7 +557,9 @@ export default function BecomeMember() {
         <Card className="shadow-lg max-w-3xl mx-auto" id="registration-form">
           <CardHeader className="bg-gradient-to-r from-[#0C71C3]/10 to-blue-50 border-b">
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
-              {registrationComplete ? "Complete Your Payment" : "Complete Your Registration"}
+              {registrationComplete
+                ? "Complete Your Payment"
+                : "Complete Your Registration"}
               {activePlan && (
                 <div className="text-sm font-normal px-2 py-0.5 bg-[#0C71C3]/10 text-[#0C71C3] rounded-md">
                   {activePlan} Plan
@@ -520,21 +580,30 @@ export default function BecomeMember() {
           </CardHeader>
           <CardContent className="pt-6">
             {!registrationComplete ? (
-              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(handleSubmit)}
+                className="space-y-6"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <Label htmlFor="name" className="text-sm font-medium">Full Name*</Label>
+                    <Label htmlFor="name" className="text-sm font-medium">
+                      Full Name*
+                    </Label>
                     <Input
                       id="name"
                       {...form.register("name")}
                       className="focus-visible:ring-[#0C71C3]"
                     />
                     {form.formState.errors.name && (
-                      <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.name.message}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-sm font-medium">Email Address*</Label>
+                    <Label htmlFor="email" className="text-sm font-medium">
+                      Email Address*
+                    </Label>
                     <Input
                       id="email"
                       type="email"
@@ -542,11 +611,15 @@ export default function BecomeMember() {
                       className="focus-visible:ring-[#0C71C3]"
                     />
                     {form.formState.errors.email && (
-                      <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.email.message}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="company" className="text-sm font-medium">Company Name</Label>
+                    <Label htmlFor="company" className="text-sm font-medium">
+                      Company Name
+                    </Label>
                     <Input
                       id="company"
                       {...form.register("company")}
@@ -554,7 +627,9 @@ export default function BecomeMember() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone" className="text-sm font-medium">Phone Number*</Label>
+                    <Label htmlFor="phone" className="text-sm font-medium">
+                      Phone Number*
+                    </Label>
                     <Input
                       id="phone"
                       type="tel"
@@ -562,14 +637,23 @@ export default function BecomeMember() {
                       className="focus-visible:ring-[#0C71C3]"
                     />
                     {form.formState.errors.phone && (
-                      <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.phone.message}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="businessType" className="text-sm font-medium">Business Type*</Label>
-                    <Select 
-                      value={form.watch("businessType")} 
-                      onValueChange={(value) => form.setValue("businessType", value)}
+                    <Label
+                      htmlFor="businessType"
+                      className="text-sm font-medium"
+                    >
+                      Business Type*
+                    </Label>
+                    <Select
+                      value={form.watch("businessType")}
+                      onValueChange={(value) =>
+                        form.setValue("businessType", value)
+                      }
                     >
                       <SelectTrigger className="focus:ring-[#0C71C3]">
                         <SelectValue placeholder="Select your business type" />
@@ -583,11 +667,18 @@ export default function BecomeMember() {
                       </SelectContent>
                     </Select>
                     {form.formState.errors.businessType && (
-                      <p className="text-sm text-red-500">{form.formState.errors.businessType.message}</p>
+                      <p className="text-sm text-red-500">
+                        {form.formState.errors.businessType.message}
+                      </p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="licenseNumber" className="text-sm font-medium">License Number (if applicable)</Label>
+                    <Label
+                      htmlFor="licenseNumber"
+                      className="text-sm font-medium"
+                    >
+                      License Number (if applicable)
+                    </Label>
                     <Input
                       id="licenseNumber"
                       {...form.register("licenseNumber")}
@@ -601,7 +692,11 @@ export default function BecomeMember() {
                   className="w-full bg-[#0C71C3] hover:bg-[#0A5A9C] text-white"
                   disabled={isLoading || !activePlan || !selectedPlan}
                 >
-                  {!activePlan ? "Select a Plan First" : isLoading ? "Processing..." : "Continue to Payment"}
+                  {!activePlan
+                    ? "Select a Plan First"
+                    : isLoading
+                      ? "Processing..."
+                      : "Continue to Payment"}
                 </Button>
               </form>
             ) : (
@@ -624,27 +719,41 @@ export default function BecomeMember() {
                     </div>
                     <div>
                       <p className="text-gray-600">Business Type</p>
-                      <p className="font-medium">{form.getValues("businessType")}</p>
+                      <p className="font-medium">
+                        {form.getValues("businessType")}
+                      </p>
                     </div>
                   </div>
                 </div>
 
                 {/* Payment Section */}
                 <div className="space-y-2">
-                  <Label className="text-sm font-medium">Payment Information*</Label>
+                  <Label className="text-sm font-medium">
+                    Payment Information*
+                  </Label>
                   <div className="p-4 border rounded-lg bg-gray-50">
                     <div className="flex items-center justify-between mb-4">
-                      <span className="text-sm font-medium text-gray-700">Selected Plan:</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Selected Plan:
+                      </span>
                       <div className="flex items-center space-x-2">
                         <span className="font-medium">{activePlan}</span>
                         <span className="text-gray-500">({selectedPlan})</span>
                         <span className="font-bold text-[#0C71C3]">
-                          {plans[selectedPlan as keyof typeof plans].find(p => p.name === activePlan)?.price}
-                          {plans[selectedPlan as keyof typeof plans].find(p => p.name === activePlan)?.period}
+                          {
+                            plans[selectedPlan as keyof typeof plans].find(
+                              (p) => p.name === activePlan
+                            )?.price
+                          }
+                          {
+                            plans[selectedPlan as keyof typeof plans].find(
+                              (p) => p.name === activePlan
+                            )?.period
+                          }
                         </span>
                       </div>
                     </div>
-                    
+
                     {paymentError && (
                       <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
                         {paymentError}
@@ -662,8 +771,19 @@ export default function BecomeMember() {
                     )}
 
                     <p className="text-sm text-gray-500 mt-3 flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4 mr-1 text-green-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
                       </svg>
                       Your payment information is securely processed by Stripe
                     </p>
@@ -671,30 +791,44 @@ export default function BecomeMember() {
                 </div>
               </div>
             )}
-            
+
             <div className="pt-4">
               <p className="text-center text-xs text-gray-500 mt-4">
-                By completing registration, you agree to our <a href="#" className="text-[#0C71C3] hover:underline">Terms of Service</a> and <a href="#" className="text-[#0C71C3] hover:underline">Privacy Policy</a>
+                By completing registration, you agree to our{" "}
+                <a href="#" className="text-[#0C71C3] hover:underline">
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className="text-[#0C71C3] hover:underline">
+                  Privacy Policy
+                </a>
               </p>
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Testimonials or Trust Signals */}
         <div className="mt-16 max-w-5xl mx-auto">
           <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-gray-900">Trusted by Real Estate Professionals</h2>
-            <p className="text-gray-600 mt-2">Join thousands of real estate professionals already using Renograte</p>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Trusted by Real Estate Professionals
+            </h2>
+            <p className="text-gray-600 mt-2">
+              Join thousands of real estate professionals already using
+              Renograte
+            </p>
           </div>
-          
+
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-70">
             {/* Replace with actual partner/client logos */}
-            {Array(5).fill(0).map((_, i) => (
-              <div key={i} className="w-32 h-12 bg-gray-200 rounded-md"></div>
-            ))}
+            {Array(5)
+              .fill(0)
+              .map((_, i) => (
+                <div key={i} className="w-32 h-12 bg-gray-200 rounded-md"></div>
+              ))}
           </div>
         </div>
       </div>
     </div>
   );
-} 
+}
