@@ -3,9 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
-import { Building, TrendingUp } from "lucide-react";
+import { Building } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 
 interface ListingStats {
   total: number;
@@ -21,7 +20,7 @@ export default function ListingStats() {
     total: 0,
     approved: 0,
     pending: 0,
-    rejected: 0
+    rejected: 0,
   });
   const [loading, setLoading] = useState(true);
 
@@ -29,32 +28,40 @@ export default function ListingStats() {
   useEffect(() => {
     const fetchListingStats = async () => {
       if (!session?.user) return;
-      
+
       setLoading(true);
       try {
         // Fetch all user listings to calculate stats
-        const response = await fetch(`/api/listings?agentId=${session.user.id}`);
-        
+        const response = await fetch(
+          `/api/listings?agentId=${session.user.id}`
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to fetch listings');
+          throw new Error("Failed to fetch listings");
         }
-        
+
         const data = await response.json();
         const listings = data.listings || [];
-        
+
         // Calculate stats
-        const approved = listings.filter((listing: any) => listing.status === 'approved').length;
-        const pending = listings.filter((listing: any) => listing.status === 'pending').length;
-        const rejected = listings.filter((listing: any) => listing.status === 'rejected').length;
-        
+        const approved = listings.filter(
+          (listing: Record<string, unknown>) => listing.status === "approved"
+        ).length;
+        const pending = listings.filter(
+          (listing: Record<string, unknown>) => listing.status === "pending"
+        ).length;
+        const rejected = listings.filter(
+          (listing: Record<string, unknown>) => listing.status === "rejected"
+        ).length;
+
         setStats({
           total: listings.length,
           approved,
           pending,
-          rejected
+          rejected,
         });
       } catch (error) {
-        console.error('Error fetching listing stats:', error);
+        console.error("Error fetching listing stats:", error);
         toast({
           title: "Error",
           description: "Failed to load listing statistics",
@@ -64,16 +71,14 @@ export default function ListingStats() {
         setLoading(false);
       }
     };
-    
+
     fetchListingStats();
-  }, [session]);
+  }, [session, toast]);
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <CardTitle className="text-sm font-medium">
-          Active Listings
-        </CardTitle>
+        <CardTitle className="text-sm font-medium">Active Listings</CardTitle>
         <div className="p-2 rounded-full bg-blue-50">
           <Building className="h-4 w-4 text-blue-600" />
         </div>
@@ -88,7 +93,9 @@ export default function ListingStats() {
             <div className="text-2xl font-bold">{stats.approved}</div>
             <p className="text-xs text-muted-foreground">
               {stats.pending > 0 && (
-                <span className="text-amber-600">+{stats.pending} pending review</span>
+                <span className="text-amber-600">
+                  +{stats.pending} pending review
+                </span>
               )}
             </p>
           </>
@@ -96,4 +103,4 @@ export default function ListingStats() {
       </CardContent>
     </Card>
   );
-} 
+}

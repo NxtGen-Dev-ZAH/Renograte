@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { userId, name, email, company, phone, businessType, licenseNumber, plan, billingCycle } = body;
+    const { userId, name, company, phone, businessType, licenseNumber, plan, billingCycle } = body;
 
     // Extra security check - only allow users to update their own account or admin to update any account
     if (session.user.id !== userId && session.user.role !== 'admin') {

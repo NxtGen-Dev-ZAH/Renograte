@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { X, BedDouble, Bath, Square, MapPin, Phone, Mail, DollarSign } from "lucide-react";
+import { X, BedDouble, Bath, Square, MapPin, DollarSign } from "lucide-react";
 
 export default function FeaturedProperty() {
   const [isHovered, setIsHovered] = useState(false);
@@ -14,7 +14,8 @@ export default function FeaturedProperty() {
     address: " Elkridge, MD 21075 ",
     price: "$850,000",
     renovationAllowance: "$135,000",
-    description: "Featuring spacious interiors, refined finishes,thoughtful design, luxurious suite,  access to nature, and versatile living areas.",
+    description:
+      "Featuring spacious interiors, refined finishes,thoughtful design, luxurious suite,  access to nature, and versatile living areas.",
     specs: {
       bedrooms: 5,
       bathrooms: 4.5,
@@ -79,11 +80,15 @@ export default function FeaturedProperty() {
             <h3 className="text-xl sm:text-2xl md:text-3xl font-bold mb-1 sm:mb-2">
               {propertyDetails.title}
             </h3>
-            <p className="text-sm sm:text-base md:text-xl mb-2 sm:mb-3 md:mb-4">{propertyDetails.address}</p>
+            <p className="text-sm sm:text-base md:text-xl mb-2 sm:mb-3 md:mb-4">
+              {propertyDetails.address}
+            </p>
 
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-3 sm:space-y-0">
               <div className="flex flex-col sm:flex-row sm:items-center">
-                <span className="text-lg sm:text-xl md:text-2xl font-bold">{propertyDetails.price}</span>
+                <span className="text-lg sm:text-xl md:text-2xl font-bold">
+                  {propertyDetails.price}
+                </span>
                 <span className="text-xs sm:text-sm md:text-lg sm:ml-4">
                   Renovation Allowance: {propertyDetails.renovationAllowance}
                 </span>
@@ -116,7 +121,7 @@ export default function FeaturedProperty() {
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.9, opacity: 0 }}
-                onClick={e => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
               >
                 {/* Modal Header */}
                 <div className="relative p-6 border-b border-gray-200">
@@ -126,7 +131,9 @@ export default function FeaturedProperty() {
                   >
                     <X className="w-6 h-6 text-gray-500" />
                   </button>
-                  <h3 className="text-2xl font-bold text-gray-900">{propertyDetails.title}</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">
+                    {propertyDetails.title}
+                  </h3>
                   <div className="flex items-center gap-2 mt-2 text-gray-600">
                     <MapPin className="w-4 h-4" />
                     <p>{propertyDetails.address}</p>
@@ -149,12 +156,15 @@ export default function FeaturedProperty() {
                   <div className="flex flex-wrap gap-4 mb-6">
                     <div className="flex items-center gap-2 bg-blue-50 px-4 py-2 rounded-lg">
                       <DollarSign className="w-5 h-5 text-blue-600" />
-                      <span className="font-semibold text-blue-600">{propertyDetails.price}</span>
+                      <span className="font-semibold text-blue-600">
+                        {propertyDetails.price}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 bg-green-50 px-4 py-2 rounded-lg">
                       <DollarSign className="w-5 h-5 text-green-600" />
                       <span className="font-semibold text-green-600">
-                        Renovation Allowance: {propertyDetails.renovationAllowance}
+                        Renovation Allowance:{" "}
+                        {propertyDetails.renovationAllowance}
                       </span>
                     </div>
                   </div>
@@ -178,7 +188,9 @@ export default function FeaturedProperty() {
                   {/* Description */}
                   <div className="mb-6">
                     <h4 className="text-lg font-semibold mb-2">Description</h4>
-                    <p className="text-gray-600 leading-relaxed">{propertyDetails.description}</p>
+                    <p className="text-gray-600 leading-relaxed">
+                      {propertyDetails.description}
+                    </p>
                   </div>
 
                   {/* Features */}
@@ -186,7 +198,10 @@ export default function FeaturedProperty() {
                     <h4 className="text-lg font-semibold mb-2">Features</h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                       {propertyDetails.features.map((feature, index) => (
-                        <div key={index} className="flex items-center gap-2 text-gray-600">
+                        <div
+                          key={index}
+                          className="flex items-center gap-2 text-gray-600"
+                        >
                           <div className="w-2 h-2 bg-blue-500 rounded-full" />
                           <span>{feature}</span>
                         </div>

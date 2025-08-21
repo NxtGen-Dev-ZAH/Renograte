@@ -12,12 +12,11 @@ import {
   FileText,
 } from "lucide-react";
 import {
-  CHAT_API_CONFIG,
   ChatMessage,
   ChatApiError,
   fetchWithRetry
 } from '../lib/chat-config';
-import { faqData, FAQItem } from './FAQData';
+import { faqData } from './FAQData';
 
 export default function ProfessionalChatbot() {
   const [isOpen, setIsOpen] = useState(false);

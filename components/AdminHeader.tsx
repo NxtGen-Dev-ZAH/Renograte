@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, ListFilter, FileText, BookOpen, Settings } from "lucide-react";
+import { Home, Users, ListFilter, FileText, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [

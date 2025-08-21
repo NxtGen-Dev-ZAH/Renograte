@@ -13,10 +13,19 @@ const TOKEN_BUFFER = 60 * 1000; // 1 minute buffer before expiry
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const resource = searchParams.get('resource');
+    let resource = searchParams.get('resource');
+    const postalCode = searchParams.get('postalCode'); // ✅ NEW
+
+    // ✅ If no resource is given but postalCode exists, build the resource automatically
+    if (!resource && postalCode) {
+      resource = `Property?$filter=PostalCode eq '${postalCode}'`;
+    }
 
     if (!resource) {
-      return NextResponse.json({ error: 'Resource parameter is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Either resource or postalCode parameter is required' },
+        { status: 400 }
+      );
     }
 
     // Get credentials from environment variables
@@ -113,7 +122,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Make API Request with timeout and retry logic
-    const makeRequest = async (retries = 2): Promise<any> => {
+    const makeRequest = async (retries = 2): Promise<{ status: number; data: Record<string, unknown> }> => {
       try {
         return await axios.get(`${apiUrl}${path}?${params.toString()}`, {
           headers: {
@@ -125,9 +134,9 @@ export async function GET(request: NextRequest) {
           },
           timeout: 10000 // Reduced timeout to 10s for faster error responses
         });
-      } catch (error: any) {
+      } catch (error: unknown) {
         // If token expired (401), invalidate cache and retry once
-        if (error.response?.status === 401 && tokenCache && retries > 0) {
+        if (error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response && error.response.status === 401 && tokenCache && retries > 0) {
           tokenCache = null; // Force new token acquisition
           return makeRequest(retries - 1); 
         }
@@ -139,10 +148,11 @@ export async function GET(request: NextRequest) {
 
     // Only log minimal info in production
     if (process.env.NODE_ENV !== 'production') {
+      const data = response.data as Record<string, unknown>;
       console.log('RealtyFeed API Response:', {
         status: response.status,
-        count: response.data['@odata.count'],
-        itemCount: response.data.value?.length,
+        count: data['@odata.count'],
+        itemCount: Array.isArray(data.value) ? data.value.length : 0,
         timestamp: new Date().toISOString()
       });
     }
@@ -156,13 +166,17 @@ export async function GET(request: NextRequest) {
       }
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     // Enhanced error logging - with sensitive data redaction
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStatus = error && typeof error === 'object' && 'response' in error && error.response && typeof error.response === 'object' && 'status' in error.response ? error.response.status : undefined;
+    const errorConfig = error && typeof error === 'object' && 'config' in error && error.config && typeof error.config === 'object' && 'url' in error.config && error.config.url ? new URL(error.config.url as string).pathname : undefined;
+    
     console.error('RealtyFeed API Error:', {
-      message: error.message,
-      status: error.response?.status,
+      message: errorMessage,
+      status: errorStatus,
       config: {
-        url: error.config?.url ? new URL(error.config.url).pathname : undefined,
+        url: errorConfig,
         // Don't log query parameters which might contain sensitive info
       }
     });

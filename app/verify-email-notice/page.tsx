@@ -17,7 +17,7 @@ export default function VerifyEmailNoticePage() {
               Please check your email for a verification link. You need to verify your email address before accessing this page.
             </p>
             <p className="text-sm text-gray-500">
-              If you haven't received the email, please check your spam folder.
+              If you haven&apos;t received the email, please check your spam folder.
             </p>
             <div className="space-y-2">
               <Button asChild variant="outline" className="w-full">

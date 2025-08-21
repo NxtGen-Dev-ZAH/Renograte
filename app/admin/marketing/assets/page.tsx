@@ -91,7 +91,7 @@ export default function AdminMarketingAssetsPage() {
   const getProxyUrl = (fileKey: string) => {
     if (!fileKey) return "";
     // Check if already a full URL or a proxy URL
-    if (fileKey.startsWith('http') || fileKey.startsWith('/api')) {
+    if (fileKey.startsWith("http") || fileKey.startsWith("/api")) {
       return fileKey;
     }
     return `/api/s3-proxy?key=${encodeURIComponent(fileKey)}`;
@@ -132,10 +132,12 @@ export default function AdminMarketingAssetsPage() {
         const params = new URLSearchParams();
 
         // Only append if the selectedType is not "all"
-        if (selectedType && selectedType !== "all") params.append("type", selectedType);
+        if (selectedType && selectedType !== "all")
+          params.append("type", selectedType);
         if (selectedCategory) params.append("category", selectedCategory);
         // Only append if the selectedStatus is not "all"
-        if (selectedStatus && selectedStatus !== "all") params.append("status", selectedStatus);
+        if (selectedStatus && selectedStatus !== "all")
+          params.append("status", selectedStatus);
 
         if (params.toString()) {
           url += `?${params.toString()}`;
@@ -205,7 +207,7 @@ export default function AdminMarketingAssetsPage() {
       });
 
       // Remove the deleted asset from the list
-      setAssets(assets.filter(asset => asset.id !== assetToDelete));
+      setAssets(assets.filter((asset) => asset.id !== assetToDelete));
       setAssetToDelete(null);
       setDeleteDialogOpen(false);
     } catch (error) {
@@ -238,7 +240,10 @@ export default function AdminMarketingAssetsPage() {
     <div className="p-6 mt-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/admin/marketing" className="text-gray-500 hover:text-gray-700">
+          <Link
+            href="/admin/marketing"
+            className="text-gray-500 hover:text-gray-700"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="text-2xl font-bold">Marketing Assets</h1>
@@ -267,7 +272,11 @@ export default function AdminMarketingAssetsPage() {
               <SelectTrigger className="min-w-[130px]">
                 <Filter className="h-4 w-4 mr-2" />
                 {/* Display "All Types" if selectedType is "all", otherwise capitalize the selected type */}
-                <span>{selectedType === "all" ? "All Types" : selectedType.replace("_", " ")}</span>
+                <span>
+                  {selectedType === "all"
+                    ? "All Types"
+                    : selectedType.replace("_", " ")}
+                </span>
               </SelectTrigger>
               <SelectContent>
                 {/* Change value to "all" */}
@@ -285,7 +294,12 @@ export default function AdminMarketingAssetsPage() {
             >
               <SelectTrigger className="min-w-[130px]">
                 {/* Display "All Statuses" if selectedStatus is "all" */}
-                <span>{selectedStatus === "all" ? "All Statuses" : selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}</span>
+                <span>
+                  {selectedStatus === "all"
+                    ? "All Statuses"
+                    : selectedStatus.charAt(0).toUpperCase() +
+                      selectedStatus.slice(1)}
+                </span>
               </SelectTrigger>
               <SelectContent>
                 {/* Add an "all" option for status filter as well */}
@@ -297,7 +311,10 @@ export default function AdminMarketingAssetsPage() {
             </Select>
           </div>
         </div>
-        <Button className="gap-2" onClick={() => router.push("/admin/marketing/assets/new")}>
+        <Button
+          className="gap-2"
+          onClick={() => router.push("/admin/marketing/assets/new")}
+        >
           <Plus className="h-4 w-4" />
           New Asset
         </Button>
@@ -350,7 +367,9 @@ export default function AdminMarketingAssetsPage() {
                 </Badge>
               </div>
               <CardHeader className="pb-2">
-                <CardTitle className="text-lg truncate">{asset.title}</CardTitle>
+                <CardTitle className="text-lg truncate">
+                  {asset.title}
+                </CardTitle>
                 <CardDescription>{asset.category}</CardDescription>
               </CardHeader>
               <CardContent className="pt-0">
@@ -358,7 +377,15 @@ export default function AdminMarketingAssetsPage() {
                   {asset.description || "No description"}
                 </p>
                 <div className="mt-3 flex justify-between items-center">
-                  <Badge variant={asset.status === "active" ? "default" : asset.status === "draft" ? "secondary" : "outline"}>
+                  <Badge
+                    variant={
+                      asset.status === "active"
+                        ? "default"
+                        : asset.status === "draft"
+                          ? "secondary"
+                          : "outline"
+                    }
+                  >
                     {asset.status}
                   </Badge>
                   <DropdownMenu>
@@ -377,7 +404,11 @@ export default function AdminMarketingAssetsPage() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <a href={getProxyUrl(asset.fileUrl)} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={getProxyUrl(asset.fileUrl)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           <ExternalLink className="h-4 w-4 mr-2" />
                           View
                         </a>
@@ -413,7 +444,8 @@ export default function AdminMarketingAssetsPage() {
           <DialogHeader>
             <DialogTitle>Delete Asset</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this asset? This action cannot be undone.
+              Are you sure you want to delete this asset? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

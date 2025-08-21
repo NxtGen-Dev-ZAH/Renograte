@@ -2,17 +2,23 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import {
   ArrowLeft,
-  BarChart3, 
-  Users, 
-  Download, 
-  Plus, 
-  LineChart, 
-  TrendingUp, 
+  BarChart3,
+  Users,
+  Download,
+  Plus,
+  LineChart,
+  TrendingUp,
   FileText,
   Image as ImageIcon,
   Video,
@@ -24,7 +30,7 @@ import {
   AlertCircle,
   Folder,
   Megaphone,
-  Shield
+  Shield,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Badge } from "@/components/ui/badge";
@@ -65,13 +71,13 @@ export default function AdminMarketingPage() {
     image: 0,
     document: 0,
     video: 0,
-    email_template: 0
+    email_template: 0,
   });
   const [campaignCounts, setCampaignCounts] = useState({
     total: 0,
     active: 0,
     draft: 0,
-    archived: 0
+    archived: 0,
   });
 
   // Redirect if not admin
@@ -97,13 +103,17 @@ export default function AdminMarketingPage() {
         }
         const campaignsData = await campaignsResponse.json();
         setRecentCampaigns(campaignsData.slice(0, 5));
-        
+
         // Calculate campaign counts
         const counts = {
           total: campaignsData.length,
-          active: campaignsData.filter((c: Campaign) => c.status === "active").length,
-          draft: campaignsData.filter((c: Campaign) => c.status === "draft").length,
-          archived: campaignsData.filter((c: Campaign) => c.status === "archived").length
+          active: campaignsData.filter((c: Campaign) => c.status === "active")
+            .length,
+          draft: campaignsData.filter((c: Campaign) => c.status === "draft")
+            .length,
+          archived: campaignsData.filter(
+            (c: Campaign) => c.status === "archived"
+          ).length,
         };
         setCampaignCounts(counts);
 
@@ -114,14 +124,20 @@ export default function AdminMarketingPage() {
         }
         const assetsData = await assetsResponse.json();
         setRecentAssets(assetsData.slice(0, 8));
-        
+
         // Calculate asset counts
         const assetCounts = {
           total: assetsData.length,
-          image: assetsData.filter((a: MarketingAsset) => a.type === "image").length,
-          document: assetsData.filter((a: MarketingAsset) => a.type === "document").length,
-          video: assetsData.filter((a: MarketingAsset) => a.type === "video").length,
-          email_template: assetsData.filter((a: MarketingAsset) => a.type === "email_template").length
+          image: assetsData.filter((a: MarketingAsset) => a.type === "image")
+            .length,
+          document: assetsData.filter(
+            (a: MarketingAsset) => a.type === "document"
+          ).length,
+          video: assetsData.filter((a: MarketingAsset) => a.type === "video")
+            .length,
+          email_template: assetsData.filter(
+            (a: MarketingAsset) => a.type === "email_template"
+          ).length,
         };
         setAssetCounts(assetCounts);
       } catch (error) {
@@ -206,12 +222,19 @@ export default function AdminMarketingPage() {
           <Shield className="h-6 w-6 text-blue-500" />
           <div>
             <h3 className="font-medium">Admin-Only Area</h3>
-            <p className="text-sm text-muted-foreground">Only administrators can create and manage marketing materials. Users can view and use these materials from their dashboard.</p>
+            <p className="text-sm text-muted-foreground">
+              Only administrators can create and manage marketing materials.
+              Users can view and use these materials from their dashboard.
+            </p>
           </div>
         </CardContent>
       </Card>
 
-      <Tabs defaultValue="overview" className="space-y-6" onValueChange={setActiveTab}>
+      <Tabs
+        defaultValue="overview"
+        className="space-y-6"
+        onValueChange={setActiveTab}
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
@@ -229,13 +252,15 @@ export default function AdminMarketingPage() {
                 <Megaphone className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : campaignCounts.total}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : campaignCounts.total}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   {campaignCounts.active} active campaigns
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -244,13 +269,23 @@ export default function AdminMarketingPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.total}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.total}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Across {Object.keys(assetCounts).filter(k => k !== 'total' && assetCounts[k as keyof typeof assetCounts] > 0).length} categories
+                  Across{" "}
+                  {
+                    Object.keys(assetCounts).filter(
+                      (k) =>
+                        k !== "total" &&
+                        assetCounts[k as keyof typeof assetCounts] > 0
+                    ).length
+                  }{" "}
+                  categories
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -259,13 +294,15 @@ export default function AdminMarketingPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : campaignCounts.draft}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : campaignCounts.draft}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Awaiting publication
                 </p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -274,7 +311,9 @@ export default function AdminMarketingPage() {
                 <Archive className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : campaignCounts.archived}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : campaignCounts.archived}
+                </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   No longer active
                 </p>
@@ -302,7 +341,10 @@ export default function AdminMarketingPage() {
                 ) : (
                   <div className="space-y-4">
                     {recentCampaigns.map((campaign) => (
-                      <div key={campaign.id} className="flex items-center justify-between border-b pb-3">
+                      <div
+                        key={campaign.id}
+                        className="flex items-center justify-between border-b pb-3"
+                      >
                         <div>
                           <p className="font-medium">{campaign.title}</p>
                           <div className="flex items-center gap-2 mt-1">
@@ -313,13 +355,20 @@ export default function AdminMarketingPage() {
                           </div>
                         </div>
                         <Button variant="ghost" size="sm" asChild>
-                          <Link href={`/admin/marketing/campaigns/${campaign.id}`}>
+                          <Link
+                            href={`/admin/marketing/campaigns/${campaign.id}`}
+                          >
                             Edit
                           </Link>
                         </Button>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      asChild
+                    >
                       <Link href="/admin/marketing/campaigns">
                         View All Campaigns
                       </Link>
@@ -328,7 +377,7 @@ export default function AdminMarketingPage() {
                 )}
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardHeader>
                 <CardTitle>Recent Assets</CardTitle>
@@ -348,14 +397,19 @@ export default function AdminMarketingPage() {
                 ) : (
                   <div className="space-y-4">
                     {recentAssets.map((asset) => (
-                      <div key={asset.id} className="flex items-center justify-between border-b pb-3">
+                      <div
+                        key={asset.id}
+                        className="flex items-center justify-between border-b pb-3"
+                      >
                         <div className="flex items-center space-x-3">
                           <div className="bg-muted rounded-md p-2">
                             {getAssetTypeIcon(asset.type)}
                           </div>
                           <div>
                             <p className="font-medium">{asset.title}</p>
-                            <p className="text-xs text-muted-foreground">{asset.category}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {asset.category}
+                            </p>
                           </div>
                         </div>
                         <Button variant="ghost" size="sm" asChild>
@@ -365,7 +419,12 @@ export default function AdminMarketingPage() {
                         </Button>
                       </div>
                     ))}
-                    <Button variant="outline" size="sm" className="w-full" asChild>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      asChild
+                    >
                       <Link href="/admin/marketing/assets">
                         View All Assets
                       </Link>
@@ -379,9 +438,7 @@ export default function AdminMarketingPage() {
           <Card>
             <CardHeader>
               <CardTitle>Marketing Dashboard</CardTitle>
-              <CardDescription>
-                Overview of marketing activity
-              </CardDescription>
+              <CardDescription>Overview of marketing activity</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               <div className="border-t pt-4 px-6 pb-6">
@@ -390,7 +447,8 @@ export default function AdminMarketingPage() {
                   <p className="text-muted-foreground">
                     Detailed analytics dashboard is under development.
                     <br />
-                    Check back soon for insights on campaign performance and asset usage.
+                    Check back soon for insights on campaign performance and
+                    asset usage.
                   </p>
                 </div>
               </div>
@@ -403,7 +461,9 @@ export default function AdminMarketingPage() {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-semibold">Campaign Management</h2>
-              <p className="text-muted-foreground">Create and manage marketing campaigns</p>
+              <p className="text-muted-foreground">
+                Create and manage marketing campaigns
+              </p>
             </div>
             <Button asChild>
               <Link href="/admin/marketing/campaigns/new">
@@ -418,7 +478,9 @@ export default function AdminMarketingPage() {
               <CardHeader className="pb-2">
                 <div className="flex justify-between">
                   <CardTitle className="text-sm font-medium">Active</CardTitle>
-                  <Badge className="bg-green-500">{campaignCounts.active}</Badge>
+                  <Badge className="bg-green-500">
+                    {campaignCounts.active}
+                  </Badge>
                 </div>
               </CardHeader>
               <CardContent>
@@ -447,7 +509,9 @@ export default function AdminMarketingPage() {
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex justify-between">
-                  <CardTitle className="text-sm font-medium">Archived</CardTitle>
+                  <CardTitle className="text-sm font-medium">
+                    Archived
+                  </CardTitle>
                   <Badge variant="secondary">{campaignCounts.archived}</Badge>
                 </div>
               </CardHeader>
@@ -482,10 +546,18 @@ export default function AdminMarketingPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="p-3 text-left text-sm font-medium">Campaign</th>
-                        <th className="p-3 text-left text-sm font-medium">Status</th>
-                        <th className="p-3 text-left text-sm font-medium">Assets</th>
-                        <th className="p-3 text-right text-sm font-medium">Actions</th>
+                        <th className="p-3 text-left text-sm font-medium">
+                          Campaign
+                        </th>
+                        <th className="p-3 text-left text-sm font-medium">
+                          Status
+                        </th>
+                        <th className="p-3 text-left text-sm font-medium">
+                          Assets
+                        </th>
+                        <th className="p-3 text-right text-sm font-medium">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -495,7 +567,10 @@ export default function AdminMarketingPage() {
                             <div className="font-medium">{campaign.title}</div>
                             {campaign.startDate && (
                               <div className="text-xs text-muted-foreground">
-                                Starts: {new Date(campaign.startDate).toLocaleDateString()}
+                                Starts:{" "}
+                                {new Date(
+                                  campaign.startDate
+                                ).toLocaleDateString()}
                               </div>
                             )}
                           </td>
@@ -507,7 +582,9 @@ export default function AdminMarketingPage() {
                           </td>
                           <td className="p-3 text-right">
                             <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/admin/marketing/campaigns/${campaign.id}`}>
+                              <Link
+                                href={`/admin/marketing/campaigns/${campaign.id}`}
+                              >
                                 Edit
                               </Link>
                             </Button>
@@ -527,7 +604,9 @@ export default function AdminMarketingPage() {
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-xl font-semibold">Asset Management</h2>
-              <p className="text-muted-foreground">Create and manage marketing assets</p>
+              <p className="text-muted-foreground">
+                Create and manage marketing assets
+              </p>
             </div>
             <Button asChild>
               <Link href="/admin/marketing/assets/new">
@@ -540,14 +619,19 @@ export default function AdminMarketingPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Images
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Images</CardTitle>
                 <ImageIcon className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.image}</div>
-                <Button variant="link" size="sm" className="p-0 h-auto mt-1" asChild>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.image}
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto mt-1"
+                  asChild
+                >
                   <Link href="/admin/marketing/assets?type=image">
                     View all
                   </Link>
@@ -556,14 +640,19 @@ export default function AdminMarketingPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Documents
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Documents</CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.document}</div>
-                <Button variant="link" size="sm" className="p-0 h-auto mt-1" asChild>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.document}
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto mt-1"
+                  asChild
+                >
                   <Link href="/admin/marketing/assets?type=document">
                     View all
                   </Link>
@@ -572,14 +661,19 @@ export default function AdminMarketingPage() {
             </Card>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Videos
-                </CardTitle>
+                <CardTitle className="text-sm font-medium">Videos</CardTitle>
                 <Video className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.video}</div>
-                <Button variant="link" size="sm" className="p-0 h-auto mt-1" asChild>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.video}
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto mt-1"
+                  asChild
+                >
                   <Link href="/admin/marketing/assets?type=video">
                     View all
                   </Link>
@@ -594,8 +688,15 @@ export default function AdminMarketingPage() {
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.email_template}</div>
-                <Button variant="link" size="sm" className="p-0 h-auto mt-1" asChild>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.email_template}
+                </div>
+                <Button
+                  variant="link"
+                  size="sm"
+                  className="p-0 h-auto mt-1"
+                  asChild
+                >
                   <Link href="/admin/marketing/assets?type=email_template">
                     View all
                   </Link>
@@ -625,10 +726,18 @@ export default function AdminMarketingPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b bg-muted/50">
-                        <th className="p-3 text-left text-sm font-medium">Asset</th>
-                        <th className="p-3 text-left text-sm font-medium">Type</th>
-                        <th className="p-3 text-left text-sm font-medium">Category</th>
-                        <th className="p-3 text-right text-sm font-medium">Actions</th>
+                        <th className="p-3 text-left text-sm font-medium">
+                          Asset
+                        </th>
+                        <th className="p-3 text-left text-sm font-medium">
+                          Type
+                        </th>
+                        <th className="p-3 text-left text-sm font-medium">
+                          Category
+                        </th>
+                        <th className="p-3 text-right text-sm font-medium">
+                          Actions
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -643,14 +752,14 @@ export default function AdminMarketingPage() {
                             </div>
                           </td>
                           <td className="p-3 capitalize">
-                            {asset.type.replace('_', ' ')}
+                            {asset.type.replace("_", " ")}
                           </td>
-                          <td className="p-3">
-                            {asset.category}
-                          </td>
+                          <td className="p-3">{asset.category}</td>
                           <td className="p-3 text-right">
                             <Button variant="ghost" size="sm" asChild>
-                              <Link href={`/admin/marketing/assets/${asset.id}`}>
+                              <Link
+                                href={`/admin/marketing/assets/${asset.id}`}
+                              >
                                 Edit
                               </Link>
                             </Button>
@@ -671,9 +780,7 @@ export default function AdminMarketingPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Asset Usage</CardTitle>
-                <CardDescription>
-                  Most used marketing assets
-                </CardDescription>
+                <CardDescription>Most used marketing assets</CardDescription>
               </CardHeader>
               <CardContent className="pl-2">
                 <BarChart3 className="h-[180px] w-full text-muted-foreground" />
@@ -722,4 +829,4 @@ export default function AdminMarketingPage() {
       </Tabs>
     </div>
   );
-} 
+}

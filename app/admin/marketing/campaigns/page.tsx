@@ -87,7 +87,9 @@ export default function AdminMarketingCampaignsPage() {
     searchParams.get("status")
   );
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(null);
+  const [campaignToDelete, setCampaignToDelete] = useState<Campaign | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   // Redirect if not admin
@@ -139,7 +141,8 @@ export default function AdminMarketingCampaignsPage() {
       result = result.filter(
         (campaign) =>
           campaign.title.toLowerCase().includes(query) ||
-          (campaign.description && campaign.description.toLowerCase().includes(query))
+          (campaign.description &&
+            campaign.description.toLowerCase().includes(query))
       );
     }
 
@@ -169,17 +172,22 @@ export default function AdminMarketingCampaignsPage() {
 
     setIsDeleting(true);
     try {
-      const response = await fetch(`/api/marketing/campaigns/${campaignToDelete.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/marketing/campaigns/${campaignToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to delete campaign");
       }
 
       // Remove campaign from state
-      setCampaigns(campaigns.filter((campaign) => campaign.id !== campaignToDelete.id));
-      
+      setCampaigns(
+        campaigns.filter((campaign) => campaign.id !== campaignToDelete.id)
+      );
+
       toast({
         title: "Campaign Deleted",
         description: "The marketing campaign has been deleted successfully",
@@ -212,14 +220,15 @@ export default function AdminMarketingCampaignsPage() {
     <div className="p-6 mt-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/admin/marketing" className="text-gray-500 hover:text-gray-700">
+          <Link
+            href="/admin/marketing"
+            className="text-gray-500 hover:text-gray-700"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="text-2xl font-bold">Marketing Campaigns</h1>
         </div>
-        <p className="text-muted-foreground">
-          Manage all marketing campaigns
-        </p>
+        <p className="text-muted-foreground">Manage all marketing campaigns</p>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between gap-4 mb-6">
@@ -233,7 +242,10 @@ export default function AdminMarketingCampaignsPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Select value={statusFilter || ""} onValueChange={(value) => setStatusFilter(value || null)}>
+          <Select
+            value={statusFilter || ""}
+            onValueChange={(value) => setStatusFilter(value || null)}
+          >
             <SelectTrigger className="w-[180px]">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4" />
@@ -304,7 +316,9 @@ export default function AdminMarketingCampaignsPage() {
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span>
-                      {campaign.startDate ? formatDate(campaign.startDate) : "No start date"}
+                      {campaign.startDate
+                        ? formatDate(campaign.startDate)
+                        : "No start date"}
                     </span>
                   </div>
                   {campaign.endDate && (
@@ -349,7 +363,9 @@ export default function AdminMarketingCampaignsPage() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href={`/admin/marketing/campaigns/${campaign.id}/view`}>
+                      <Link
+                        href={`/admin/marketing/campaigns/${campaign.id}/view`}
+                      >
                         <Eye className="mr-2 h-4 w-4" />
                         View Details
                       </Link>
@@ -402,7 +418,9 @@ export default function AdminMarketingCampaignsPage() {
             <DialogDescription>
               Are you sure you want to delete this marketing campaign?
               {campaignToDelete?.title && (
-                <span className="font-medium block mt-1">"{campaignToDelete.title}"</span>
+                <span className="font-medium block mt-1">
+                  "{campaignToDelete.title}"
+                </span>
               )}
               This action cannot be undone.
             </DialogDescription>
@@ -434,4 +452,4 @@ export default function AdminMarketingCampaignsPage() {
       </Dialog>
     </div>
   );
-} 
+}

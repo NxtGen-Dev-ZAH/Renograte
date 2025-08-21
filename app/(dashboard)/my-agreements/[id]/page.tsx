@@ -3,26 +3,49 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Download, Share2, Clock, Mail, FileText } from "lucide-react";
+import { ArrowLeft, Download, Share2, Clock, Mail } from "lucide-react";
 import ContractSignatureFlow from "@/components/ContractSignatureFlow";
 import { ContractRole } from "@/lib/contracts/contractService";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import jsPDF from "jspdf";
 
-export default function ContractDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ContractDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   // Unwrap params with React.use() to properly access id
   const resolvedParams = use(params);
   const id = resolvedParams.id;
-  
+
   const [contract, setContract] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [sendingEmail, setSendingEmail] = useState(false);
@@ -31,7 +54,9 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
   const [recipientName, setRecipientName] = useState("");
   const { toast } = useToast();
   const router = useRouter();
-  const [currentUserRole, setCurrentUserRole] = useState<ContractRole | undefined>("AGENT"); // Hardcoded for demo, should be based on auth
+  const [currentUserRole, setCurrentUserRole] = useState<
+    ContractRole | undefined
+  >("AGENT"); // Hardcoded for demo, should be based on auth
   const [isAgent, setIsAgent] = useState(true); // Hardcoded for demo, should be based on auth
 
   useEffect(() => {
@@ -44,7 +69,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
     try {
       setLoading(true);
       const response = await fetch(`/api/contracts/${id}`);
-      
+
       if (!response.ok) {
         if (response.status === 404) {
           toast({
@@ -55,9 +80,9 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
           router.push("/my-agreements");
           return;
         }
-        throw new Error('Failed to fetch contract');
+        throw new Error("Failed to fetch contract");
       }
-      
+
       const contractData = await response.json();
       setContract(contractData);
     } catch (error) {
@@ -72,16 +97,19 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const handleSignSection = async (sectionId: string, signatureData: string) => {
+  const handleSignSection = async (
+    sectionId: string,
+    signatureData: string
+  ) => {
     try {
       if (!currentUserRole) {
         throw new Error("No role assigned");
       }
-      
+
       const response = await fetch(`/api/contracts/${id}`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           sectionId,
@@ -91,14 +119,14 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
           signerRole: currentUserRole,
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to sign contract section');
+        throw new Error("Failed to sign contract section");
       }
-      
+
       // Reload contract to get updated data
       await loadContract();
-      
+
       toast({
         title: "Success",
         description: "Contract section signed successfully.",
@@ -114,34 +142,38 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
     }
   };
 
-  const handleSendSigningLink = async (role: ContractRole, email: string, name: string) => {
+  const handleSendSigningLink = async (
+    role: ContractRole,
+    email: string,
+    name: string
+  ) => {
     try {
       // Send signing link via API with PDF attachment
-      const response = await fetch('/api/contracts/send-signing-link', {
-        method: 'POST',
+      const response = await fetch("/api/contracts/send-signing-link", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           contractId: id,
           role,
           email,
           name,
-          attachPdf: true // Include PDF attachment in email
+          attachPdf: true, // Include PDF attachment in email
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to send signing link');
+        throw new Error("Failed to send signing link");
       }
-      
+
       const data = await response.json();
-      
+
       toast({
         title: "Signing Link Generated",
         description: `A link has been sent to ${email} with the contract document attached.`,
       });
-      
+
       return data.signingLink;
     } catch (error) {
       console.error("Error generating signing link:", error);
@@ -166,11 +198,11 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
 
     try {
       setSendingEmail(true);
-      
-      const response = await fetch('/api/contracts/send-document', {
-        method: 'POST',
+
+      const response = await fetch("/api/contracts/send-document", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           contractId: contract.id,
@@ -180,11 +212,11 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
           contractTitle: contract.title,
         }),
       });
-      
+
       if (!response.ok) {
-        throw new Error('Failed to send document via email');
+        throw new Error("Failed to send document via email");
       }
-      
+
       setEmailDialogOpen(false);
       toast({
         title: "Email Sent",
@@ -225,41 +257,57 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
 
       // Add title page with contract information
       doc.setFontSize(24);
-      doc.setFont('helvetica', 'bold');
-      doc.text("SIGNED AGREEMENT", pageWidth / 2, 40, { align: 'center' });
-      
+      doc.setFont("helvetica", "bold");
+      doc.text("SIGNED AGREEMENT", pageWidth / 2, 40, { align: "center" });
+
       doc.setFontSize(18);
-      doc.text(contract.title, pageWidth / 2, 60, { align: 'center' });
-      
+      doc.text(contract.title, pageWidth / 2, 60, { align: "center" });
+
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Generated on ${new Date().toLocaleDateString()}`, pageWidth / 2, 75, { align: 'center' });
-      
+      doc.setFont("helvetica", "normal");
+      doc.text(
+        `Generated on ${new Date().toLocaleDateString()}`,
+        pageWidth / 2,
+        75,
+        { align: "center" }
+      );
+
       // Add contract details
       doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
+      doc.setFont("helvetica", "bold");
       doc.text("Contract Details:", 20, 100);
-      
-      doc.setFont('helvetica', 'normal');
+
+      doc.setFont("helvetica", "normal");
       doc.text(`ID: ${contract.id}`, 20, 110);
-      doc.text(`Status: ${contract.status === "FULLY_EXECUTED" ? "Fully Executed" : contract.status}`, 20, 120);
-      doc.text(`Created: ${new Date(contract.createdAt).toLocaleDateString()}`, 20, 130);
-      
+      doc.text(
+        `Status: ${contract.status === "FULLY_EXECUTED" ? "Fully Executed" : contract.status}`,
+        20,
+        120
+      );
+      doc.text(
+        `Created: ${new Date(contract.createdAt).toLocaleDateString()}`,
+        20,
+        130
+      );
+
       // Add a page for each signature
       if (contract.sections && contract.sections.length > 0) {
-        const signedSections = contract.sections.filter((section: any) => 
-          section.status === "SIGNED" && section.signature && section.signature.signatureData
+        const signedSections = contract.sections.filter(
+          (section: any) =>
+            section.status === "SIGNED" &&
+            section.signature &&
+            section.signature.signatureData
         );
-        
+
         if (signedSections.length > 0) {
           // Add signature page
           doc.addPage();
           doc.setFontSize(20);
-          doc.setFont('helvetica', 'bold');
-          doc.text("SIGNATURES", pageWidth / 2, 30, { align: 'center' });
-          
+          doc.setFont("helvetica", "bold");
+          doc.text("SIGNATURES", pageWidth / 2, 30, { align: "center" });
+
           let yPos = 50;
-          
+
           // Add each signature with details
           for (const section of signedSections) {
             // Check if we need a new page
@@ -267,66 +315,85 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
               doc.addPage();
               yPos = 50;
             }
-            
+
             // Add section title and role
             doc.setFontSize(14);
-            doc.setFont('helvetica', 'bold');
+            doc.setFont("helvetica", "bold");
             doc.text(`${section.role} Signature - ${section.title}`, 20, yPos);
             yPos += 10;
-            
+
             // Add signature box
             doc.setDrawColor(200, 200, 200);
             doc.setFillColor(252, 252, 252);
-            doc.roundedRect(20, yPos, 170, 50, 3, 3, 'FD');
-            
+            doc.roundedRect(20, yPos, 170, 50, 3, 3, "FD");
+
             // Add signature image
             try {
-              doc.addImage(section.signature.signatureData, "PNG", 30, yPos + 10, 100, 30);
+              doc.addImage(
+                section.signature.signatureData,
+                "PNG",
+                30,
+                yPos + 10,
+                100,
+                30
+              );
             } catch (error) {
               console.error("Error adding signature image:", error);
               doc.text("(Signature unavailable)", 30, yPos + 25);
             }
-            
+
             // Add signature metadata
             yPos += 60;
             doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
+            doc.setFont("helvetica", "normal");
             doc.text(`Name: ${section.signature.signerName}`, 20, yPos);
             yPos += 7;
-            
+
             if (section.signature.signerEmail) {
               doc.text(`Email: ${section.signature.signerEmail}`, 20, yPos);
               yPos += 7;
             }
-            
+
             if (section.signature.signedAt) {
-              const signedDate = new Date(section.signature.signedAt).toLocaleDateString();
-              const signedTime = new Date(section.signature.signedAt).toLocaleTimeString();
+              const signedDate = new Date(
+                section.signature.signedAt
+              ).toLocaleDateString();
+              const signedTime = new Date(
+                section.signature.signedAt
+              ).toLocaleTimeString();
               doc.text(`Signed on: ${signedDate} at ${signedTime}`, 20, yPos);
               yPos += 7;
             }
-            
+
             // Add section info
-            doc.text(`Section: ${section.title} (Page ${section.pageNumber})`, 20, yPos);
+            doc.text(
+              `Section: ${section.title} (Page ${section.pageNumber})`,
+              20,
+              yPos
+            );
             yPos += 20;
           }
         }
       }
-      
+
       // If there's a document URL, add a reference page
       if (contract.documentUrl) {
         doc.addPage();
         doc.setFontSize(16);
-        doc.setFont('helvetica', 'bold');
-        doc.text("ORIGINAL DOCUMENT", pageWidth / 2, 30, { align: 'center' });
-        
+        doc.setFont("helvetica", "bold");
+        doc.text("ORIGINAL DOCUMENT", pageWidth / 2, 30, { align: "center" });
+
         doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text("The original document is available online in your agreements dashboard.", 20, 50);
-        
+        doc.setFont("helvetica", "normal");
+        doc.text(
+          "The original document is available online in your agreements dashboard.",
+          20,
+          50
+        );
+
         // Add QR code for the document URL (if needed)
         // This would require a QR code library
-        
+
         // Add instructions for accessing the original
         doc.setFontSize(12);
         doc.text("To access the original document:", 20, 70);
@@ -334,28 +401,43 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
         doc.text("2. Navigate to My Agreements", 25, 95);
         doc.text("3. Open this agreement", 25, 105);
         doc.text("4. Click 'Download Original Document'", 25, 115);
-        
+
         // Add a note about the document
         doc.setFontSize(10);
-        doc.setFont('helvetica', 'italic');
-        doc.text("This signed PDF serves as an official record of signatures for the agreement.", 20, 140);
-        doc.text("The original document with these signatures is stored securely in the Renograte system.", 20, 150);
+        doc.setFont("helvetica", "italic");
+        doc.text(
+          "This signed PDF serves as an official record of signatures for the agreement.",
+          20,
+          140
+        );
+        doc.text(
+          "The original document with these signatures is stored securely in the Renograte system.",
+          20,
+          150
+        );
       }
-      
+
       // Add footer with page numbers
       const totalPages = doc.getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
         doc.setTextColor(100, 100, 100);
-        doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-        doc.text('Renograte® Agreement Document', 20, pageHeight - 10);
-        doc.text(`Generated: ${new Date().toLocaleDateString()}`, pageWidth - 20, pageHeight - 10, { align: 'right' });
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, pageHeight - 10, {
+          align: "center",
+        });
+        doc.text("Renograte® Agreement Document", 20, pageHeight - 10);
+        doc.text(
+          `Generated: ${new Date().toLocaleDateString()}`,
+          pageWidth - 20,
+          pageHeight - 10,
+          { align: "right" }
+        );
       }
-      
+
       // Save the PDF with a meaningful filename
       doc.save(`${contract.title.replace(/\s+/g, "_")}_signed.pdf`);
-      
+
       toast({
         title: "PDF Downloaded",
         description: "Your signed agreement has been downloaded successfully.",
@@ -413,7 +495,8 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
               <DialogHeader>
                 <DialogTitle>Send Document via Email</DialogTitle>
                 <DialogDescription>
-                  Enter the recipient's details to send the document as an email attachment.
+                  Enter the recipient's details to send the document as an email
+                  attachment.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
@@ -439,13 +522,13 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               </div>
               <DialogFooter>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setEmailDialogOpen(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={handleSendDocumentEmail}
                   disabled={sendingEmail || !recipientEmail}
                 >
@@ -454,16 +537,12 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
               </DialogFooter>
             </DialogContent>
           </Dialog>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={handleDownloadPDF}
-          >
+          <Button variant="outline" size="sm" onClick={handleDownloadPDF}>
             <Download className="mr-2 h-4 w-4" />
             Download Agreement PDF
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => {
               const url = `${window.location.origin}/contracts/${id}`;
@@ -492,7 +571,7 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                   title="Document Preview"
                 />
                 <div className="p-4 bg-gray-50 border-t flex justify-center">
-                  <Button 
+                  <Button
                     onClick={handleDownloadPDF}
                     className="flex items-center gap-2"
                   >
@@ -515,19 +594,21 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
             <CardHeader>
               <CardTitle>Contract Status</CardTitle>
               <CardDescription>
-                Current status: {' '}
-                <Badge variant={
-                  contract.status === "FULLY_EXECUTED" 
-                    ? "secondary" 
-                    : contract.status === "IN_PROGRESS" 
-                    ? "outline" 
-                    : "default"
-                }>
-                  {contract.status === "FULLY_EXECUTED" 
-                    ? "Fully Executed" 
-                    : contract.status === "IN_PROGRESS" 
-                    ? "In Progress" 
-                    : "Draft"}
+                Current status:{" "}
+                <Badge
+                  variant={
+                    contract.status === "FULLY_EXECUTED"
+                      ? "secondary"
+                      : contract.status === "IN_PROGRESS"
+                        ? "outline"
+                        : "default"
+                  }
+                >
+                  {contract.status === "FULLY_EXECUTED"
+                    ? "Fully Executed"
+                    : contract.status === "IN_PROGRESS"
+                      ? "In Progress"
+                      : "Draft"}
                 </Badge>
               </CardDescription>
             </CardHeader>
@@ -539,16 +620,19 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                       <div>
                         <div className="flex items-center gap-2">
                           <h4 className="font-medium">{section.title}</h4>
-                          <Badge variant={
-                            section.status === "SIGNED" 
-                              ? "secondary" 
-                              : "outline"
-                          }>
+                          <Badge
+                            variant={
+                              section.status === "SIGNED"
+                                ? "secondary"
+                                : "outline"
+                            }
+                          >
                             {section.status === "SIGNED" ? "Signed" : "Pending"}
                           </Badge>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {section.description || `Signature required from ${section.role}`}
+                          {section.description ||
+                            `Signature required from ${section.role}`}
                         </p>
                       </div>
                       {section.status === "SIGNED" && section.signature ? (
@@ -558,15 +642,23 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                               <div className="flex items-center gap-2">
                                 <Avatar className="h-8 w-8">
                                   <AvatarFallback>
-                                    {section.signature.signerName.split(' ').map((n: string) => n[0]).join('')}
+                                    {section.signature.signerName
+                                      .split(" ")
+                                      .map((n: string) => n[0])
+                                      .join("")}
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="text-sm">
-                                  <p className="font-medium">{section.signature.signerName}</p>
+                                  <p className="font-medium">
+                                    {section.signature.signerName}
+                                  </p>
                                   <p className="text-xs text-muted-foreground">
-                                    {section.signature.createdAt ? 
-                                      format(new Date(section.signature.createdAt), "MMM d, yyyy") : 
-                                      "Hover to view details"}
+                                    {section.signature.createdAt
+                                      ? format(
+                                          new Date(section.signature.createdAt),
+                                          "MMM d, yyyy"
+                                        )
+                                      : "Hover to view details"}
                                   </p>
                                 </div>
                               </div>
@@ -575,9 +667,14 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                               <div className="text-xs">
                                 <p>Signed by: {section.signature.signerName}</p>
                                 <p>Email: {section.signature.signerEmail}</p>
-                                <p>Date: {section.signature.signedAt ? 
-                                  format(new Date(section.signature.signedAt), "MMM d, yyyy h:mm a") : 
-                                  "Date unavailable"}
+                                <p>
+                                  Date:{" "}
+                                  {section.signature.signedAt
+                                    ? format(
+                                        new Date(section.signature.signedAt),
+                                        "MMM d, yyyy h:mm a"
+                                      )
+                                    : "Date unavailable"}
                                 </p>
                               </div>
                             </TooltipContent>
@@ -586,7 +683,9 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                       ) : (
                         <div className="flex items-center gap-2">
                           <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">Awaiting signature</span>
+                          <span className="text-sm text-muted-foreground">
+                            Awaiting signature
+                          </span>
                         </div>
                       )}
                     </div>
@@ -594,9 +693,9 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
                       <div className="mt-4 border-t pt-4">
                         <p className="text-sm font-medium mb-2">Signature</p>
                         <div className="bg-gray-50 p-2 rounded-md">
-                          <img 
-                            src={section.signature.signatureData} 
-                            alt="Signature" 
+                          <img
+                            src={section.signature.signatureData}
+                            alt="Signature"
                             className="max-h-16"
                           />
                         </div>
@@ -619,4 +718,4 @@ export default function ContractDetailPage({ params }: { params: Promise<{ id: s
       </div>
     </div>
   );
-} 
+}

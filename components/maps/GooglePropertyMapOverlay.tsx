@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { Property } from '@/types/property';
 import { X } from 'lucide-react';
 import { 
   loadGoogleMaps, 
   calculateCenter, 
-  createBounds,
   getDefaultMapOptions,
   getMapTypeControlOptions
 } from '@/lib/google-maps';
@@ -103,7 +102,7 @@ export default function GooglePropertyMapOverlay({
     return () => {
       document.body.style.overflow = 'auto';
     };
-  }, []); // Only run once, not dependent on properties
+  }, [properties]); // Run when properties change
 
   // Memoized marker icon creation function
   const createMarkerIcons = useCallback((property: Property) => {

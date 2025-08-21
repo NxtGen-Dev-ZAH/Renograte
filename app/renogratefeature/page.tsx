@@ -15,7 +15,7 @@ import {
   Network,
   Cpu,
 } from "lucide-react";
-import TrialDialog from "@/components/TrialDialog";
+
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 
@@ -156,7 +156,7 @@ export default function FeaturesPage() {
             whileTap={{ scale: 0.95 }}
             onClick={() => router.push("/become-member")}
           >
-            Let's Get Started
+            Let&apos;s Get Started
           </motion.button>
           
         </div>

@@ -12,14 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+
 import { Loader2, FileDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import jsPDF from "jspdf";
 import SignatureBox from "@/components/SignatureBox";
 import { saveTermSheet } from "@/lib/contracts/service";
 
-interface ServiceProviderFormData {
+interface ServiceProviderFormData extends Record<string, unknown> {
   // Parties Information
   sellerName: string;
   sellerAddress: string;
@@ -27,18 +27,18 @@ interface ServiceProviderFormData {
   buyerAddress: string;
   contractorName: string;
   contractorAddress: string;
-  
+
   // Property Information
   propertyAddress: string;
-  
+
   // Work Schedule
   startDate: string;
   estimatedCompletionDate: string;
-  
+
   // Agreement Details
   agreementDate: string;
   agreementId: string;
-  
+
   // Signatures
   sellerSignature: string;
   sellerSignDate: string;
@@ -48,15 +48,9 @@ interface ServiceProviderFormData {
   contractorSignDate: string;
 }
 
-interface AgreementHistory {
-  formData: ServiceProviderFormData;
-  timestamp: string;
-}
-
 export default function CreateServiceProviderAgreement() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
-  const [agreementHistory, setAgreementHistory] = useState<AgreementHistory[]>([]);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -70,7 +64,7 @@ export default function CreateServiceProviderAgreement() {
     propertyAddress: "",
     startDate: "",
     estimatedCompletionDate: "",
-    agreementDate: new Date().toISOString().split('T')[0],
+    agreementDate: new Date().toISOString().split("T")[0],
     agreementId: `SPA-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
     sellerSignature: "",
     sellerSignDate: "",
@@ -92,15 +86,15 @@ export default function CreateServiceProviderAgreement() {
 
   const generatePDF = () => {
     setIsGeneratingPdf(true);
-    
+
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const pageHeight = doc.internal.pageSize.height;
       const margin = 20;
-      const contentWidth = pageWidth - (margin * 2);
+      const contentWidth = pageWidth - margin * 2;
       let y = 40; // Start lower to accommodate logo
-      
+
       // Helper function to add logo to each page
       const addLogoToPage = () => {
         // Add Renograte logo to top left of the page
@@ -115,39 +109,46 @@ export default function CreateServiceProviderAgreement() {
           doc.text("RENOGRATE®", margin, 15);
         }
       };
-      
+
       // Add logo to first page
       addLogoToPage();
-      
+
       // Helper function for adding text with proper wrapping and page breaks
-      const addText = (text: string, fontSize: number = 12, isBold: boolean = false) => {
+      const addText = (
+        text: string,
+        fontSize: number = 12,
+        isBold: boolean = false
+      ) => {
         doc.setFontSize(fontSize);
         doc.setFont("helvetica", isBold ? "bold" : "normal");
         const lines = doc.splitTextToSize(text, contentWidth);
-        
+
         // Check if we need to add a new page
-        if (y + (lines.length * fontSize * 0.352778) > pageHeight - margin) {
+        if (y + lines.length * fontSize * 0.352778 > pageHeight - margin) {
           doc.addPage();
           y = 40; // Reset y position for new page with space for logo
           addLogoToPage(); // Add logo to new page
         }
-        
+
         doc.text(lines, margin, y);
-        y += (lines.length * fontSize * 0.352778) + 5;
+        y += lines.length * fontSize * 0.352778 + 5;
       };
-      
+
       // Title
       doc.setFontSize(16);
       doc.setFont("helvetica", "bold");
-      doc.text("RENOGRATE® SERVICE PROVIDER AGREEMENT", pageWidth/2, y, { align: "center" });
+      doc.text("RENOGRATE® SERVICE PROVIDER AGREEMENT", pageWidth / 2, y, {
+        align: "center",
+      });
       y += 20;
-      
+
       // Reset text color to black
       doc.setTextColor(0, 0, 0);
       y = 50;
 
       // Introduction
-      const introText = 'This Service Provider Agreement (\"Agreement\") is entered into by and between the Contractor or Service Provider (\"Contractor\"), the Property Owner (\"Seller\"), and/or the Prospective Buyer (\"Buyer\") of the real property listed below. This Agreement governs the scope of work, payment terms, warranties, and legal protections for renovation services performed prior to or during the sale process of the identified property.';
+      const introText =
+        'This Service Provider Agreement (\"Agreement\") is entered into by and between the Contractor or Service Provider (\"Contractor\"), the Property Owner (\"Seller\"), and/or the Prospective Buyer (\"Buyer\") of the real property listed below. This Agreement governs the scope of work, payment terms, warranties, and legal protections for renovation services performed prior to or during the sale process of the identified property.';
       addText(introText, 10);
       y += 10;
 
@@ -162,61 +163,90 @@ export default function CreateServiceProviderAgreement() {
 
       // Sections
       addText("1. Scope of Work", 12, true);
-      addText("The Contractor shall provide renovation services as agreed upon in a separate, signed Work Order approved by the Buyer and Seller before work begins.");
+      addText(
+        "The Contractor shall provide renovation services as agreed upon in a separate, signed Work Order approved by the Buyer and Seller before work begins."
+      );
 
       addText("2. Work Schedule", 12, true);
       addText("Start Date: " + formData.startDate);
       addText("Estimated Completion Date: " + formData.estimatedCompletionDate);
 
       addText("3. Compensation and Payment Terms", 12, true);
-      addText("Contractor shall be paid in full at the closing of the sale using proceeds from the transaction. An agreed portion of the Earnest Money Deposit (EMD) up to 50% may be released to the Contractor as a down payment if authorized through escrow instructions.");
+      addText(
+        "Contractor shall be paid in full at the closing of the sale using proceeds from the transaction. An agreed portion of the Earnest Money Deposit (EMD) up to 50% may be released to the Contractor as a down payment if authorized through escrow instructions."
+      );
 
       addText("4. Approval and Quality Assurance", 12, true);
-      addText("Buyer may inspect and approve all completed work prior to closing. Contractor must address any deficiencies promptly.");
+      addText(
+        "Buyer may inspect and approve all completed work prior to closing. Contractor must address any deficiencies promptly."
+      );
 
       addText("5. Warranties & Insurance", 12, true);
-      addText("Contractor warrants that all work will be performed in a professional, workmanlike manner and compliant with applicable codes. Contractor affirms possession of proper licensing, general liability insurance, and workers' compensation coverage, and shall provide proof upon request.");
+      addText(
+        "Contractor warrants that all work will be performed in a professional, workmanlike manner and compliant with applicable codes. Contractor affirms possession of proper licensing, general liability insurance, and workers' compensation coverage, and shall provide proof upon request."
+      );
 
       addText("6. Independent Contractor Status", 12, true);
-      addText("Contractor is not an employee or agent of Renograte LLC or any real estate professional. Contractor is solely responsible for legal and tax obligations.");
+      addText(
+        "Contractor is not an employee or agent of Renograte LLC or any real estate professional. Contractor is solely responsible for legal and tax obligations."
+      );
 
       addText("7. Hold Harmless and Indemnification", 12, true);
-      addText("All Parties agree to hold harmless and indemnify Renograte LLC, the brokerage, and any licensed real estate agents involved from any claim arising out of renovation work, including but not limited to property damage, injury, delays, or disputes over payments or workmanship.");
+      addText(
+        "All Parties agree to hold harmless and indemnify Renograte LLC, the brokerage, and any licensed real estate agents involved from any claim arising out of renovation work, including but not limited to property damage, injury, delays, or disputes over payments or workmanship."
+      );
 
       addText("8. Contingency Events", 12, true);
-      addText("If the Buyer defaults on the Option Agreement or Purchase and Sale Agreement:");
-      addText("- The Seller shall become liable to pay the Contractor the full amount for all renovation work performed, due either:");
-      addText("  - At the time of the next sale of the Property to a new buyer, or");
+      addText(
+        "If the Buyer defaults on the Option Agreement or Purchase and Sale Agreement:"
+      );
+      addText(
+        "- The Seller shall become liable to pay the Contractor the full amount for all renovation work performed, due either:"
+      );
+      addText(
+        "  - At the time of the next sale of the Property to a new buyer, or"
+      );
       addText("  - At closing if the Seller re-lists and sells the Property.");
-      addText("- The Seller shall retain the Earnest Money Deposit (EMD) from the defaulting Buyer, which may be used to offset Contractor payment.");
-      addText("- Contractor may file a mechanic's lien as permitted by local law.");
-      
-      addText("If the Seller cancels or breaches the sale without Buyer fault:");
-      addText("- Seller is immediately liable for full payment to the Contractor.");
+      addText(
+        "- The Seller shall retain the Earnest Money Deposit (EMD) from the defaulting Buyer, which may be used to offset Contractor payment."
+      );
+      addText(
+        "- Contractor may file a mechanic's lien as permitted by local law."
+      );
+
+      addText(
+        "If the Seller cancels or breaches the sale without Buyer fault:"
+      );
+      addText(
+        "- Seller is immediately liable for full payment to the Contractor."
+      );
       addText("- Contractor may pursue collection and lien rights.");
-      
+
       addText("If both Parties mutually terminate:");
       addText("- Contractor is paid from escrowed funds if available.");
-      addText("- Any balance becomes the Seller's liability and may be paid at the next closing.");
+      addText(
+        "- Any balance becomes the Seller's liability and may be paid at the next closing."
+      );
       addText("- Contractor may pursue lien rights for unpaid work.");
-      
+
       addText("9. Legal Review and Acknowledgment", 12, true);
-      addText("Each Party acknowledges that they have reviewed and understand this Agreement and had an opportunity to seek legal advice.");
-      
+      addText(
+        "Each Party acknowledges that they have reviewed and understand this Agreement and had an opportunity to seek legal advice."
+      );
+
       // Signatures
       y += 10;
       addText("10. Signatures", 12, true);
       y += 10;
-      
+
       // Check if we need to add a new page for signatures
       if (y > pageHeight - 100) {
         doc.addPage();
         y = 40;
         addLogoToPage();
       }
-      
+
       // Add signature lines
-      const signatureY = y;
       doc.line(margin, y, margin + 80, y);
       doc.text("Seller Signature", margin, y + 5);
       doc.text(`Date: ${formData.sellerSignDate}`, margin + 100, y + 5);
@@ -228,7 +258,7 @@ export default function CreateServiceProviderAgreement() {
           doc.text("(Signature)", margin, y - 5);
         }
       }
-      
+
       y += 30;
       doc.line(margin, y, margin + 80, y);
       doc.text("Buyer Signature", margin, y + 5);
@@ -241,14 +271,21 @@ export default function CreateServiceProviderAgreement() {
           doc.text("(Signature)", margin, y - 5);
         }
       }
-      
+
       y += 30;
       doc.line(margin, y, margin + 80, y);
       doc.text("Contractor Signature", margin, y + 5);
       doc.text(`Date: ${formData.contractorSignDate}`, margin + 100, y + 5);
       if (formData.contractorSignature) {
         try {
-          doc.addImage(formData.contractorSignature, "PNG", margin, y - 20, 80, 20);
+          doc.addImage(
+            formData.contractorSignature,
+            "PNG",
+            margin,
+            y - 20,
+            80,
+            20
+          );
         } catch (error) {
           console.error("Error adding contractor signature image:", error);
           doc.text("(Signature)", margin, y - 5);
@@ -258,7 +295,7 @@ export default function CreateServiceProviderAgreement() {
       // Footer with corrected page numbers
       // Get the actual number of pages
       const totalPages = doc.internal.pages.length;
-      
+
       // Now add the footer to each page
       for (let i = 1; i <= totalPages; i++) {
         doc.setPage(i);
@@ -271,10 +308,10 @@ export default function CreateServiceProviderAgreement() {
           { align: "center" }
         );
       }
-      
+
       // Save the PDF
       doc.save("renograte_service_provider_agreement.pdf");
-      
+
       toast({
         title: "PDF Generated",
         description: "Your agreement has been saved as a PDF.",
@@ -307,12 +344,12 @@ export default function CreateServiceProviderAgreement() {
         terms: "Standard service provider terms",
         data: formData,
       };
-      
+
       saveTermSheet(termSheetData);
-      
+
       // Optional: API call if you want to save to backend as well
       try {
-        const response = await fetch("/api/agreements", {
+        await fetch("/api/agreements", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -348,7 +385,9 @@ export default function CreateServiceProviderAgreement() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Create Service Provider Agreement</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Create Service Provider Agreement
+        </h2>
         <p className="text-muted-foreground">
           Create a new agreement between property owner, buyer, and contractor
         </p>
@@ -362,7 +401,7 @@ export default function CreateServiceProviderAgreement() {
           <Card>
             <CardHeader>
               <CardTitle>Seller Information</CardTitle>
-              <CardDescription>Enter the seller's details</CardDescription>
+              <CardDescription>Enter the seller&apos;s details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -391,7 +430,7 @@ export default function CreateServiceProviderAgreement() {
           <Card>
             <CardHeader>
               <CardTitle>Buyer Information</CardTitle>
-              <CardDescription>Enter the buyer's details</CardDescription>
+              <CardDescription>Enter the buyer&apos;s details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -420,7 +459,9 @@ export default function CreateServiceProviderAgreement() {
           <Card>
             <CardHeader>
               <CardTitle>Contractor Information</CardTitle>
-              <CardDescription>Enter the contractor's details</CardDescription>
+              <CardDescription>
+                Enter the contractor&apos;s details
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -492,7 +533,9 @@ export default function CreateServiceProviderAgreement() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="estimatedCompletionDate">Estimated Completion Date</Label>
+                <Label htmlFor="estimatedCompletionDate">
+                  Estimated Completion Date
+                </Label>
                 <Input
                   id="estimatedCompletionDate"
                   type="date"
@@ -508,29 +551,51 @@ export default function CreateServiceProviderAgreement() {
           <Card className="md:col-span-2">
             <CardHeader>
               <CardTitle>Signatures</CardTitle>
-              <CardDescription>Sign in to Your Designated Panel Below and Upload the Generated PDF Agreement to the 'My Agreements' Page to Initiate the Contract Signing Workflow for the Respective Parties</CardDescription>
+              <CardDescription>
+                Sign in to Your Designated Panel Below and Upload the Generated
+                PDF Agreement to the &apos;My Agreements&apos; Page to Initiate
+                the Contract Signing Workflow for the Respective Parties
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-6 md:grid-cols-3">
               <SignatureBox
                 label="Seller Signature"
                 signatureData={formData.sellerSignature}
                 dateValue={formData.sellerSignDate}
-                onSignatureChange={(value: string) => setFormData(prev => ({ ...prev, sellerSignature: value }))}
-                onDateChange={(value: string) => setFormData(prev => ({ ...prev, sellerSignDate: value }))}
+                onSignatureChange={(value: string) =>
+                  setFormData((prev) => ({ ...prev, sellerSignature: value }))
+                }
+                onDateChange={(value: string) =>
+                  setFormData((prev) => ({ ...prev, sellerSignDate: value }))
+                }
               />
               <SignatureBox
                 label="Buyer Signature"
                 signatureData={formData.buyerSignature}
                 dateValue={formData.buyerSignDate}
-                onSignatureChange={(value: string) => setFormData(prev => ({ ...prev, buyerSignature: value }))}
-                onDateChange={(value: string) => setFormData(prev => ({ ...prev, buyerSignDate: value }))}
+                onSignatureChange={(value: string) =>
+                  setFormData((prev) => ({ ...prev, buyerSignature: value }))
+                }
+                onDateChange={(value: string) =>
+                  setFormData((prev) => ({ ...prev, buyerSignDate: value }))
+                }
               />
               <SignatureBox
                 label="Contractor Signature"
                 signatureData={formData.contractorSignature}
                 dateValue={formData.contractorSignDate}
-                onSignatureChange={(value: string) => setFormData(prev => ({ ...prev, contractorSignature: value }))}
-                onDateChange={(value: string) => setFormData(prev => ({ ...prev, contractorSignDate: value }))}
+                onSignatureChange={(value: string) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    contractorSignature: value,
+                  }))
+                }
+                onDateChange={(value: string) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    contractorSignDate: value,
+                  }))
+                }
               />
             </CardContent>
           </Card>
@@ -581,25 +646,34 @@ const AgreementTemplate = () => {
     <Card className="mb-6">
       <CardHeader>
         <CardTitle>Service Provider Agreement Template</CardTitle>
-        <CardDescription>Please review the agreement template before filling out the form</CardDescription>
+        <CardDescription>
+          Please review the agreement template before filling out the form
+        </CardDescription>
       </CardHeader>
       <CardContent className="prose max-w-none">
         <div className="space-y-4 text-sm">
-          <h1 className="text-2xl font-bold text-center">Renograte® Service Provider Agreement</h1>
-          
+          <h1 className="text-2xl font-bold text-center">
+            Renograte® Service Provider Agreement
+          </h1>
+
           <p className="text-muted-foreground">
             {`This Service Provider Agreement ("Agreement") is entered into by and between the Contractor or Service Provider ("Contractor"), the Property Owner ("Seller"), and/or the Prospective Buyer ("Buyer") of the real property listed below. This Agreement governs the scope of work, payment terms, warranties, and legal protections for renovation services performed prior to or during the sale process of the identified property.`}
           </p>
 
           <div className="border-b pb-2">
-            <p className="font-semibold">Property Address: _________________________</p>
+            <p className="font-semibold">
+              Property Address: _________________________
+            </p>
           </div>
 
           <div className="space-y-4">
             <section>
               <h3 className="font-semibold">1. Scope of Work</h3>
-              <p>The Contractor shall provide renovation services as agreed upon in a separate, signed Work 
-              Order approved by the Buyer and Seller before work begins.</p>
+              <p>
+                The Contractor shall provide renovation services as agreed upon
+                in a separate, signed Work Order approved by the Buyer and
+                Seller before work begins.
+              </p>
             </section>
 
             <section>
@@ -609,74 +683,126 @@ const AgreementTemplate = () => {
             </section>
 
             <section>
-              <h3 className="font-semibold">3. Compensation and Payment Terms</h3>
-              <p>Contractor shall be paid in full at the closing of the sale using proceeds from the transaction.
-              An agreed portion of the Earnest Money Deposit (EMD) up to 50% may be released to the 
-              Contractor as a down payment if authorized through escrow instructions.</p>
+              <h3 className="font-semibold">
+                3. Compensation and Payment Terms
+              </h3>
+              <p>
+                Contractor shall be paid in full at the closing of the sale
+                using proceeds from the transaction. An agreed portion of the
+                Earnest Money Deposit (EMD) up to 50% may be released to the
+                Contractor as a down payment if authorized through escrow
+                instructions.
+              </p>
             </section>
 
             <section>
-              <h3 className="font-semibold">4. Approval and Quality Assurance</h3>
-              <p>Buyer may inspect and approve all completed work prior to closing. Contractor must 
-              address any deficiencies promptly.</p>
+              <h3 className="font-semibold">
+                4. Approval and Quality Assurance
+              </h3>
+              <p>
+                Buyer may inspect and approve all completed work prior to
+                closing. Contractor must address any deficiencies promptly.
+              </p>
             </section>
 
             <section>
               <h3 className="font-semibold">5. Warranties & Insurance</h3>
-              <p>Contractor warrants that all work will be performed in a professional, workmanlike manner 
-              and compliant with applicable codes. Contractor affirms possession of proper licensing, 
-              general liability insurance, and workers' compensation coverage, and shall provide proof 
-              upon request.</p>
+              <p>
+                Contractor warrants that all work will be performed in a
+                professional, workmanlike manner and compliant with applicable
+                codes. Contractor affirms possession of proper licensing,
+                general liability insurance, and workers&apos; compensation
+                coverage, and shall provide proof upon request.
+              </p>
             </section>
 
             <section>
-              <h3 className="font-semibold">6. Independent Contractor Status</h3>
-              <p>Contractor is not an employee or agent of Renograte LLC or any real estate professional.
-              Contractor is solely responsible for legal and tax obligations.</p>
+              <h3 className="font-semibold">
+                6. Independent Contractor Status
+              </h3>
+              <p>
+                Contractor is not an employee or agent of Renograte LLC or any
+                real estate professional. Contractor is solely responsible for
+                legal and tax obligations.
+              </p>
             </section>
 
             <section>
-              <h3 className="font-semibold">7. Hold Harmless and Indemnification</h3>
-              <p>All Parties agree to hold harmless and indemnify Renograte LLC, the brokerage, and any 
-              licensed real estate agents involved from any claim arising out of renovation work, 
-              including but not limited to property damage, injury, delays, or disputes over payments or 
-              workmanship.</p>
+              <h3 className="font-semibold">
+                7. Hold Harmless and Indemnification
+              </h3>
+              <p>
+                All Parties agree to hold harmless and indemnify Renograte LLC,
+                the brokerage, and any licensed real estate agents involved from
+                any claim arising out of renovation work, including but not
+                limited to property damage, injury, delays, or disputes over
+                payments or workmanship.
+              </p>
             </section>
 
             <section>
               <h3 className="font-semibold">8. Contingency Events</h3>
-              <p className="font-medium">If the Buyer defaults on the Option Agreement or Purchase and Sale Agreement:</p>
+              <p className="font-medium">
+                If the Buyer defaults on the Option Agreement or Purchase and
+                Sale Agreement:
+              </p>
               <ul className="list-disc pl-6">
-                <li>The Seller shall become liable to pay the Contractor the full amount for all renovation 
-                work performed, due either:
+                <li>
+                  The Seller shall become liable to pay the Contractor the full
+                  amount for all renovation work performed, due either:
                   <ul className="list-disc pl-6">
-                    <li>At the time of the next sale of the Property to a new buyer, or</li>
-                    <li>At closing if the Seller re-lists and sells the Property.</li>
+                    <li>
+                      At the time of the next sale of the Property to a new
+                      buyer, or
+                    </li>
+                    <li>
+                      At closing if the Seller re-lists and sells the Property.
+                    </li>
                   </ul>
                 </li>
-                <li>The Seller shall retain the Earnest Money Deposit (EMD) from the defaulting Buyer, which 
-                may be used to offset Contractor payment.</li>
-                <li>Contractor may file a mechanic's lien as permitted by local law.</li>
+                <li>
+                  The Seller shall retain the Earnest Money Deposit (EMD) from
+                  the defaulting Buyer, which may be used to offset Contractor
+                  payment.
+                </li>
+                <li>
+                  Contractor may file a mechanic&apos;s lien as permitted by
+                  local law.
+                </li>
               </ul>
 
-              <p className="font-medium mt-2">If the Seller cancels or breaches the sale without Buyer fault:</p>
+              <p className="font-medium mt-2">
+                If the Seller cancels or breaches the sale without Buyer fault:
+              </p>
               <ul className="list-disc pl-6">
-                <li>Seller is immediately liable for full payment to the Contractor.</li>
+                <li>
+                  Seller is immediately liable for full payment to the
+                  Contractor.
+                </li>
                 <li>Contractor may pursue collection and lien rights.</li>
               </ul>
 
-              <p className="font-medium mt-2">If both Parties mutually terminate:</p>
+              <p className="font-medium mt-2">
+                If both Parties mutually terminate:
+              </p>
               <ul className="list-disc pl-6">
                 <li>Contractor is paid from escrowed funds if available.</li>
-                <li>Any balance becomes the Seller's liability and may be paid at the next closing.</li>
+                <li>
+                  Any balance becomes the Seller&apos;s liability and may be
+                  paid at the next closing.
+                </li>
                 <li>Contractor may pursue lien rights for unpaid work.</li>
               </ul>
             </section>
 
             <section>
-              <h3 className="font-semibold">9. Legal Review and Acknowledgment</h3>
-              <p>Each Party acknowledges that they have reviewed and understand this Agreement and had 
-              an opportunity to seek legal advice.</p>
+              <h3 className="font-semibold">
+                9. Legal Review and Acknowledgment
+              </h3>
+              <p>
+                Each Party acknowledges that they have reviewed and understand
+                this Agreement and had an opportunity to seek legal advice.
+              </p>
             </section>
 
             <section>
@@ -701,4 +827,4 @@ const AgreementTemplate = () => {
       </CardContent>
     </Card>
   );
-}; 
+};

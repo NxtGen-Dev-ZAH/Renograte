@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { Property } from '@/types/property';
-import { 
-  loadGoogleMaps, 
-  isWithinUSBounds, 
-  clampToUSBounds, 
-  calculateCenter, 
-  createBounds,
+import { useState, useEffect, useRef, useCallback } from "react";
+import { Property } from "@/types/property";
+import {
+  loadGoogleMaps,
+  isWithinUSBounds,
+  clampToUSBounds,
+  calculateCenter,
   getDefaultMapOptions,
-  getMapTypeControlOptions
-} from '@/lib/google-maps';
+  getMapTypeControlOptions,
+} from "@/lib/google-maps";
 
 interface PropertyMapProps {
   properties: Property[];
@@ -30,31 +29,35 @@ interface MarkerData {
 }
 
 interface DirectionalIndicator {
-  direction: 'top' | 'right' | 'bottom' | 'left';
+  direction: "top" | "right" | "bottom" | "left";
   visible: boolean;
 }
 
-export default function GooglePropertyMap({ 
-  properties, 
-  height = "400px", 
+export default function GooglePropertyMap({
+  properties,
+  height = "400px",
   onMarkerClick,
   highlightedPropertyId,
   initialCenter,
-  initialZoom
+  initialZoom,
 }: PropertyMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const markersRef = useRef<Map<string, MarkerData>>(new Map());
-  const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(null);
+  const [hoveredPropertyId, setHoveredPropertyId] = useState<string | null>(
+    null
+  );
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const currentInfoWindowRef = useRef<google.maps.InfoWindow | null>(null);
   const propertiesSignatureRef = useRef<string>("");
-  const [directionalIndicators, setDirectionalIndicators] = useState<DirectionalIndicator[]>([
-    { direction: 'top', visible: false },
-    { direction: 'right', visible: false },
-    { direction: 'bottom', visible: false },
-    { direction: 'left', visible: false },
+  const [directionalIndicators, setDirectionalIndicators] = useState<
+    DirectionalIndicator[]
+  >([
+    { direction: "top", visible: false },
+    { direction: "right", visible: false },
+    { direction: "bottom", visible: false },
+    { direction: "left", visible: false },
   ]);
 
   // Initialize Google Maps - must respond to property and initialCenter/initialZoom changes
@@ -64,30 +67,38 @@ export default function GooglePropertyMap({
     const initMap = async () => {
       try {
         await loadGoogleMaps();
-        
+
         // Check if container has dimensions before initializing
-        if (mapRef.current!.clientWidth === 0 || mapRef.current!.clientHeight === 0) {
-          console.warn('Map container has zero width or height. Delaying map initialization.');
+        if (
+          mapRef.current!.clientWidth === 0 ||
+          mapRef.current!.clientHeight === 0
+        ) {
+          console.warn(
+            "Map container has zero width or height. Delaying map initialization."
+          );
           return;
         }
 
         // Determine initial center
         let center = { lat: 39.8283, lng: -98.5795 }; // Default to geographic center of US
-        
+
         if (initialCenter) {
-          const [lat, lng] = clampToUSBounds(initialCenter[0], initialCenter[1]);
+          const [lat, lng] = clampToUSBounds(
+            initialCenter[0],
+            initialCenter[1]
+          );
           center = { lat, lng };
         } else if (properties.length > 0) {
-          const validProperties = properties.filter(p => {
+          const validProperties = properties.filter((p) => {
             const lat = p.Latitude || 0;
             const lng = p.Longitude || 0;
             return isWithinUSBounds(lat, lng);
           });
-          
+
           if (validProperties.length > 0) {
-            const coords = validProperties.map(p => ({ 
-              lat: p.Latitude || 0, 
-              lng: p.Longitude || 0 
+            const coords = validProperties.map((p) => ({
+              lat: p.Latitude || 0,
+              lng: p.Longitude || 0,
             }));
             center = calculateCenter(coords);
           }
@@ -100,14 +111,14 @@ export default function GooglePropertyMap({
             ...getDefaultMapOptions(),
             center,
             zoom: initialZoom || 10,
-            mapTypeControlOptions: getMapTypeControlOptions()
+            mapTypeControlOptions: getMapTypeControlOptions(),
           };
-          
+
           mapInstance = new google.maps.Map(mapRef.current!, mapOptions);
           setMap(mapInstance);
 
           // Add bounds_changed listener to check for off-screen markers
-          mapInstance.addListener('bounds_changed', () => {
+          mapInstance.addListener("bounds_changed", () => {
             checkForOffscreenHighlightedMarker();
           });
         } else {
@@ -117,11 +128,10 @@ export default function GooglePropertyMap({
             mapInstance.setZoom(initialZoom);
           }
         }
-        
-        setIsLoading(false);
 
+        setIsLoading(false);
       } catch (error) {
-        console.error('Error initializing Google Maps:', error);
+        console.error("Error initializing Google Maps:", error);
         setIsLoading(false);
       }
     };
@@ -132,7 +142,10 @@ export default function GooglePropertyMap({
   // Create a signature of properties to detect meaningful changes
   useEffect(() => {
     // Create a signature based on property IDs
-    const newSignature = properties.map(p => p.ListingKey).sort().join(',');
+    const newSignature = properties
+      .map((p) => p.ListingKey)
+      .sort()
+      .join(",");
     propertiesSignatureRef.current = newSignature;
   }, [properties]);
 
@@ -140,8 +153,8 @@ export default function GooglePropertyMap({
   const checkForOffscreenHighlightedMarker = useCallback(() => {
     if (!map || !highlightedPropertyId) {
       // Reset all indicators if no highlighted property
-      setDirectionalIndicators(prev => 
-        prev.map(indicator => ({ ...indicator, visible: false }))
+      setDirectionalIndicators((prev) =>
+        prev.map((indicator) => ({ ...indicator, visible: false }))
       );
       return;
     }
@@ -160,8 +173,8 @@ export default function GooglePropertyMap({
 
     if (isInViewport) {
       // If in viewport, hide all indicators
-      setDirectionalIndicators(prev => 
-        prev.map(indicator => ({ ...indicator, visible: false }))
+      setDirectionalIndicators((prev) =>
+        prev.map((indicator) => ({ ...indicator, visible: false }))
       );
     } else {
       // If not in viewport, determine direction
@@ -180,10 +193,10 @@ export default function GooglePropertyMap({
       const isWest = markerLng < centerLng;
 
       setDirectionalIndicators([
-        { direction: 'top', visible: isNorth },
-        { direction: 'right', visible: isEast },
-        { direction: 'bottom', visible: isSouth },
-        { direction: 'left', visible: isWest },
+        { direction: "top", visible: isNorth },
+        { direction: "right", visible: isEast },
+        { direction: "bottom", visible: isSouth },
+        { direction: "left", visible: isWest },
       ]);
     }
   }, [map, highlightedPropertyId]);
@@ -193,18 +206,20 @@ export default function GooglePropertyMap({
     if (map && highlightedPropertyId) {
       checkForOffscreenHighlightedMarker();
     }
-  }, [map, highlightedPropertyId, checkForOffscreenHighlightedMarker]);
+  }, [map, highlightedPropertyId]);
 
   // Memoized marker icon creation function
   const createMarkerIcons = useCallback((property: Property) => {
-    const formattedPrice = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
+    const formattedPrice = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
     }).format(property.ListPrice);
 
     const blueDefault = {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      url:
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" width="140" height="44" viewBox="0 0 140 44">
           <defs>
             <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -220,11 +235,13 @@ export default function GooglePropertyMap({
         </svg>
       `),
       scaledSize: new google.maps.Size(140, 44),
-      anchor: new google.maps.Point(70, 22)
+      anchor: new google.maps.Point(70, 22),
     };
 
     const orangeDefault = {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      url:
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" width="140" height="44" viewBox="0 0 140 44">
           <defs>
             <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
@@ -240,11 +257,13 @@ export default function GooglePropertyMap({
         </svg>
       `),
       scaledSize: new google.maps.Size(140, 44),
-      anchor: new google.maps.Point(70, 22)
+      anchor: new google.maps.Point(70, 22),
     };
 
     const orangeHover = {
-      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+      url:
+        "data:image/svg+xml;charset=UTF-8," +
+        encodeURIComponent(`
         <svg xmlns="http://www.w3.org/2000/svg" width="148" height="48" viewBox="0 0 148 48">
           <defs>
             <filter id="shadow-hover" x="-50%" y="-50%" width="200%" height="200%">
@@ -260,7 +279,7 @@ export default function GooglePropertyMap({
         </svg>
       `),
       scaledSize: new google.maps.Size(148, 48),
-      anchor: new google.maps.Point(74, 24)
+      anchor: new google.maps.Point(74, 24),
     };
 
     return { blueDefault, orangeDefault, orangeHover };
@@ -268,10 +287,10 @@ export default function GooglePropertyMap({
 
   // Memoized tooltip content creation
   const createTooltipContent = useCallback((property: Property) => {
-    const formattedPrice = new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0
+    const formattedPrice = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
     }).format(property.ListPrice);
 
     return `
@@ -283,17 +302,17 @@ export default function GooglePropertyMap({
         <div class="tooltip-content">
           <div class="property-specs">
             <div class="spec-item">
-              <span class="spec-value">${property.BedroomsTotal || 'N/A'}</span>
+              <span class="spec-value">${property.BedroomsTotal || "N/A"}</span>
               <span class="spec-label">Beds</span>
             </div>
             <div class="spec-divider"></div>
             <div class="spec-item">
-              <span class="spec-value">${property.BathroomsTotalInteger || 'N/A'}</span>
+              <span class="spec-value">${property.BathroomsTotalInteger || "N/A"}</span>
               <span class="spec-label">Baths</span>
             </div>
             <div class="spec-divider"></div>
             <div class="spec-item">
-              <span class="spec-value">${property.LivingArea ? property.LivingArea.toLocaleString() : 'N/A'}</span>
+              <span class="spec-value">${property.LivingArea ? property.LivingArea.toLocaleString() : "N/A"}</span>
               <span class="spec-label">Sq Ft</span>
             </div>
           </div>
@@ -301,7 +320,7 @@ export default function GooglePropertyMap({
             <div class="street-address">${property.StreetNumber} ${property.StreetName}</div>
             <div class="city-state">${property.City}, ${property.StateOrProvince} ${property.PostalCode}</div>
           </div>
-          ${property.PropertyType ? `<div class="property-type">${property.PropertyType}</div>` : ''}
+          ${property.PropertyType ? `<div class="property-type">${property.PropertyType}</div>` : ""}
         </div>
       </div>
     `;
@@ -316,26 +335,29 @@ export default function GooglePropertyMap({
   }, []);
 
   // Memoized hover handler to prevent jerky movement
-  const handleMarkerHover = useCallback((propertyId: string, marker: google.maps.Marker, content: string) => {
-    if (hoverTimeoutRef.current) {
-      clearTimeout(hoverTimeoutRef.current);
-    }
-    
-    // Close any existing InfoWindow
-    closeCurrentInfoWindow();
-    
-    // Create new InfoWindow
-    const infoWindow = new google.maps.InfoWindow({
-      content,
-      disableAutoPan: true,
-      pixelOffset: new google.maps.Size(0, -10)
-    });
-    
-    // Open the new InfoWindow
-    infoWindow.open(map, marker);
-    currentInfoWindowRef.current = infoWindow;
-    setHoveredPropertyId(propertyId);
-  }, [map, closeCurrentInfoWindow]);
+  const handleMarkerHover = useCallback(
+    (propertyId: string, marker: google.maps.Marker, content: string) => {
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+      }
+
+      // Close any existing InfoWindow
+      closeCurrentInfoWindow();
+
+      // Create new InfoWindow
+      const infoWindow = new google.maps.InfoWindow({
+        content,
+        disableAutoPan: true,
+        pixelOffset: new google.maps.Size(0, -10),
+      });
+
+      // Open the new InfoWindow
+      infoWindow.open(map, marker);
+      currentInfoWindowRef.current = infoWindow;
+      setHoveredPropertyId(propertyId);
+    },
+    [map, closeCurrentInfoWindow]
+  );
 
   const handleMarkerUnhover = useCallback(() => {
     hoverTimeoutRef.current = setTimeout(() => {
@@ -349,13 +371,13 @@ export default function GooglePropertyMap({
     if (!map || !window.google) return;
 
     const currentMarkers = markersRef.current;
-    const validProperties = properties.filter(property => {
+    const validProperties = properties.filter((property) => {
       const lat = property.Latitude || 0;
       const lng = property.Longitude || 0;
       return isWithinUSBounds(lat, lng);
     });
-    
-    const newPropertyIds = new Set(validProperties.map(p => p.ListingKey));
+
+    const newPropertyIds = new Set(validProperties.map((p) => p.ListingKey));
     const existingPropertyIds = new Set(currentMarkers.keys());
 
     // Remove markers that are no longer in the properties list
@@ -373,20 +395,20 @@ export default function GooglePropertyMap({
     const bounds = new google.maps.LatLngBounds();
     let hasNewMarkers = false;
 
-    validProperties.forEach(property => {
+    validProperties.forEach((property) => {
       if (!currentMarkers.has(property.ListingKey)) {
         hasNewMarkers = true;
         let lat = property.Latitude || 0;
         let lng = property.Longitude || 0;
-        
+
         // Clamp coordinates to US bounds
         [lat, lng] = clampToUSBounds(lat, lng);
-        
+
         const position = { lat, lng };
-        
+
         // Create marker icons
         const icons = createMarkerIcons(property);
-        
+
         // Create marker with initial blue default
         const marker = new google.maps.Marker({
           position,
@@ -394,23 +416,23 @@ export default function GooglePropertyMap({
           title: `${property.StreetNumber} ${property.StreetName}`,
           zIndex: 1,
           icon: icons.blueDefault,
-          optimized: false
+          optimized: false,
         });
 
         // Get tooltip content
         const tooltipContent = createTooltipContent(property);
 
         // Add hover listeners (only handle state, effect will update icon)
-        marker.addListener('mouseover', () => {
+        marker.addListener("mouseover", () => {
           handleMarkerHover(property.ListingKey, marker, tooltipContent);
         });
 
-        marker.addListener('mouseout', () => {
+        marker.addListener("mouseout", () => {
           handleMarkerUnhover();
         });
 
         // Add click listener
-        marker.addListener('click', () => {
+        marker.addListener("click", () => {
           if (onMarkerClick) {
             onMarkerClick(property.ListingKey);
           }
@@ -418,7 +440,7 @@ export default function GooglePropertyMap({
 
         currentMarkers.set(property.ListingKey, { marker, property, ...icons });
       }
-      
+
       // Always update bounds with all valid properties
       const lat = property.Latitude || 0;
       const lng = property.Longitude || 0;
@@ -431,9 +453,9 @@ export default function GooglePropertyMap({
       // Use a small timeout to ensure the map is properly sized
       setTimeout(() => {
         map.fitBounds(bounds, { top: 50, right: 50, bottom: 50, left: 50 });
-        
+
         // Ensure zoom doesn't go too high
-        google.maps.event.addListenerOnce(map, 'bounds_changed', () => {
+        google.maps.event.addListenerOnce(map, "bounds_changed", () => {
           if (map.getZoom()! > 15) {
             map.setZoom(15);
           }
@@ -445,27 +467,42 @@ export default function GooglePropertyMap({
     if (highlightedPropertyId) {
       setTimeout(checkForOffscreenHighlightedMarker, 200);
     }
-  }, [map, properties, onMarkerClick, createTooltipContent, createMarkerIcons, handleMarkerHover, handleMarkerUnhover, initialCenter, highlightedPropertyId, checkForOffscreenHighlightedMarker]);
+  }, [
+    map,
+    properties,
+    onMarkerClick,
+    createTooltipContent,
+    createMarkerIcons,
+    handleMarkerHover,
+    handleMarkerUnhover,
+    initialCenter,
+    highlightedPropertyId,
+    checkForOffscreenHighlightedMarker,
+  ]);
 
-  // Separate effect for updating map view when highlighting changes  
+  // Separate effect for updating map view when highlighting changes
   useEffect(() => {
     if (!map || markersRef.current.size === 0) return;
 
     if (highlightedPropertyId) {
       const markerData = markersRef.current.get(highlightedPropertyId);
-      if (markerData && markerData.property.Latitude && markerData.property.Longitude) {
+      if (
+        markerData &&
+        markerData.property.Latitude &&
+        markerData.property.Longitude
+      ) {
         const lat = markerData.property.Latitude;
         const lng = markerData.property.Longitude;
         const [clampedLat, clampedLng] = clampToUSBounds(lat, lng);
-        
+
         // Only adjust center if it's significantly different from current center
         const currentCenter = map.getCenter();
         if (currentCenter) {
           const distance = Math.sqrt(
-            Math.pow((currentCenter.lat() - clampedLat), 2) + 
-            Math.pow((currentCenter.lng() - clampedLng), 2)
+            Math.pow(currentCenter.lat() - clampedLat, 2) +
+              Math.pow(currentCenter.lng() - clampedLng, 2)
           );
-          
+
           // Only pan if the highlighted property is far from current view
           if (distance > 0.1) {
             map.panTo({ lat: clampedLat, lng: clampedLng });
@@ -474,7 +511,7 @@ export default function GooglePropertyMap({
           // If we can't get current center, just set it directly
           map.panTo({ lat: clampedLat, lng: clampedLng });
         }
-        
+
         // Do NOT automatically adjust zoom on highlight in the listings page
         // This preserves the user's zoom level while exploring
       }
@@ -490,19 +527,23 @@ export default function GooglePropertyMap({
       const { marker, blueDefault, orangeDefault, orangeHover } = markerData;
       const isHighlighted = highlightedPropertyId === propertyId;
       const isHovered = hoveredPropertyId === propertyId;
-      
+
       // Determine the appropriate icon and z-index
-      const targetIcon = isHovered ? orangeHover : (isHighlighted ? orangeDefault : blueDefault);
-      const targetZIndex = isHovered ? 2000 : (isHighlighted ? 1000 : 1);
-      
+      const targetIcon = isHovered
+        ? orangeHover
+        : isHighlighted
+          ? orangeDefault
+          : blueDefault;
+      const targetZIndex = isHovered ? 2000 : isHighlighted ? 1000 : 1;
+
       // Only update if the icon or z-index actually changed
       const currentIcon = marker.getIcon();
       const currentZIndex = marker.getZIndex();
-      
+
       if (currentIcon !== targetIcon) {
         marker.setIcon(targetIcon);
       }
-      
+
       if (currentZIndex !== targetZIndex) {
         marker.setZIndex(targetZIndex);
       }
@@ -511,9 +552,9 @@ export default function GooglePropertyMap({
 
   // Add custom CSS for professional styling
   useEffect(() => {
-    if (!document.getElementById('google-maps-custom-styles')) {
-      const style = document.createElement('style');
-      style.id = 'google-maps-custom-styles';
+    if (!document.getElementById("google-maps-custom-styles")) {
+      const style = document.createElement("style");
+      style.id = "google-maps-custom-styles";
       style.innerHTML = `
         .property-tooltip-professional {
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif !important;
@@ -781,20 +822,20 @@ export default function GooglePropertyMap({
     if (!map) return;
 
     const handleResize = () => {
-      google.maps.event.trigger(map, 'resize');
+      google.maps.event.trigger(map, "resize");
       setTimeout(checkForOffscreenHighlightedMarker, 100);
     };
 
-    window.addEventListener('resize', handleResize);
-    
+    window.addEventListener("resize", handleResize);
+
     // Trigger resize after small delay to ensure container is fully rendered
     const resizeTimer = setTimeout(() => {
-      google.maps.event.trigger(map, 'resize');
+      google.maps.event.trigger(map, "resize");
       checkForOffscreenHighlightedMarker();
     }, 200);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimer);
     };
   }, [map, checkForOffscreenHighlightedMarker]);
@@ -805,9 +846,9 @@ export default function GooglePropertyMap({
       if (hoverTimeoutRef.current) {
         clearTimeout(hoverTimeoutRef.current);
       }
-      
+
       closeCurrentInfoWindow();
-      
+
       markersRef.current.forEach(({ marker }) => {
         marker.setMap(null);
       });
@@ -816,64 +857,76 @@ export default function GooglePropertyMap({
   }, [closeCurrentInfoWindow]);
 
   // Click handler for directional indicators
-  const handleDirectionClick = (direction: string) => {
+  const handleDirectionClick = (_direction: string) => {
     if (!map || !highlightedPropertyId) return;
-    
+
     const markerData = markersRef.current.get(highlightedPropertyId);
-    if (!markerData || !markerData.property.Latitude || !markerData.property.Longitude) return;
-    
+    if (
+      !markerData ||
+      !markerData.property.Latitude ||
+      !markerData.property.Longitude
+    )
+      return;
+
     // Pan to the highlighted property
     const lat = markerData.property.Latitude;
     const lng = markerData.property.Longitude;
     const [clampedLat, clampedLng] = clampToUSBounds(lat, lng);
-    
+
     map.panTo({ lat: clampedLat, lng: clampedLng });
   };
 
   return (
-    <div className="map-container" style={{ position: 'relative', width: '100%', height, zIndex: 51 }}>
-      <div 
-        ref={mapRef} 
-        style={{ 
-          position: 'absolute', 
-          top: 0, 
-          left: 0, 
-          width: '100%',
-          height: '100%' 
+    <div
+      className="map-container"
+      style={{ position: "relative", width: "100%", height, zIndex: 51 }}
+    >
+      <div
+        ref={mapRef}
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          width: "100%",
+          height: "100%",
         }}
       />
       {isLoading && (
-        <div className="map-loading" style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: '#f3f4f6'
-        }}>
+        <div
+          className="map-loading"
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: "#f3f4f6",
+          }}
+        >
           <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       )}
 
       {/* Directional indicators for off-screen highlighted markers */}
-      {directionalIndicators.map(indicator => 
-        indicator.visible && (
-          <div 
-            key={indicator.direction}
-            className={`direction-indicator ${indicator.direction}`}
-            onClick={() => handleDirectionClick(indicator.direction)}
-            title="Property is outside current view. Click to pan."
-          >
-            {indicator.direction === 'top' && '↑'}
-            {indicator.direction === 'right' && '→'}
-            {indicator.direction === 'bottom' && '↓'}
-            {indicator.direction === 'left' && '←'}
-          </div>
-        )
+      {directionalIndicators.map(
+        (indicator) =>
+          indicator.visible && (
+            <div
+              key={indicator.direction}
+              className={`direction-indicator ${indicator.direction}`}
+              onClick={() => handleDirectionClick(indicator.direction)}
+              title="Property is outside current view. Click to pan."
+            >
+              {indicator.direction === "top" && "↑"}
+              {indicator.direction === "right" && "→"}
+              {indicator.direction === "bottom" && "↓"}
+              {indicator.direction === "left" && "←"}
+            </div>
+          )
       )}
     </div>
   );
-} 
+}

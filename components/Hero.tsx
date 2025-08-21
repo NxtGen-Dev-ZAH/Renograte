@@ -6,6 +6,7 @@ import Image from "next/image";
 import { ChevronDown, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import AutocompleteInput from "./AutocompleteInput";
 
 export default function Hero() {
   const router = useRouter();
@@ -20,11 +21,11 @@ export default function Hero() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    
+
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const handleSearch = () => {
@@ -36,32 +37,32 @@ export default function Hero() {
 
   const fadeInUpVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
+    visible: {
+      opacity: 1,
       y: 0,
       transition: {
         duration: 0.6,
-        ease: "easeOut"
-      }
+        ease: "easeOut",
+      },
     },
   };
 
   const containerVariants = {
     hidden: { opacity: 0 },
-    visible: { 
+    visible: {
       opacity: 1,
       transition: {
         staggerChildren: 0.2,
-        delayChildren: 0.3
-      }
-    }
+        delayChildren: 0.3,
+      },
+    },
   };
 
   return (
     <section className="relative w-full min-h-screen flex flex-col items-center justify-between overflow-hidden bg-gradient-to-br from-white via-white to-cyan-50 pt-16 md:pt-28 lg:pt-36 xl:pt-40">
       {/* Background Patterns */}
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.02] pointer-events-none" />
-      
+
       {/* Mobile-first layout - stack vertically on small screens, side by side on larger screens */}
       <div className="flex flex-col md:flex-row w-full h-full relative z-10">
         {/* Left Side: Search and 'How It Works' Section */}
@@ -71,24 +72,20 @@ export default function Hero() {
           animate="visible"
           variants={containerVariants}
         >
-          <motion.div 
-            className="w-full max-w-2xl"
-            variants={fadeInUpVariants}
-          >
+          <motion.div className="w-full max-w-2xl" variants={fadeInUpVariants}>
             <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent pb-2">
               Pre-Closing Buyer Renovations!
               <div className="w-full h-1 bg-gradient-to-r from-blue-600 to-cyan-600 mt-2 mb-6 md:mb-8"></div>
             </h1>
-            
           </motion.div>
 
           <motion.p
             className="text-sm sm:text-base md:text-lg lg:text-xl mb-8 md:mb-10 text-gray-600 leading-relaxed"
             variants={fadeInUpVariants}
           >
-            Realtors add value and earn higher commissions, buyers receive custom
-            renovation allowances, and sellers get top dollar for their homes with
-            no upfront costs.
+            Realtors add value and earn higher commissions, buyers receive
+            custom renovation allowances, and sellers get top dollar for their
+            homes with no upfront costs.
           </motion.p>
 
           <motion.div
@@ -96,15 +93,13 @@ export default function Hero() {
             variants={fadeInUpVariants}
           >
             <div className="relative w-full sm:w-3/4 md:w-2/4 lg:w-3/6">
-              <input
-                type="text"
+              <AutocompleteInput
                 placeholder="Enter property address"
-                className="px-4 py-3 border border-gray-200 rounded-lg w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base transition-all duration-300 shadow-sm"
                 value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                onChange={setSearchValue}
+                onSearch={handleSearch}
+                className="w-full"
               />
-              <div className="absolute inset-0 border border-gradient-blue opacity-50 rounded-lg pointer-events-none" />
             </div>
             <motion.button
               className="px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-600 text-white rounded-lg font-semibold flex items-center justify-center gap-2 transition-all duration-300 shadow-lg hover:shadow-xl text-base group overflow-hidden relative"
@@ -146,10 +141,7 @@ export default function Hero() {
             animate={{ opacity: 1 }}
             transition={{ duration: 1 }}
           />
-          <motion.div
-            className="w-full h-full"
-            style={{ scale }}
-          >
+          <motion.div className="w-full h-full" style={{ scale }}>
             <Image
               src={isMobile ? "/imagemain4.png" : "/imagemain.png"}
               alt="Modern home interior"
@@ -178,18 +170,3 @@ export default function Hero() {
     </section>
   );
 }
-
-// Add this to your global CSS
-const styles = `
-.bg-grid-pattern {
-  background-image: linear-gradient(to right, #f0f0f0 1px, transparent 1px),
-    linear-gradient(to bottom, #f0f0f0 1px, transparent 1px);
-  background-size: 24px 24px;
-}
-
-.border-gradient-blue {
-  background: linear-gradient(to right, #2563eb, #0891b2);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-}
-`;

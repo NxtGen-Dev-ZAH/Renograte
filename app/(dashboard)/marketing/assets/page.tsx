@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+// import { useAuth } from "@/hooks/useAuth";
 import RoleProtected from "@/components/RoleProtected";
-import { 
+import {
   Download,
-  Edit,
   ExternalLink,
   FileIcon,
   FileText,
@@ -21,16 +27,13 @@ import {
   LayoutList,
   Mail,
   MoreHorizontal,
-  Plus,
   Search,
-  Trash2,
-  Video
+  Video,
 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -42,7 +45,7 @@ import {
 } from "@/components/ui/select";
 import Link from "next/link";
 import Image from "next/image";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,9 +70,7 @@ interface MarketingAsset {
 }
 
 export function MarketingAssetsPage() {
-  const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
 
   const [assets, setAssets] = useState<MarketingAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,35 +85,35 @@ export function MarketingAssetsPage() {
   const getProxyUrl = (fileKey: string) => {
     if (!fileKey) return "";
     // Check if already a full URL or a proxy URL
-    if (fileKey.startsWith('http') || fileKey.startsWith('/api')) {
+    if (fileKey.startsWith("http") || fileKey.startsWith("/api")) {
       return fileKey;
     }
     return `/api/s3-proxy?key=${encodeURIComponent(fileKey)}`;
   };
 
-  const loadAssets = async () => {
+  const loadAssets = useCallback(async () => {
     setIsLoading(true);
     try {
       let url = "/api/marketing/assets";
       const params = new URLSearchParams();
-      
+
       if (typeFilter !== "all") {
         params.append("type", typeFilter);
       }
-      
+
       if (categoryFilter !== "all") {
         params.append("category", categoryFilter);
       }
-      
+
       if (params.toString()) {
         url += `?${params.toString()}`;
       }
-      
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to load marketing assets");
       }
-      
+
       const data = await response.json();
       setAssets(data);
     } catch (error) {
@@ -125,29 +126,32 @@ export function MarketingAssetsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [typeFilter, categoryFilter, toast]);
 
   useEffect(() => {
     loadAssets();
-  }, [typeFilter, categoryFilter]);
+  }, [loadAssets]);
 
   const handleDeleteAsset = async () => {
     if (!assetToDelete) return;
-    
+
     try {
-      const response = await fetch(`/api/marketing/assets?id=${assetToDelete}`, {
-        method: "DELETE",
-      });
-      
+      const response = await fetch(
+        `/api/marketing/assets?id=${assetToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
+
       if (!response.ok) {
         throw new Error("Failed to delete asset");
       }
-      
+
       toast({
         title: "Success",
         description: "Asset deleted successfully",
       });
-      
+
       // Reload assets
       loadAssets();
     } catch (error) {
@@ -161,11 +165,6 @@ export function MarketingAssetsPage() {
       setDeleteDialogOpen(false);
       setAssetToDelete(null);
     }
-  };
-
-  const confirmDelete = (id: string) => {
-    setAssetToDelete(id);
-    setDeleteDialogOpen(true);
   };
 
   const handleDownload = (asset: MarketingAsset) => {
@@ -195,19 +194,23 @@ export function MarketingAssetsPage() {
   };
 
   // Get unique categories and types for filters
-  const categories = [...new Set(assets.map(asset => asset.category))];
-  const types = [...new Set(assets.map(asset => asset.type))];
+  const categories = [...new Set(assets.map((asset) => asset.category))];
+  const types = [...new Set(assets.map((asset) => asset.type))];
 
-  const filteredAssets = assets.filter(asset => 
-    asset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (asset.description && asset.description.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredAssets = assets.filter(
+    (asset) =>
+      asset.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (asset.description &&
+        asset.description.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Marketing Assets</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Marketing Assets
+          </h1>
           <p className="text-muted-foreground">
             Browse and manage marketing materials
           </p>
@@ -255,18 +258,16 @@ export function MarketingAssetsPage() {
             <div className="flex flex-col md:flex-row gap-2">
               <div className="flex items-center gap-2">
                 <Filter className="h-4 w-4 text-muted-foreground" />
-                <Select
-                  value={typeFilter}
-                  onValueChange={setTypeFilter}
-                >
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
                   <SelectTrigger className="w-[180px]">
                     <SelectValue placeholder="Filter by type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
-                    {types.map(type => (
+                    {types.map((type) => (
                       <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}
+                        {type.charAt(0).toUpperCase() +
+                          type.slice(1).replace("_", " ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -283,7 +284,7 @@ export function MarketingAssetsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map(category => (
+                    {categories.map((category) => (
                       <SelectItem key={category} value={category}>
                         {category}
                       </SelectItem>
@@ -307,7 +308,7 @@ export function MarketingAssetsPage() {
             </div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredAssets.map(asset => (
+              {filteredAssets.map((asset) => (
                 <Card key={asset.id} className="overflow-hidden">
                   <div className="aspect-video relative bg-muted">
                     {asset.thumbnail ? (
@@ -334,12 +335,18 @@ export function MarketingAssetsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleDownload(asset)}>
+                          <DropdownMenuItem
+                            onClick={() => handleDownload(asset)}
+                          >
                             <Download className="mr-2 h-4 w-4" />
                             Download
                           </DropdownMenuItem>
                           <DropdownMenuItem asChild>
-                            <Link href={getProxyUrl(asset.fileUrl)} target="_blank" rel="noopener noreferrer">
+                            <Link
+                              href={getProxyUrl(asset.fileUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               View
                             </Link>
@@ -354,7 +361,7 @@ export function MarketingAssetsPage() {
                     )}
                     <div className="flex items-center justify-between mt-2">
                       <Badge variant="outline">{asset.category}</Badge>
-                      <Badge>{asset.type.replace('_', ' ')}</Badge>
+                      <Badge>{asset.type.replace("_", " ")}</Badge>
                     </div>
                   </CardContent>
                 </Card>
@@ -372,7 +379,7 @@ export function MarketingAssetsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredAssets.map(asset => (
+                  {filteredAssets.map((asset) => (
                     <tr key={asset.id} className="border-b">
                       <td className="p-3">
                         <div className="flex items-center gap-3">
@@ -400,7 +407,7 @@ export function MarketingAssetsPage() {
                         </div>
                       </td>
                       <td className="p-3">
-                        <Badge>{asset.type.replace('_', ' ')}</Badge>
+                        <Badge>{asset.type.replace("_", " ")}</Badge>
                       </td>
                       <td className="p-3">
                         <Badge variant="outline">{asset.category}</Badge>
@@ -414,12 +421,12 @@ export function MarketingAssetsPage() {
                           >
                             <Download className="h-4 w-4" />
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            asChild
-                          >
-                            <Link href={getProxyUrl(asset.fileUrl)} target="_blank" rel="noopener noreferrer">
+                          <Button size="sm" variant="outline" asChild>
+                            <Link
+                              href={getProxyUrl(asset.fileUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <ExternalLink className="h-4 w-4" />
                             </Link>
                           </Button>
@@ -444,13 +451,13 @@ export function MarketingAssetsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the asset
-              and remove it from our servers.
+              This action cannot be undone. This will permanently delete the
+              asset and remove it from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteAsset}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -469,4 +476,4 @@ export default function MarketingAssetsProtectedWrapper() {
       <MarketingAssetsPage />
     </RoleProtected>
   );
-} 
+}

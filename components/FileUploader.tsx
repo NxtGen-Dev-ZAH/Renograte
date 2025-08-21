@@ -12,7 +12,7 @@ interface FileUploaderProps {
   maxFiles?: number;
   maxSize?: number;
   className?: string;
-  isUploading?: boolean;
+
 }
 
 export function FileUploader({
@@ -21,7 +21,7 @@ export function FileUploader({
   maxFiles = 1,
   maxSize = 10 * 1024 * 1024, // 10MB
   className,
-  isUploading = false,
+
 }: FileUploaderProps) {
   const [files, setFiles] = useState<File[]>([]);
 

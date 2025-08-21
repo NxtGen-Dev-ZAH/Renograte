@@ -15,7 +15,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, FileText, Upload, Plus, Trash2, Eye, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  Upload,
+  Plus,
+  Trash2,
+  ExternalLink,
+} from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ContractRole } from "@/lib/contracts/contractService";
 
@@ -50,12 +57,12 @@ export default function CreateContractPage() {
   const [selectedTab, setSelectedTab] = useState("template");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [documentUrl, setDocumentUrl] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [sections, setSections] = useState<ContractSection[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<ContractTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<ContractTemplate | null>(null);
 
   // Templates data (same as in the contracts page)
   const templates = [
@@ -75,9 +82,9 @@ export default function CreateContractPage() {
         { title: "Contractor Signature", role: "CONTRACTOR", pageNumber: 3 },
         { title: "Seller Signature", role: "SELLER", pageNumber: 3 },
         { title: "Buyer Signature", role: "BUYER", pageNumber: 3 },
-      ]
+      ],
     },
-    { 
+    {
       id: 2,
       name: "Renograte Option Contract",
       description: "Option agreement for property renovation",
@@ -93,7 +100,7 @@ export default function CreateContractPage() {
         { title: "Seller Signature", role: "SELLER", pageNumber: 3 },
         { title: "Buyer Signature", role: "BUYER", pageNumber: 3 },
         { title: "Agent Signature", role: "AGENT", pageNumber: 3 },
-      ]
+      ],
     },
     {
       id: 3,
@@ -109,7 +116,7 @@ export default function CreateContractPage() {
         { title: "Option Terms", role: "AGENT", pageNumber: 3 },
         { title: "Tenant Signature", role: "BUYER", pageNumber: 5 },
         { title: "Landlord Signature", role: "SELLER", pageNumber: 5 },
-      ]
+      ],
     },
     {
       id: 4,
@@ -125,33 +132,33 @@ export default function CreateContractPage() {
         { title: "Profit Sharing", role: "AGENT", pageNumber: 3 },
         { title: "Partner 1 Signature", role: "BUYER", pageNumber: 6 },
         { title: "Partner 2 Signature", role: "SELLER", pageNumber: 6 },
-      ]
+      ],
     },
   ];
 
   // Load template if templateId is provided
   useEffect(() => {
     if (templateId) {
-      const template = templates.find(t => t.id.toString() === templateId);
+      const template = templates.find((t) => t.id.toString() === templateId);
       if (template) {
         setSelectedTemplate(template);
         setTitle(`${template.name} - ${new Date().toLocaleDateString()}`);
         setDescription(template.description);
         setPreviewUrl(template.previewUrl);
-        
+
         // Convert template sections to contract sections
-        const contractSections = template.sections.map(section => ({
+        const contractSections = template.sections.map((section) => ({
           title: section.title,
           pageNumber: section.pageNumber,
           role: section.role as ContractRole,
           required: true,
         }));
-        
+
         setSections(contractSections);
         setSelectedTab("details");
       }
     }
-  }, [templateId]);
+  }, [templateId, templates]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -165,16 +172,16 @@ export default function CreateContractPage() {
           variant: "destructive",
         });
         // Reset the file input
-        e.target.value = '';
+        e.target.value = "";
         return;
       }
-      
+
       setUploadedFile(file);
-      
+
       // Create a temporary URL for preview
       const fileUrl = URL.createObjectURL(file);
       setPreviewUrl(fileUrl);
-      
+
       // Set document name as title if not already set
       if (!title) {
         setTitle(file.name.replace(/\.[^/.]+$/, ""));
@@ -198,7 +205,11 @@ export default function CreateContractPage() {
     ]);
   };
 
-  const updateSection = (index: number, field: keyof ContractSection, value: any) => {
+  const updateSection = (
+    index: number,
+    field: keyof ContractSection,
+    value: string | number | boolean
+  ) => {
     const updatedSections = [...sections];
     updatedSections[index] = {
       ...updatedSections[index],
@@ -250,25 +261,25 @@ export default function CreateContractPage() {
         try {
           // Upload the file to S3
           const formData = new FormData();
-          formData.append('file', uploadedFile);
-          
-          const response = await fetch('/api/upload', {
-            method: 'POST',
+          formData.append("file", uploadedFile);
+
+          const response = await fetch("/api/upload", {
+            method: "POST",
             body: formData,
           });
-          
+
           if (!response.ok) {
-            throw new Error('Failed to upload file');
+            throw new Error("Failed to upload file");
           }
-          
+
           const data = await response.json();
           finalDocumentUrl = `/api/s3-proxy?key=${data.fileKey}`;
         } catch (error) {
-          console.error('Error uploading file:', error);
+          console.error("Error uploading file:", error);
           toast({
-            title: 'Error',
-            description: 'Failed to upload document. Please try again.',
-            variant: 'destructive',
+            title: "Error",
+            description: "Failed to upload document. Please try again.",
+            variant: "destructive",
           });
           setIsSubmitting(false);
           return;
@@ -276,10 +287,10 @@ export default function CreateContractPage() {
       }
 
       // Create contract in the database
-      const response = await fetch('/api/contracts', {
-        method: 'POST',
+      const response = await fetch("/api/contracts", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           title,
@@ -290,7 +301,7 @@ export default function CreateContractPage() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create contract');
+        throw new Error("Failed to create contract");
       }
 
       const contract = await response.json();
@@ -327,10 +338,16 @@ export default function CreateContractPage() {
             Back to My Agreements
           </Button>
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">Create New Contract</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Create New Contract
+        </h2>
       </div>
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
+      <Tabs
+        value={selectedTab}
+        onValueChange={setSelectedTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="template">1. Choose Template</TabsTrigger>
           <TabsTrigger value="details">2. Contract Details</TabsTrigger>
@@ -342,18 +359,26 @@ export default function CreateContractPage() {
         <TabsContent value="template" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Select a Template or Upload your own document</CardTitle>
+              <CardTitle>
+                Select a Template or Upload your own document
+              </CardTitle>
             </CardHeader>
             <CardContent>
-            <div className="mt-2">
-                <p className="text-muted-foreground mb-4">Upload your own document</p>
+              <div className="mt-2">
+                <p className="text-muted-foreground mb-4">
+                  Upload your own document
+                </p>
                 <div className="flex items-center gap-4">
                   <div className="flex-1">
                     <Label htmlFor="document-upload" className="cursor-pointer">
                       <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
                         <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
-                        <p className="text-sm font-medium">Click to upload or drag and drop</p>
-                        <p className="text-xs text-muted-foreground mt-1">PDF (max 5MB)</p>
+                        <p className="text-sm font-medium">
+                          Click to upload or drag and drop
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          PDF (max 5MB)
+                        </p>
                       </div>
                       <Input
                         id="document-upload"
@@ -373,7 +398,9 @@ export default function CreateContractPage() {
                               <FileText className="h-6 w-6 text-gray-600" />
                             </div>
                             <div className="flex-1">
-                              <h4 className="font-medium">{uploadedFile.name}</h4>
+                              <h4 className="font-medium">
+                                {uploadedFile.name}
+                              </h4>
                               <p className="text-sm text-muted-foreground mt-1">
                                 {Math.round(uploadedFile.size / 1024)} KB
                               </p>
@@ -396,15 +423,16 @@ export default function CreateContractPage() {
               </div>
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
                 {templates.map((template) => (
-                  <Card 
-                    key={template.id} 
+                  <Card
+                    key={template.id}
                     className={`cursor-pointer overflow-hidden transition-all ${
-                      selectedTemplate?.id === template.id ? 'ring-2 ring-primary' : ''
+                      selectedTemplate?.id === template.id
+                        ? "ring-2 ring-primary"
+                        : ""
                     }`}
                     onClick={() => handleTemplateSelect(template)}
                   >
                     <CardContent className="p-0">
-                      
                       <div className="bg-gray-50 p-4 border-b">
                         <div className="flex items-start gap-3">
                           <div className="p-2 rounded-lg bg-gray-100">
@@ -421,8 +449,12 @@ export default function CreateContractPage() {
                       <div className="p-4">
                         <div className="text-sm mb-4">
                           <div className="flex items-center justify-between">
-                            <span className="text-muted-foreground">Sections:</span>
-                            <span className="font-medium">{template.sections.length}</span>
+                            <span className="text-muted-foreground">
+                              Sections:
+                            </span>
+                            <span className="font-medium">
+                              {template.sections.length}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -431,10 +463,8 @@ export default function CreateContractPage() {
                 ))}
               </div>
 
-
-
               <div className="flex justify-end mt-6">
-                <Button 
+                <Button
                   onClick={() => setSelectedTab("details")}
                   disabled={!selectedTemplate && !uploadedFile}
                 >
@@ -472,7 +502,7 @@ export default function CreateContractPage() {
                     rows={3}
                   />
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label>Document Preview</Label>
                   <div className="border rounded-md overflow-hidden">
@@ -485,19 +515,23 @@ export default function CreateContractPage() {
                     ) : (
                       <div className="flex flex-col items-center justify-center h-[300px] bg-gray-50">
                         <FileText className="h-16 w-16 text-gray-400 mb-4" />
-                        <h3 className="text-lg font-medium mb-2">Document Preview</h3>
+                        <h3 className="text-lg font-medium mb-2">
+                          Document Preview
+                        </h3>
                         <p className="text-sm text-muted-foreground mb-4">
-                          {selectedTemplate ? selectedTemplate.name : uploadedFile?.name || "No document selected"}
+                          {selectedTemplate
+                            ? selectedTemplate.name
+                            : uploadedFile?.name || "No document selected"}
                         </p>
                       </div>
                     )}
                   </div>
                   {previewUrl && (
                     <div className="flex justify-end mt-2">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => window.open(previewUrl, '_blank')}
+                        onClick={() => window.open(previewUrl, "_blank")}
                       >
                         <ExternalLink className="mr-2 h-4 w-4" />
                         Open in New Tab
@@ -508,7 +542,10 @@ export default function CreateContractPage() {
               </div>
 
               <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setSelectedTab("template")}>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTab("template")}
+                >
                   Back
                 </Button>
                 <Button onClick={() => setSelectedTab("sections")}>
@@ -545,27 +582,41 @@ export default function CreateContractPage() {
                         <Input
                           id={`section-title-${index}`}
                           value={section.title}
-                          onChange={(e) => updateSection(index, "title", e.target.value)}
+                          onChange={(e) =>
+                            updateSection(index, "title", e.target.value)
+                          }
                           placeholder="e.g., Buyer Signature"
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`section-page-${index}`}>Page Number</Label>
+                        <Label htmlFor={`section-page-${index}`}>
+                          Page Number
+                        </Label>
                         <Input
                           id={`section-page-${index}`}
                           type="number"
                           min="1"
                           value={section.pageNumber}
-                          onChange={(e) => updateSection(index, "pageNumber", parseInt(e.target.value))}
+                          onChange={(e) =>
+                            updateSection(
+                              index,
+                              "pageNumber",
+                              parseInt(e.target.value)
+                            )
+                          }
                         />
                       </div>
                     </div>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor={`section-role-${index}`}>Signer Role</Label>
+                        <Label htmlFor={`section-role-${index}`}>
+                          Signer Role
+                        </Label>
                         <Select
                           value={section.role}
-                          onValueChange={(value) => updateSection(index, "role", value)}
+                          onValueChange={(value) =>
+                            updateSection(index, "role", value)
+                          }
                         >
                           <SelectTrigger id={`section-role-${index}`}>
                             <SelectValue placeholder="Select role" />
@@ -574,15 +625,21 @@ export default function CreateContractPage() {
                             <SelectItem value="BUYER">Buyer</SelectItem>
                             <SelectItem value="SELLER">Seller</SelectItem>
                             <SelectItem value="AGENT">Agent</SelectItem>
-                            <SelectItem value="CONTRACTOR">Contractor</SelectItem>
+                            <SelectItem value="CONTRACTOR">
+                              Contractor
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`section-required-${index}`}>Required</Label>
+                        <Label htmlFor={`section-required-${index}`}>
+                          Required
+                        </Label>
                         <Select
                           value={section.required ? "yes" : "no"}
-                          onValueChange={(value) => updateSection(index, "required", value === "yes")}
+                          onValueChange={(value) =>
+                            updateSection(index, "required", value === "yes")
+                          }
                         >
                           <SelectTrigger id={`section-required-${index}`}>
                             <SelectValue placeholder="Is this required?" />
@@ -597,14 +654,21 @@ export default function CreateContractPage() {
                   </div>
                 ))}
 
-                <Button variant="outline" onClick={addSection} className="w-full">
+                <Button
+                  variant="outline"
+                  onClick={addSection}
+                  className="w-full"
+                >
                   <Plus className="mr-2 h-4 w-4" />
                   Add Signature Section
                 </Button>
               </div>
 
               <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setSelectedTab("details")}>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTab("details")}
+                >
                   Back
                 </Button>
                 <Button onClick={() => setSelectedTab("review")}>
@@ -628,18 +692,28 @@ export default function CreateContractPage() {
                     <h3 className="font-medium mb-2">Contract Details</h3>
                     <div className="space-y-2">
                       <div>
-                        <span className="text-sm text-muted-foreground">Title:</span>
+                        <span className="text-sm text-muted-foreground">
+                          Title:
+                        </span>
                         <p className="font-medium">{title}</p>
                       </div>
                       {description && (
                         <div>
-                          <span className="text-sm text-muted-foreground">Description:</span>
+                          <span className="text-sm text-muted-foreground">
+                            Description:
+                          </span>
                           <p>{description}</p>
                         </div>
                       )}
                       <div>
-                        <span className="text-sm text-muted-foreground">Template:</span>
-                        <p>{selectedTemplate ? selectedTemplate.name : "Custom Document"}</p>
+                        <span className="text-sm text-muted-foreground">
+                          Template:
+                        </span>
+                        <p>
+                          {selectedTemplate
+                            ? selectedTemplate.name
+                            : "Custom Document"}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -656,7 +730,8 @@ export default function CreateContractPage() {
                             </span>
                           </div>
                           <div className="text-sm text-muted-foreground">
-                            {section.role} • {section.required ? "Required" : "Optional"}
+                            {section.role} •{" "}
+                            {section.required ? "Required" : "Optional"}
                           </div>
                         </div>
                       ))}
@@ -679,7 +754,10 @@ export default function CreateContractPage() {
               </div>
 
               <div className="flex justify-between mt-6">
-                <Button variant="outline" onClick={() => setSelectedTab("sections")}>
+                <Button
+                  variant="outline"
+                  onClick={() => setSelectedTab("sections")}
+                >
                   Back
                 </Button>
                 <Button onClick={handleSubmit} disabled={isSubmitting}>
@@ -692,4 +770,4 @@ export default function CreateContractPage() {
       </Tabs>
     </div>
   );
-} 
+}

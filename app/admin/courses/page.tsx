@@ -2,7 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,29 +37,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  Loader2, 
-  Plus, 
-  Trash2, 
-  Video, 
-  Upload, 
-  ArrowLeft, 
-  Clock, 
-  BookOpen, 
+import {
+  Loader2,
+  Plus,
+  Trash2,
+  Video,
+  Upload,
+  Clock,
+  BookOpen,
   Search,
-  Filter,
   Eye,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import Image from "next/image";
-import { uploadFileToS3 } from "@/lib/s3";
 
 const courseCategories = [
   { id: "basics", name: "Real Estate Basics" },
@@ -86,7 +84,6 @@ interface Course {
 }
 
 export default function AdminCoursesPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,11 +120,11 @@ export default function AdminCoursesPage() {
     try {
       setLoading(true);
       const response = await fetch("/api/courses");
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch courses");
       }
-      
+
       const data = await response.json();
       setCourses(data.courses);
     } catch (error) {
@@ -144,33 +141,33 @@ export default function AdminCoursesPage() {
 
   const handleCourseSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       setIsSubmitting(true);
-      
+
       const formDataToSend = new FormData();
       formDataToSend.append("title", formData.title);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("category", formData.category);
-      
+
       if (thumbnailFile) {
         formDataToSend.append("thumbnail", thumbnailFile);
       }
-      
+
       const response = await fetch("/api/courses", {
         method: "POST",
         body: formDataToSend,
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to create course");
       }
-      
+
       toast({
         title: "Success",
         description: "Course created successfully",
       });
-      
+
       setFormData({
         title: "",
         description: "",
@@ -193,13 +190,13 @@ export default function AdminCoursesPage() {
 
   const handleVideoSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!selectedCourse) return;
-    
+
     try {
       setIsSubmitting(true);
       setUploadProgress(0);
-      
+
       if (!videoFile) {
         toast({
           title: "Error",
@@ -208,13 +205,14 @@ export default function AdminCoursesPage() {
         });
         return;
       }
-      
+
       // Show upload starting toast
       toast({
         title: "Upload starting",
-        description: "Beginning video upload. This may take several minutes for large files.",
+        description:
+          "Beginning video upload. This may take several minutes for large files.",
       });
-      
+
       const formDataToSend = new FormData();
       formDataToSend.append("title", videoFormData.title);
       formDataToSend.append("description", videoFormData.description);
@@ -222,46 +220,46 @@ export default function AdminCoursesPage() {
       formDataToSend.append("order", videoFormData.order.toString());
       formDataToSend.append("duration", videoFormData.duration.toString());
       formDataToSend.append("video", videoFile);
-      
+
       // Set longer timeout for large files
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10 * 60 * 1000); // 10 minutes timeout
-      
+
       // Simulate upload progress for better UX
       const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
+        setUploadProgress((prev) => {
           if (prev === null) return 0;
           // Gradually increase progress, but never reach 100% until complete
           if (prev < 90) {
-            return prev + (Math.random() * 5);
+            return prev + Math.random() * 5;
           }
           return prev;
         });
       }, 1000);
-      
+
       try {
         const response = await fetch("/api/courses/videos", {
           method: "POST",
           body: formDataToSend,
-          signal: controller.signal
+          signal: controller.signal,
         });
-        
+
         clearTimeout(timeoutId);
         clearInterval(progressInterval);
         setUploadProgress(100);
-        
+
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to add video");
         }
-        
+
         const data = await response.json();
-        
+
         toast({
           title: "Success",
           description: data.message || "Video added successfully",
         });
-        
+
         setVideoFormData({
           title: "",
           description: "",
@@ -274,11 +272,12 @@ export default function AdminCoursesPage() {
       } catch (fetchError) {
         clearInterval(progressInterval);
         setUploadProgress(null);
-        
-        if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+
+        if (fetchError instanceof Error && fetchError.name === "AbortError") {
           toast({
             title: "Upload timeout",
-            description: "The upload took too long and was cancelled. Try with a smaller file or check your connection.",
+            description:
+              "The upload took too long and was cancelled. Try with a smaller file or check your connection.",
             variant: "destructive",
           });
         } else {
@@ -288,12 +287,12 @@ export default function AdminCoursesPage() {
     } catch (error) {
       console.error("Error adding video:", error);
       setUploadProgress(null);
-      
+
       let errorMessage = "Failed to add video. Please try again.";
       if (error instanceof Error) {
         errorMessage = error.message;
       }
-      
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -305,24 +304,28 @@ export default function AdminCoursesPage() {
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm("Are you sure you want to delete this course? This will also delete all videos in the course.")) {
+    if (
+      !confirm(
+        "Are you sure you want to delete this course? This will also delete all videos in the course."
+      )
+    ) {
       return;
     }
-    
+
     try {
       const response = await fetch(`/api/courses?id=${courseId}`, {
         method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete course");
       }
-      
+
       toast({
         title: "Success",
         description: "Course deleted successfully",
       });
-      
+
       fetchCourses();
     } catch (error) {
       console.error("Error deleting course:", error);
@@ -338,21 +341,21 @@ export default function AdminCoursesPage() {
     if (!confirm("Are you sure you want to delete this video?")) {
       return;
     }
-    
+
     try {
       const response = await fetch(`/api/courses/videos?id=${videoId}`, {
         method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete video");
       }
-      
+
       toast({
         title: "Success",
         description: "Video deleted successfully",
       });
-      
+
       fetchCourses();
     } catch (error) {
       console.error("Error deleting video:", error);
@@ -368,16 +371,17 @@ export default function AdminCoursesPage() {
     const file = e.target.files?.[0];
     if (file) {
       // Validate image file type
-      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+      const validTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
       if (!validTypes.includes(file.type)) {
         toast({
           title: "Error",
-          description: "Invalid file type. Please upload JPG, PNG, WEBP, or GIF images.",
+          description:
+            "Invalid file type. Please upload JPG, PNG, WEBP, or GIF images.",
           variant: "destructive",
         });
         return;
       }
-      
+
       // Validate file size (limit to 5MB)
       const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
       if (file.size > maxSizeInBytes) {
@@ -388,16 +392,16 @@ export default function AdminCoursesPage() {
         });
         return;
       }
-      
+
       setThumbnailFile(file);
-      
+
       // Create thumbnail preview
       const reader = new FileReader();
       reader.onload = (e) => {
         setThumbnailPreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
-      
+
       toast({
         title: "Thumbnail selected",
         description: file.name,
@@ -418,53 +422,55 @@ export default function AdminCoursesPage() {
         });
         return;
       }
-      
+
       // Check file type
-      const validTypes = ['video/mp4', 'video/webm', 'video/quicktime'];
+      const validTypes = ["video/mp4", "video/webm", "video/quicktime"];
       if (!validTypes.includes(file.type)) {
         toast({
           title: "Error",
-          description: "Invalid file type. Please upload MP4, WebM, or MOV video files.",
+          description:
+            "Invalid file type. Please upload MP4, WebM, or MOV video files.",
           variant: "destructive",
         });
         return;
       }
-      
+
       setVideoFile(file);
       toast({
         title: "Video selected",
         description: `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`,
       });
-      
+
       // Get video duration
       const video = document.createElement("video");
       video.preload = "metadata";
-      
+
       video.onloadedmetadata = () => {
         window.URL.revokeObjectURL(video.src);
         const durationInSeconds = Math.round(video.duration);
-        setVideoFormData(prev => ({
+        setVideoFormData((prev) => ({
           ...prev,
-          duration: durationInSeconds
+          duration: durationInSeconds,
         }));
-        
+
         // Show duration in toast
         const minutes = Math.floor(durationInSeconds / 60);
         const seconds = durationInSeconds % 60;
         toast({
           title: "Video duration",
-          description: `${minutes}:${seconds.toString().padStart(2, '0')}`,
+          description: `${minutes}:${seconds.toString().padStart(2, "0")}`,
         });
       };
-      
+
       video.onerror = () => {
         toast({
           title: "Error",
-          description: "Could not read video metadata. The file might be corrupted.",
+          description:
+            "Could not read video metadata. The file might be corrupted.",
           variant: "destructive",
         });
       };
-      
+
       video.src = URL.createObjectURL(file);
     }
   };
@@ -481,11 +487,12 @@ export default function AdminCoursesPage() {
     }
   };
 
-  const filteredCourses = courses.filter(course => {
-    const matchesSearch = !searchQuery || 
+  const filteredCourses = courses.filter((course) => {
+    const matchesSearch =
+      !searchQuery ||
       course.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "all" || 
-      course.category === selectedCategory;
+    const matchesCategory =
+      selectedCategory === "all" || course.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -493,7 +500,9 @@ export default function AdminCoursesPage() {
     <div className="space-y-6 mt-16 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Course Management</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Course Management
+          </h2>
           <p className="text-muted-foreground">
             Create and manage courses for Renograte University
           </p>
@@ -540,13 +549,13 @@ export default function AdminCoursesPage() {
           <BookOpen className="mx-auto h-10 w-10 text-gray-400" />
           <h3 className="mt-4 text-lg font-semibold">No courses found</h3>
           <p className="text-muted-foreground mt-2">
-            {searchQuery || selectedCategory !== "all" 
-              ? "Try adjusting your search or filter" 
+            {searchQuery || selectedCategory !== "all"
+              ? "Try adjusting your search or filter"
               : "Create your first course to get started"}
           </p>
           {(searchQuery || selectedCategory !== "all") && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="mt-4"
               onClick={() => {
                 setSearchQuery("");
@@ -581,9 +590,13 @@ export default function AdminCoursesPage() {
                 <div className="flex-1">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <div>
-                      <CardTitle className="text-xl font-bold">{course.title}</CardTitle>
+                      <CardTitle className="text-xl font-bold">
+                        {course.title}
+                      </CardTitle>
                       <CardDescription>
-                        {courseCategories.find((cat) => cat.id === course.category)?.name || course.category}
+                        {courseCategories.find(
+                          (cat) => cat.id === course.category
+                        )?.name || course.category}
                       </CardDescription>
                     </div>
                     <div className="flex gap-2">
@@ -614,13 +627,17 @@ export default function AdminCoursesPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-sm mb-4">{course.description}</div>
-                    
+
                     <div className="flex items-center gap-4 mb-4">
-                      <Badge variant="outline" className="flex items-center gap-1">
-                        <Video className="h-3 w-3" /> 
-                        {course._count.videos} {course._count.videos === 1 ? "video" : "videos"}
+                      <Badge
+                        variant="outline"
+                        className="flex items-center gap-1"
+                      >
+                        <Video className="h-3 w-3" />
+                        {course._count.videos}{" "}
+                        {course._count.videos === 1 ? "video" : "videos"}
                       </Badge>
-                      
+
                       {course.videos.length > 0 && (
                         <div className="text-sm text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
@@ -628,7 +645,7 @@ export default function AdminCoursesPage() {
                         </div>
                       )}
                     </div>
-                    
+
                     {course.videos.length > 0 ? (
                       <Tabs defaultValue="list" className="w-full">
                         <TabsList className="mb-2">
@@ -640,7 +657,7 @@ export default function AdminCoursesPage() {
                             {course.videos
                               .sort((a, b) => a.order - b.order)
                               .map((video) => (
-                                <div 
+                                <div
                                   key={video.id}
                                   className="flex items-center justify-between p-3 bg-gray-50 rounded-md hover:bg-gray-100"
                                 >
@@ -649,7 +666,9 @@ export default function AdminCoursesPage() {
                                       <Video className="h-4 w-4 text-primary" />
                                     </div>
                                     <div>
-                                      <p className="font-medium">{video.order}. {video.title}</p>
+                                      <p className="font-medium">
+                                        {video.order}. {video.title}
+                                      </p>
                                       <p className="text-xs text-muted-foreground">
                                         {formatDuration(video.duration)}
                                       </p>
@@ -674,7 +693,9 @@ export default function AdminCoursesPage() {
                                 <TableHead>Order</TableHead>
                                 <TableHead>Title</TableHead>
                                 <TableHead>Duration</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
+                                <TableHead className="text-right">
+                                  Actions
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -691,7 +712,9 @@ export default function AdminCoursesPage() {
                                       <Button
                                         variant="destructive"
                                         size="sm"
-                                        onClick={() => handleDeleteVideo(video.id)}
+                                        onClick={() =>
+                                          handleDeleteVideo(video.id)
+                                        }
                                       >
                                         <Trash2 className="h-4 w-4" />
                                       </Button>
@@ -705,9 +728,11 @@ export default function AdminCoursesPage() {
                     ) : (
                       <div className="text-center py-8 border border-dashed rounded-lg">
                         <Video className="mx-auto h-8 w-8 text-gray-400" />
-                        <p className="text-sm text-muted-foreground mt-2">No videos added yet</p>
-                        <Button 
-                          variant="outline" 
+                        <p className="text-sm text-muted-foreground mt-2">
+                          No videos added yet
+                        </p>
+                        <Button
+                          variant="outline"
                           size="sm"
                           className="mt-4"
                           onClick={() => {
@@ -749,7 +774,9 @@ export default function AdminCoursesPage() {
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -757,7 +784,9 @@ export default function AdminCoursesPage() {
                 <Label htmlFor="category">Category</Label>
                 <Select
                   value={formData.category}
-                  onValueChange={(value) => setFormData({ ...formData, category: value })}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, category: value })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select category" />
@@ -777,7 +806,9 @@ export default function AdminCoursesPage() {
                   id="description"
                   rows={4}
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
                   required
                 />
               </div>
@@ -792,7 +823,11 @@ export default function AdminCoursesPage() {
                       accept="image/*"
                       onChange={handleThumbnailChange}
                     />
-                    <Button type="button" variant="outline" onClick={triggerThumbnailInput}>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={triggerThumbnailInput}
+                    >
                       <Upload className="mr-2 h-4 w-4" /> Upload Thumbnail
                     </Button>
                     {thumbnailFile && (
@@ -801,10 +836,10 @@ export default function AdminCoursesPage() {
                       </span>
                     )}
                   </div>
-                  
+
                   {thumbnailPreview && (
                     <div className="relative aspect-video w-full max-w-[300px] mx-auto border rounded-md overflow-hidden">
-                      <Image 
+                      <Image
                         src={thumbnailPreview}
                         alt="Thumbnail preview"
                         fill
@@ -816,15 +851,21 @@ export default function AdminCoursesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => {
-                setIsAddingCourse(false);
-                setThumbnailPreview(null);
-                setThumbnailFile(null);
-              }}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsAddingCourse(false);
+                  setThumbnailPreview(null);
+                  setThumbnailFile(null);
+                }}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Create Course
               </Button>
             </DialogFooter>
@@ -833,13 +874,16 @@ export default function AdminCoursesPage() {
       </Dialog>
 
       {/* Add Video Dialog */}
-      <Dialog open={isAddingVideo} onOpenChange={(open) => {
-        setIsAddingVideo(open);
-        if (!open) {
-          setUploadProgress(null);
-          setVideoFile(null);
-        }
-      }}>
+      <Dialog
+        open={isAddingVideo}
+        onOpenChange={(open) => {
+          setIsAddingVideo(open);
+          if (!open) {
+            setUploadProgress(null);
+            setVideoFile(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Add Video to Course</DialogTitle>
@@ -854,7 +898,12 @@ export default function AdminCoursesPage() {
                 <Input
                   id="videoTitle"
                   value={videoFormData.title}
-                  onChange={(e) => setVideoFormData({ ...videoFormData, title: e.target.value })}
+                  onChange={(e) =>
+                    setVideoFormData({
+                      ...videoFormData,
+                      title: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
@@ -864,7 +913,12 @@ export default function AdminCoursesPage() {
                   id="videoDescription"
                   rows={4}
                   value={videoFormData.description}
-                  onChange={(e) => setVideoFormData({ ...videoFormData, description: e.target.value })}
+                  onChange={(e) =>
+                    setVideoFormData({
+                      ...videoFormData,
+                      description: e.target.value,
+                    })
+                  }
                   required
                 />
               </div>
@@ -875,7 +929,12 @@ export default function AdminCoursesPage() {
                   type="number"
                   min="1"
                   value={videoFormData.order}
-                  onChange={(e) => setVideoFormData({ ...videoFormData, order: parseInt(e.target.value) })}
+                  onChange={(e) =>
+                    setVideoFormData({
+                      ...videoFormData,
+                      order: parseInt(e.target.value),
+                    })
+                  }
                   required
                 />
               </div>
@@ -889,16 +948,24 @@ export default function AdminCoursesPage() {
                     accept="video/*"
                     onChange={handleVideoChange}
                   />
-                  <Button type="button" variant="outline" onClick={triggerVideoInput}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={triggerVideoInput}
+                  >
                     <Upload className="mr-2 h-4 w-4" /> Upload Video
                   </Button>
                   {videoFile && (
                     <span className="text-sm text-muted-foreground">
-                      {videoFile.name} ({videoFormData.duration > 0 ? `${Math.floor(videoFormData.duration / 60)}:${(videoFormData.duration % 60).toString().padStart(2, "0")}` : "Processing..."})
+                      {videoFile.name} (
+                      {videoFormData.duration > 0
+                        ? `${Math.floor(videoFormData.duration / 60)}:${(videoFormData.duration % 60).toString().padStart(2, "0")}`
+                        : "Processing..."}
+                      )
                     </span>
                   )}
                 </div>
-                
+
                 {uploadProgress !== null && (
                   <div className="mt-2">
                     <div className="text-sm flex justify-between mb-1">
@@ -906,8 +973,8 @@ export default function AdminCoursesPage() {
                       <span>{Math.round(uploadProgress)}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2.5">
-                      <div 
-                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+                      <div
+                        className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
                         style={{ width: `${uploadProgress}%` }}
                       ></div>
                     </div>
@@ -919,7 +986,7 @@ export default function AdminCoursesPage() {
                     )}
                   </div>
                 )}
-                
+
                 <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
                   <div className="text-sm text-amber-800">
@@ -935,15 +1002,21 @@ export default function AdminCoursesPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => {
-                setIsAddingVideo(false);
-                setUploadProgress(null);
-                setVideoFile(null);
-              }}>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setIsAddingVideo(false);
+                  setUploadProgress(null);
+                  setVideoFile(null);
+                }}
+              >
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting || !videoFile}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                )}
                 Add Video
               </Button>
             </DialogFooter>
@@ -966,9 +1039,9 @@ function formatTotalDuration(videos: CourseVideo[]): string {
   const totalSeconds = videos.reduce((acc, video) => acc + video.duration, 0);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m total`;
   }
   return `${minutes}m total`;
-} 
+}
