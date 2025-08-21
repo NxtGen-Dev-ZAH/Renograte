@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
       
       // Determine appropriate content type and disposition based on file type
       let responseContentType = contentType;
-      let contentDisposition = 'inline';
+      const contentDisposition = 'inline';
       
       if (!responseContentType) {
         // Try to determine content type from file extension

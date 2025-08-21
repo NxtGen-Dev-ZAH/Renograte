@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ErrorBoundary } from "react-error-boundary";
 import { Info, Loader2, BedDouble, Bath, Ruler, Home, Clock, Tag } from "lucide-react";
 import {
   Tooltip,
@@ -12,7 +11,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -50,7 +49,6 @@ interface Listing {
 export  function RenograteListingsPage() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState("all");
   const [filterPrice, setFilterPrice] = useState("all");
   const [sortOption, setSortOption] = useState("newest");
   const [photoUrls, setPhotoUrls] = useState<{ [key: string]: string[] }>({});

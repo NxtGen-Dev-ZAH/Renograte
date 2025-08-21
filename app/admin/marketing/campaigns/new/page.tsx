@@ -35,22 +35,24 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 
 // Define the form schema with proper types for the refine function
-const campaignFormSchema = z.object({
-  title: z.string().min(3, "Title must be at least 3 characters"),
-  description: z.string().optional(),
-  status: z.enum(["draft", "active", "archived"]),
-  startDate: z.date().optional(),
-  endDate: z.date().optional(),
-}).refine(
-  (data) => {
-    if (!data.endDate || !data.startDate) return true;
-    return data.endDate > data.startDate;
-  },
-  {
-    message: "End date must be after start date",
-    path: ["endDate"],
-  }
-);
+const campaignFormSchema = z
+  .object({
+    title: z.string().min(3, "Title must be at least 3 characters"),
+    description: z.string().optional(),
+    status: z.enum(["draft", "active", "archived"]),
+    startDate: z.date().optional(),
+    endDate: z.date().optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.endDate || !data.startDate) return true;
+      return data.endDate > data.startDate;
+    },
+    {
+      message: "End date must be after start date",
+      path: ["endDate"],
+    }
+  );
 
 type CampaignFormValues = z.infer<typeof campaignFormSchema>;
 
@@ -124,14 +126,15 @@ export default function NewCampaignPage() {
     if (selectedAssets.length === 0) {
       toast({
         title: "No Assets Selected",
-        description: "Please select at least one marketing asset for this campaign",
+        description:
+          "Please select at least one marketing asset for this campaign",
         variant: "destructive",
       });
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const campaignData = {
         ...data,
@@ -158,13 +161,14 @@ export default function NewCampaignPage() {
         title: "Campaign Created",
         description: "Your marketing campaign has been created successfully",
       });
-      
+
       router.push("/admin/marketing/campaigns");
     } catch (error) {
       console.error("Error creating campaign:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create campaign",
+        description:
+          error instanceof Error ? error.message : "Failed to create campaign",
         variant: "destructive",
       });
     } finally {
@@ -174,7 +178,9 @@ export default function NewCampaignPage() {
 
   const toggleAssetSelection = (asset: MarketingAsset) => {
     if (selectedAssets.some((selected) => selected.id === asset.id)) {
-      setSelectedAssets(selectedAssets.filter((selected) => selected.id !== asset.id));
+      setSelectedAssets(
+        selectedAssets.filter((selected) => selected.id !== asset.id)
+      );
     } else {
       setSelectedAssets([...selectedAssets, asset]);
     }
@@ -200,7 +206,7 @@ export default function NewCampaignPage() {
   // Get today's date in ISO format for min date attribute
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const todayISO = today.toISOString().split('T')[0];
+  const todayISO = today.toISOString().split("T")[0];
 
   // Get start date for end date validation
   const startDate = form.watch("startDate");
@@ -210,7 +216,10 @@ export default function NewCampaignPage() {
     <div className="p-6 mt-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/admin/marketing" className="text-gray-500 hover:text-gray-700">
+          <Link
+            href="/admin/marketing"
+            className="text-gray-500 hover:text-gray-700"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="text-2xl font-bold">Create New Campaign</h1>
@@ -228,7 +237,10 @@ export default function NewCampaignPage() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   <FormField
                     control={form.control}
                     name="title"
@@ -236,7 +248,10 @@ export default function NewCampaignPage() {
                       <FormItem>
                         <FormLabel>Campaign Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter campaign title" {...field} />
+                          <Input
+                            placeholder="Enter campaign title"
+                            {...field}
+                          />
                         </FormControl>
                         <FormDescription>
                           A descriptive name for your marketing campaign
@@ -390,13 +405,10 @@ export default function NewCampaignPage() {
                 </div>
               ) : availableAssets.length === 0 ? (
                 <div className="text-center py-8 border rounded-md">
-                  <p className="text-muted-foreground">No marketing assets found</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    asChild
-                  >
+                  <p className="text-muted-foreground">
+                    No marketing assets found
+                  </p>
+                  <Button variant="outline" size="sm" className="mt-2" asChild>
                     <Link href="/admin/marketing/assets/new">
                       <Plus className="mr-2 h-4 w-4" />
                       Create Asset
@@ -410,7 +422,9 @@ export default function NewCampaignPage() {
                       key={asset.id}
                       className={cn(
                         "flex items-center p-2 border rounded-md cursor-pointer transition-colors",
-                        selectedAssets.some((selected) => selected.id === asset.id)
+                        selectedAssets.some(
+                          (selected) => selected.id === asset.id
+                        )
                           ? "border-primary bg-primary/5"
                           : "hover:border-gray-400"
                       )}
@@ -429,12 +443,16 @@ export default function NewCampaignPage() {
                         <div
                           className={cn(
                             "w-5 h-5 rounded-full border flex items-center justify-center",
-                            selectedAssets.some((selected) => selected.id === asset.id)
+                            selectedAssets.some(
+                              (selected) => selected.id === asset.id
+                            )
                               ? "bg-primary border-primary text-white"
                               : "border-gray-300"
                           )}
                         >
-                          {selectedAssets.some((selected) => selected.id === asset.id) && (
+                          {selectedAssets.some(
+                            (selected) => selected.id === asset.id
+                          ) && (
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               width="12"
@@ -461,4 +479,4 @@ export default function NewCampaignPage() {
       </div>
     </div>
   );
-} 
+}

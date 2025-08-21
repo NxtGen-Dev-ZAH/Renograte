@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -133,7 +134,7 @@ export default function ContractSignatureFlow({
     
     try {
       setSendingEmail(true);
-      const link = await onSendSigningLink(role, party.email, party.name);
+      await onSendSigningLink(role, party.email, party.name);
       
       setSentEmails(prev => ({
         ...prev,
@@ -275,9 +276,11 @@ export default function ContractSignatureFlow({
                         <div>
                           {section.status === "SIGNED" ? (
                             <div className="border border-gray-200 rounded-md p-2">
-                              <img
-                                src={section.signature?.id ? `data:image/png;base64,${section.signature.id}` : undefined}
+                              <Image
+                                src={section.signature?.id ? `data:image/png;base64,${section.signature.id}` : "/placeholder-signature.png"}
                                 alt="Signature"
+                                width={200}
+                                height={64}
                                 className="max-h-16"
                               />
                               <p className="text-xs text-muted-foreground mt-1">
@@ -309,7 +312,7 @@ export default function ContractSignatureFlow({
               <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium mb-2">No Role Assigned</h3>
               <p className="text-muted-foreground">
-                You don't have a role assigned for this contract.
+                You don&apos;t have a role assigned for this contract.
                 {isAgent && " Please assign yourself a role in the Manage Signers tab."}
               </p>
             </div>

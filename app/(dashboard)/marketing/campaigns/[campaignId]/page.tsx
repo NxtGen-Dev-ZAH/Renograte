@@ -17,11 +17,10 @@ import {
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import RoleProtected from "@/components/RoleProtected";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, Plus, X } from "lucide-react";
+import { CalendarIcon, Loader2, X } from "lucide-react";
 import { DatePicker } from "@/components/ui/date-picker";
+import Image from "next/image";
 
 interface MarketingCampaignFormProps {
   params: {
@@ -41,10 +40,13 @@ interface MarketingAsset {
   fileUrl?: string;
 }
 
-export function MarketingCampaignForm({ params, searchParams }: MarketingCampaignFormProps) {
+export function MarketingCampaignForm({
+  params,
+  searchParams,
+}: MarketingCampaignFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const isEdit = params.campaignId !== "new";
   const campaignId = isEdit ? params.campaignId : searchParams.id;
 
@@ -74,7 +76,7 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
           variant: "destructive",
         });
       });
-  }, []);
+  }, [toast]);
 
   // Load campaign data if editing
   useEffect(() => {
@@ -87,10 +89,12 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
             ...data,
             startDate: data.startDate || "",
             endDate: data.endDate || "",
-            assets: data.assets.map((asset: any) => ({
-              id: asset.assetId,
-              order: asset.order,
-            })),
+            assets: data.assets.map(
+              (asset: { assetId: string; order: number }) => ({
+                id: asset.assetId,
+                order: asset.order,
+              })
+            ),
           });
         })
         .catch((error) => {
@@ -105,7 +109,7 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
           setIsLoading(false);
         });
     }
-  }, [isEdit, campaignId]);
+  }, [isEdit, campaignId, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +121,9 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(isEdit ? { id: campaignId, ...formData } : formData),
+        body: JSON.stringify(
+          isEdit ? { id: campaignId, ...formData } : formData
+        ),
       });
 
       if (!response.ok) {
@@ -228,11 +234,15 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
                   <Label>Start Date</Label>
                   <div className="relative">
                     <DatePicker
-                      selected={formData.startDate ? new Date(formData.startDate) : undefined}
-                      onSelect={(date: Date | undefined) => 
+                      selected={
+                        formData.startDate
+                          ? new Date(formData.startDate)
+                          : undefined
+                      }
+                      onSelect={(date: Date | undefined) =>
                         setFormData({
                           ...formData,
-                          startDate: date ? date.toISOString() : ""
+                          startDate: date ? date.toISOString() : "",
                         })
                       }
                     />
@@ -244,14 +254,22 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
                   <Label>End Date</Label>
                   <div className="relative">
                     <DatePicker
-                      selected={formData.endDate ? new Date(formData.endDate) : undefined}
-                      onSelect={(date: Date | undefined) => 
+                      selected={
+                        formData.endDate
+                          ? new Date(formData.endDate)
+                          : undefined
+                      }
+                      onSelect={(date: Date | undefined) =>
                         setFormData({
                           ...formData,
-                          endDate: date ? date.toISOString() : ""
+                          endDate: date ? date.toISOString() : "",
                         })
                       }
-                      min={formData.startDate ? format(new Date(formData.startDate), "yyyy-MM-dd") : ""}
+                      min={
+                        formData.startDate
+                          ? format(new Date(formData.startDate), "yyyy-MM-dd")
+                          : ""
+                      }
                     />
                     <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 opacity-50" />
                   </div>
@@ -264,7 +282,9 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
                   {/* Selected Assets */}
                   <div className="space-y-2">
                     {formData.assets.map((asset) => {
-                      const assetData = availableAssets.find((a) => a.id === asset.id);
+                      const assetData = availableAssets.find(
+                        (a) => a.id === asset.id
+                      );
                       return assetData ? (
                         <div
                           key={asset.id}
@@ -272,10 +292,12 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
                         >
                           <div className="flex items-center gap-2">
                             {assetData.thumbnail && (
-                              <img
+                              <Image
                                 src={assetData.thumbnail}
                                 alt={assetData.title}
-                                className="w-8 h-8 object-cover rounded"
+                                width={32}
+                                height={32}
+                                className="object-cover rounded"
                               />
                             )}
                             <div>
@@ -300,9 +322,7 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
 
                   {/* Add Asset */}
                   <div>
-                    <Select
-                      onValueChange={handleAddAsset}
-                    >
+                    <Select onValueChange={handleAddAsset}>
                       <SelectTrigger>
                         <SelectValue placeholder="Add asset to campaign" />
                       </SelectTrigger>
@@ -325,10 +345,7 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
             </div>
 
             <div className="flex gap-4">
-              <Button
-                type="submit"
-                disabled={isLoading}
-              >
+              <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -353,10 +370,12 @@ export function MarketingCampaignForm({ params, searchParams }: MarketingCampaig
   );
 }
 
-export default function MarketingCampaignFormProtectedWrapper(props: MarketingCampaignFormProps) {
+export default function MarketingCampaignFormProtectedWrapper(
+  props: MarketingCampaignFormProps
+) {
   return (
-    <RoleProtected allowedRoles={['admin']}>
+    <RoleProtected allowedRoles={["admin"]}>
       <MarketingCampaignForm {...props} />
     </RoleProtected>
   );
-} 
+}

@@ -2,7 +2,14 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Search, Filter, RefreshCw, Edit, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Search,
+  Filter,
+  RefreshCw,
+  Edit,
+  Trash2,
+} from "lucide-react";
 
 // Define types
 type Lead = {
@@ -29,16 +36,17 @@ export default function LeadsManagementPage() {
   const fetchLeads = async () => {
     setLoading(true);
     try {
-      const url = statusFilter === "all" 
-        ? "/api/leads" 
-        : `/api/leads?status=${statusFilter}`;
-        
+      const url =
+        statusFilter === "all"
+          ? "/api/leads"
+          : `/api/leads?status=${statusFilter}`;
+
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error("Failed to fetch leads");
       }
-      
+
       const data = await response.json();
       setLeads(data.leads);
       setError(null);
@@ -58,18 +66,18 @@ export default function LeadsManagementPage() {
   // Handle lead deletion
   const handleDeleteLead = async (id: string) => {
     if (!confirm("Are you sure you want to delete this lead?")) return;
-    
+
     try {
       const response = await fetch(`/api/leads/${id}`, {
         method: "DELETE",
       });
-      
+
       if (!response.ok) {
         throw new Error("Failed to delete lead");
       }
-      
+
       // Remove lead from state
-      setLeads(leads.filter(lead => lead.id !== id));
+      setLeads(leads.filter((lead) => lead.id !== id));
     } catch (err) {
       console.error("Error deleting lead:", err);
       alert("Failed to delete lead. Please try again.");
@@ -77,18 +85,19 @@ export default function LeadsManagementPage() {
   };
 
   // Filter leads based on search query
-  const filteredLeads = leads.filter(lead => 
-    lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    lead.phone.includes(searchQuery)
+  const filteredLeads = leads.filter(
+    (lead) =>
+      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.phone.includes(searchQuery)
   );
 
   // Format date for display
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     });
   };
 
@@ -97,13 +106,18 @@ export default function LeadsManagementPage() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <Link href="/admin" className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors mb-3">
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors mb-3"
+            >
               <ArrowLeft className="w-4 h-4" />
               <span>Back to Admin</span>
             </Link>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Leads Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Leads Management
+            </h1>
           </div>
-          <button 
+          <button
             onClick={fetchLeads}
             className="flex items-center gap-2 bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
@@ -124,16 +138,16 @@ export default function LeadsManagementPage() {
                 className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 placeholder="Search by name, email, or phone"
                 value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            
+
             <div className="flex items-center">
               <Filter className="h-5 w-5 text-gray-400 mr-2" />
               <select
                 className="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
                 value={statusFilter}
-                onChange={e => setStatusFilter(e.target.value)}
+                onChange={(e) => setStatusFilter(e.target.value)}
               >
                 <option value="all">All Statuses</option>
                 <option value="new">New</option>
@@ -156,7 +170,7 @@ export default function LeadsManagementPage() {
           ) : error ? (
             <div className="p-8 text-center text-red-600">
               <p>{error}</p>
-              <button 
+              <button
                 className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 onClick={fetchLeads}
               >
@@ -172,19 +186,34 @@ export default function LeadsManagementPage() {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Name
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Contact Info
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Status
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Date
                     </th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Actions
                     </th>
                   </tr>
@@ -193,23 +222,42 @@ export default function LeadsManagementPage() {
                   {filteredLeads.map((lead) => (
                     <tr key={lead.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{lead.name}</div>
-                        <div className="text-sm text-gray-500">{lead.roles.join(", ")}</div>
+                        <div className="text-sm font-medium text-gray-900">
+                          {lead.name}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {lead.roles.join(", ")}
+                        </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{lead.email}</div>
-                        <div className="text-sm text-gray-500">{lead.phone}</div>
-                        {lead.address && <div className="text-xs text-gray-500 truncate max-w-xs">{lead.address}</div>}
+                        <div className="text-sm text-gray-900">
+                          {lead.email}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {lead.phone}
+                        </div>
+                        {lead.address && (
+                          <div className="text-xs text-gray-500 truncate max-w-xs">
+                            {lead.address}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          lead.status === "new" ? "bg-blue-100 text-blue-800" :
-                          lead.status === "contacted" ? "bg-yellow-100 text-yellow-800" :
-                          lead.status === "qualified" ? "bg-purple-100 text-purple-800" :
-                          lead.status === "converted" ? "bg-green-100 text-green-800" :
-                          "bg-gray-100 text-gray-800"
-                        }`}>
-                          {lead.status.charAt(0).toUpperCase() + lead.status.slice(1)}
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            lead.status === "new"
+                              ? "bg-blue-100 text-blue-800"
+                              : lead.status === "contacted"
+                                ? "bg-yellow-100 text-yellow-800"
+                                : lead.status === "qualified"
+                                  ? "bg-purple-100 text-purple-800"
+                                  : lead.status === "converted"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {lead.status.charAt(0).toUpperCase() +
+                            lead.status.slice(1)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -217,10 +265,13 @@ export default function LeadsManagementPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center space-x-3">
-                          <Link href={`/admin/leads/${lead.id}`} className="text-blue-600 hover:text-blue-900">
+                          <Link
+                            href={`/admin/leads/${lead.id}`}
+                            className="text-blue-600 hover:text-blue-900"
+                          >
                             <Edit className="w-5 h-5" />
                           </Link>
-                          <button 
+                          <button
                             onClick={() => handleDeleteLead(lead.id)}
                             className="text-red-600 hover:text-red-900"
                           >
@@ -238,4 +289,4 @@ export default function LeadsManagementPage() {
       </div>
     </main>
   );
-} 
+}

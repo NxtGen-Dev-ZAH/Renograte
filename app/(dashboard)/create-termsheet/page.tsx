@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, ChevronDown, ChevronUp, FileDown } from "lucide-react";
+import { Loader2, FileDown } from "lucide-react";
 import { useState, FormEvent } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -29,13 +29,13 @@ interface TermSheetFormData {
   // Property Information
   propertyAddress: string;
   propertyCondition: string;
-  
+
   // Parties Involved
   sellerName: string;
   buyerName: string;
   realEstateAgent: string;
   proposedContractor: string;
-  
+
   // Transaction Framework
   estimatedSalePrice: string;
   currentMarketValue: string;
@@ -43,22 +43,22 @@ interface TermSheetFormData {
   allowanceSource: string;
   renovationTimeline: string;
   targetClosingDate: string;
-  
+
   // Option Structure
   optionFee: string;
   optionPeriod: string;
   propertyAccess: boolean;
   contingencyTerms: string;
-  
+
   // Renovation Scope
   generalScope: string[];
   preliminaryEstimate: string;
-  
+
   // Signatures
   buyerName_sign: string;
   sellerName_sign: string;
   agentName_sign: string;
-  
+
   // Metadata
   dateIssued: string;
   termSheetId: string;
@@ -74,7 +74,9 @@ interface TermSheetHistory {
 export default function CreateTermSheetPage() {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
-  const [termSheetHistory, setTermSheetHistory] = useState<TermSheetHistory[]>([]);
+  const [termSheetHistory, setTermSheetHistory] = useState<TermSheetHistory[]>(
+    []
+  );
   const { toast } = useToast();
   const router = useRouter();
 
@@ -101,10 +103,10 @@ export default function CreateTermSheetPage() {
     buyerName_sign: "",
     sellerName_sign: "",
     agentName_sign: "",
-    dateIssued: new Date().toISOString().split('T')[0],
+    dateIssued: new Date().toISOString().split("T")[0],
     termSheetId: `TS-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
     otherAllowanceSource: "",
-    otherGeneralScope: ""
+    otherGeneralScope: "",
   });
 
   const handleInputChange = (
@@ -134,9 +136,9 @@ export default function CreateTermSheetPage() {
   const handleScopeChange = (scope: string, checked: boolean) => {
     setFormData((prev) => ({
       ...prev,
-      generalScope: checked 
+      generalScope: checked
         ? [...prev.generalScope, scope]
-        : prev.generalScope.filter(s => s !== scope)
+        : prev.generalScope.filter((s) => s !== scope),
     }));
   };
 
@@ -184,23 +186,27 @@ export default function CreateTermSheetPage() {
 
   const generatePDF = () => {
     setIsGeneratingPdf(true);
-    
+
     try {
       const doc = new jsPDF();
       const pageWidth = doc.internal.pageSize.width;
       const margin = 20;
-      const contentWidth = pageWidth - (margin * 2);
+      const contentWidth = pageWidth - margin * 2;
       let y = 20;
-      
+
       // Helper function for adding text with proper wrapping
-      const addText = (text: string, fontSize: number = 12, isBold: boolean = false) => {
+      const addText = (
+        text: string,
+        fontSize: number = 12,
+        isBold: boolean = false
+      ) => {
         doc.setFontSize(fontSize);
         doc.setFont("helvetica", isBold ? "bold" : "normal");
         const lines = doc.splitTextToSize(text, contentWidth);
         doc.text(lines, margin, y);
-        y += (lines.length * fontSize * 0.352778) + 5; // Add spacing after text
+        y += lines.length * fontSize * 0.352778 + 5; // Add spacing after text
       };
-      
+
       // Helper function for adding section headers
       const addSectionHeader = (text: string, number: string) => {
         y += 5;
@@ -216,15 +222,21 @@ export default function CreateTermSheetPage() {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(24);
       doc.setFont("helvetica", "bold");
-      doc.text("RENOGRATE® TERM SHEET", pageWidth/2, 25, { align: "center" });
-      
+      doc.text("RENOGRATE® TERM SHEET", pageWidth / 2, 25, {
+        align: "center",
+      });
+
       // Reset text color to black
       doc.setTextColor(0, 0, 0);
       y = 50;
-      
+
       // Subtitle
-      addText("Pre-Contract Summary of Terms for Renovation-Enabled Real Estate Transaction", 12, true);
-      
+      addText(
+        "Pre-Contract Summary of Terms for Renovation-Enabled Real Estate Transaction",
+        12,
+        true
+      );
+
       // Metadata
       doc.setDrawColor(200, 200, 200);
       doc.setFillColor(245, 245, 245);
@@ -233,73 +245,105 @@ export default function CreateTermSheetPage() {
       y += 8;
       doc.setFontSize(10);
       doc.text(`Date Issued: ${formData.dateIssued}`, margin + 5, y);
-      doc.text(`Term Sheet ID: ${formData.termSheetId}`, pageWidth - margin - 80, y);
+      doc.text(
+        `Term Sheet ID: ${formData.termSheetId}`,
+        pageWidth - margin - 80,
+        y
+      );
       y += 20;
-      
+
       // 1. Property Information
       addSectionHeader("PROPERTY INFORMATION", "1");
       addText(`Property Address: ${formData.propertyAddress}`);
       addText(`Current Property Condition: ${formData.propertyCondition}`);
-      
+
       // 2. Parties Involved
       addSectionHeader("PARTIES INVOLVED", "2");
       addText(`Seller Name(s): ${formData.sellerName}`);
       addText(`Buyer Name(s): ${formData.buyerName}`);
-      addText(`Real Estate Agent (If Any): ${formData.realEstateAgent || "N/A"}`);
+      addText(
+        `Real Estate Agent (If Any): ${formData.realEstateAgent || "N/A"}`
+      );
       addText(`Contractor (Proposed): ${formData.proposedContractor || "N/A"}`);
-      
+
       // 3. Transaction Framework
       addSectionHeader("TRANSACTION FRAMEWORK", "3");
-      addText(`Estimated Sale Price (After Renovation Value / ARV): $${formData.estimatedSalePrice}`);
-      addText(`Estimated Current Market Value (As-Is): $${formData.currentMarketValue}`);
-      addText(`Proposed Renovation Allowance: $${formData.renovationAllowance}`);
-      addText(`Source of Allowance: ${formData.allowanceSource}${formData.otherAllowanceSource ? ` (${formData.otherAllowanceSource})` : ""}`);
-      addText(`Renovation Timeline (Estimated): ${formData.renovationTimeline} days`);
+      addText(
+        `Estimated Sale Price (After Renovation Value / ARV): $${formData.estimatedSalePrice}`
+      );
+      addText(
+        `Estimated Current Market Value (As-Is): $${formData.currentMarketValue}`
+      );
+      addText(
+        `Proposed Renovation Allowance: $${formData.renovationAllowance}`
+      );
+      addText(
+        `Source of Allowance: ${formData.allowanceSource}${formData.otherAllowanceSource ? ` (${formData.otherAllowanceSource})` : ""}`
+      );
+      addText(
+        `Renovation Timeline (Estimated): ${formData.renovationTimeline} days`
+      );
       addText(`Target Closing Date: ${formData.targetClosingDate}`);
-      
+
       // Check if we need a new page
       if (y > doc.internal.pageSize.height - 60) {
         doc.addPage();
         y = 20;
       }
-      
+
       // 4. Option Structure
       addSectionHeader("OPTION STRUCTURE", "4");
-      addText(`Option Fee / Earnest Money Deposit (EMD): $${formData.optionFee}`);
+      addText(
+        `Option Fee / Earnest Money Deposit (EMD): $${formData.optionFee}`
+      );
       addText(`Option Period: ${formData.optionPeriod} days`);
-      addText(`Right to Access Property During Option Period: ${formData.propertyAccess ? "Yes" : "No"}`);
+      addText(
+        `Right to Access Property During Option Period: ${formData.propertyAccess ? "Yes" : "No"}`
+      );
       if (formData.contingencyTerms) {
         addText(`Contingency Terms:\n${formData.contingencyTerms}`);
       }
-      
+
       // 5. Renovation Scope
       addSectionHeader("RENOVATION SCOPE", "5");
       addText("General Scope:");
-      formData.generalScope.forEach(scope => {
+      formData.generalScope.forEach((scope) => {
         addText(`• ${scope}`, 11);
       });
       if (formData.otherGeneralScope) {
         addText(`• Other: ${formData.otherGeneralScope}`, 11);
       }
       addText(`Preliminary Estimate: $${formData.preliminaryEstimate}`);
-      
+
       // Check if we need a new page for signatures
       if (y > doc.internal.pageSize.height - 100) {
         doc.addPage();
         y = 20;
       }
-      
+
       // 6. Representations
       addSectionHeader("REPRESENTATIONS", "6");
-      addText("• Buyer understands that this Term Sheet is non-binding and does not guarantee final sale.", 10);
-      addText("• Seller agrees not to market the home to other parties during the agreed option period (once contract is executed).", 10);
-      addText("• Parties agree to proceed in good faith toward executing a RENOGRATE® Option Contract and accompanying PSA.", 10);
-      addText("• Renovations will not begin until the Renograte Option Contract and all necessary addenda are signed.", 10);
-      
+      addText(
+        "• Buyer understands that this Term Sheet is non-binding and does not guarantee final sale.",
+        10
+      );
+      addText(
+        "• Seller agrees not to market the home to other parties during the agreed option period (once contract is executed).",
+        10
+      );
+      addText(
+        "• Parties agree to proceed in good faith toward executing a RENOGRATE® Option Contract and accompanying PSA.",
+        10
+      );
+      addText(
+        "• Renovations will not begin until the Renograte Option Contract and all necessary addenda are signed.",
+        10
+      );
+
       // 7. Signatures
       addSectionHeader("SIGNATURES", "7");
       addText("For Acknowledgement Only — Not Legally Binding", 10, true);
-      
+
       y += 10;
       // Buyer signature
       doc.line(margin, y, margin + 80, y);
@@ -311,7 +355,7 @@ export default function CreateTermSheetPage() {
         y += 15;
         doc.text(`Name: ${formData.buyerName_sign}`, margin, y);
       }
-      
+
       y += 20;
       // Seller signature
       doc.line(margin, y, margin + 80, y);
@@ -322,7 +366,7 @@ export default function CreateTermSheetPage() {
         y += 15;
         doc.text(`Name: ${formData.sellerName_sign}`, margin, y);
       }
-      
+
       y += 20;
       // Agent signature (if applicable)
       if (formData.agentName_sign) {
@@ -333,7 +377,7 @@ export default function CreateTermSheetPage() {
         y += 15;
         doc.text(`Name: ${formData.agentName_sign}`, margin, y);
       }
-      
+
       // Footer
       const pageCount = doc.internal.pages.length - 1;
       for (let i = 1; i <= pageCount; i++) {
@@ -347,10 +391,10 @@ export default function CreateTermSheetPage() {
           { align: "center" }
         );
       }
-      
+
       // Save the PDF
       doc.save("renograte_term_sheet.pdf");
-      
+
       toast({
         title: "PDF Generated",
         description: "Your term sheet has been saved as a PDF.",
@@ -373,8 +417,8 @@ export default function CreateTermSheetPage() {
       timestamp: new Date().toISOString(),
     };
 
-    setTermSheetHistory(prev => [historyEntry, ...prev]);
-    
+    setTermSheetHistory((prev) => [historyEntry, ...prev]);
+
     toast({
       title: "Term Sheet Saved",
       description: "Your term sheet has been saved to history.",
@@ -383,7 +427,7 @@ export default function CreateTermSheetPage() {
 
   const loadTermSheet = (savedTermSheet: TermSheetHistory) => {
     setFormData(savedTermSheet.formData);
-    
+
     toast({
       title: "Term Sheet Loaded",
       description: "Previous term sheet has been loaded successfully.",
@@ -395,7 +439,8 @@ export default function CreateTermSheetPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Create Term Sheet</h2>
         <p className="text-muted-foreground">
-          Create a new RENOGRATE® Term Sheet for a renovation-enabled real estate transaction
+          Create a new RENOGRATE® Term Sheet for a renovation-enabled real
+          estate transaction
         </p>
       </div>
 
@@ -451,17 +496,23 @@ export default function CreateTermSheetPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="propertyCondition">Current Property Condition</Label>
+              <Label htmlFor="propertyCondition">
+                Current Property Condition
+              </Label>
               <Select
                 value={formData.propertyCondition}
-                onValueChange={(value) => handleSelectChange("propertyCondition", value)}
+                onValueChange={(value) =>
+                  handleSelectChange("propertyCondition", value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select property condition" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Livable">Livable</SelectItem>
-                  <SelectItem value="Requires Renovation">Requires Renovation</SelectItem>
+                  <SelectItem value="Requires Renovation">
+                    Requires Renovation
+                  </SelectItem>
                   <SelectItem value="Vacant">Vacant</SelectItem>
                   <SelectItem value="Distressed">Distressed</SelectItem>
                 </SelectContent>
@@ -500,7 +551,9 @@ export default function CreateTermSheetPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="realEstateAgent">Real Estate Agent (If Any)</Label>
+              <Label htmlFor="realEstateAgent">
+                Real Estate Agent (If Any)
+              </Label>
               <Input
                 id="realEstateAgent"
                 placeholder="Enter agent name"
@@ -530,7 +583,9 @@ export default function CreateTermSheetPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="estimatedSalePrice">Estimated Sale Price (ARV)</Label>
+              <Label htmlFor="estimatedSalePrice">
+                Estimated Sale Price (ARV)
+              </Label>
               <Input
                 id="estimatedSalePrice"
                 type="number"
@@ -541,7 +596,9 @@ export default function CreateTermSheetPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="currentMarketValue">Current Market Value (As-Is)</Label>
+              <Label htmlFor="currentMarketValue">
+                Current Market Value (As-Is)
+              </Label>
               <Input
                 id="currentMarketValue"
                 type="number"
@@ -552,7 +609,9 @@ export default function CreateTermSheetPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="renovationAllowance">Proposed Renovation Allowance</Label>
+              <Label htmlFor="renovationAllowance">
+                Proposed Renovation Allowance
+              </Label>
               <Input
                 id="renovationAllowance"
                 type="number"
@@ -566,14 +625,20 @@ export default function CreateTermSheetPage() {
               <Label htmlFor="allowanceSource">Source of Allowance</Label>
               <Select
                 value={formData.allowanceSource}
-                onValueChange={(value) => handleSelectChange("allowanceSource", value)}
+                onValueChange={(value) =>
+                  handleSelectChange("allowanceSource", value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select allowance source" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Seller Concession">Seller Concession</SelectItem>
-                  <SelectItem value="Buyer Financing">Buyer Financing</SelectItem>
+                  <SelectItem value="Seller Concession">
+                    Seller Concession
+                  </SelectItem>
+                  <SelectItem value="Buyer Financing">
+                    Buyer Financing
+                  </SelectItem>
                   <SelectItem value="Combination">Combination</SelectItem>
                   <SelectItem value="Other">Other</SelectItem>
                 </SelectContent>
@@ -581,7 +646,9 @@ export default function CreateTermSheetPage() {
             </div>
             {formData.allowanceSource === "Other" && (
               <div className="space-y-2">
-                <Label htmlFor="otherAllowanceSource">Specify Other Source</Label>
+                <Label htmlFor="otherAllowanceSource">
+                  Specify Other Source
+                </Label>
                 <Input
                   id="otherAllowanceSource"
                   placeholder="Enter other source"
@@ -591,7 +658,9 @@ export default function CreateTermSheetPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="renovationTimeline">Renovation Timeline (Days)</Label>
+              <Label htmlFor="renovationTimeline">
+                Renovation Timeline (Days)
+              </Label>
               <Input
                 id="renovationTimeline"
                 type="number"
@@ -650,7 +719,7 @@ export default function CreateTermSheetPage() {
                 <Checkbox
                   id="propertyAccess"
                   checked={formData.propertyAccess}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleCheckboxChange("propertyAccess", checked as boolean)
                   }
                 />
@@ -690,13 +759,13 @@ export default function CreateTermSheetPage() {
                   "Flooring/Painting",
                   "Structural/Mechanical",
                   "Exterior/Landscaping",
-                  "Other"
+                  "Other",
                 ].map((scope) => (
                   <div key={scope} className="flex items-center space-x-2">
                     <Checkbox
                       id={`scope-${scope}`}
                       checked={formData.generalScope.includes(scope)}
-                      onCheckedChange={(checked) => 
+                      onCheckedChange={(checked) =>
                         handleScopeChange(scope, checked as boolean)
                       }
                     />
@@ -771,17 +840,17 @@ export default function CreateTermSheetPage() {
 
         {/* Add Save Button at the bottom of the last card */}
         <div className="col-span-2 flex justify-end space-x-4">
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={saveTermSheet}
             className="bg-[#0C71C3] text-white hover:bg-[#0C71C3]/90"
           >
             Save Term Sheet
           </Button>
-          <Button 
-            type="button" 
-            variant="outline" 
+          <Button
+            type="button"
+            variant="outline"
             onClick={generatePDF}
             disabled={isGeneratingPdf}
           >
@@ -797,7 +866,7 @@ export default function CreateTermSheetPage() {
               </>
             )}
           </Button>
-          <Button 
+          <Button
             type="submit"
             disabled={isSubmitting}
             className="bg-[#0C71C3] hover:bg-[#0C71C3]/90"
@@ -816,7 +885,9 @@ export default function CreateTermSheetPage() {
         {/* Term Sheet History */}
         <Card className="md:col-span-2 bg-white/95 backdrop-blur-sm border-none shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl text-[#0C71C3] font-bold">Term Sheet History</CardTitle>
+            <CardTitle className="text-2xl text-[#0C71C3] font-bold">
+              Term Sheet History
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -826,7 +897,9 @@ export default function CreateTermSheetPage() {
                   className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
                 >
                   <div>
-                    <p className="font-medium">Term Sheet {termSheetHistory.length - index}</p>
+                    <p className="font-medium">
+                      Term Sheet {termSheetHistory.length - index}
+                    </p>
                     <p className="text-sm text-gray-500">
                       Property: {entry.formData.propertyAddress}
                     </p>
@@ -837,7 +910,10 @@ export default function CreateTermSheetPage() {
                       Buyer: {entry.formData.buyerName}
                     </p>
                     <p className="text-sm text-gray-500">
-                      ARV: ${parseFloat(entry.formData.estimatedSalePrice).toLocaleString()}
+                      ARV: $
+                      {parseFloat(
+                        entry.formData.estimatedSalePrice
+                      ).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-400">
                       {new Date(entry.timestamp).toLocaleString()}

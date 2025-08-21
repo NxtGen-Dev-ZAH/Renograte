@@ -114,7 +114,7 @@ const LoginModal = () => {
         // Default for unknown roles (fallback to home)
         router.push('/');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Login error:", error);
       toast({
         title: "Login Failed",
@@ -252,7 +252,7 @@ const LoginModal = () => {
                 </a>
 
                 <div className="pt-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-600 mb-3">Don't have an account yet?</p>
+                  <p className="text-sm text-gray-600 mb-3">Don&apos;t have an account yet?</p>
                   <Button
                     type="button"
                     variant="outline"

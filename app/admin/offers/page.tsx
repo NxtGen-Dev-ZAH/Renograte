@@ -12,7 +12,6 @@ import {
   Table,
   TableBody,
   TableCell,
-
   TableHead,
   TableHeader,
   TableRow,
@@ -151,16 +150,12 @@ export default function AdminOffersPage() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
-                        {formatCurrency(offer.offerAmount)}
-                      </TableCell>
+                      <TableCell>{formatCurrency(offer.offerAmount)}</TableCell>
                       <TableCell>
                         {formatCurrency(offer.listingPrice)}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary">
-                          {offer.status}
-                        </Badge>
+                        <Badge variant="secondary">{offer.status}</Badge>
                       </TableCell>
                       <TableCell>{formatDate(offer.createdAt)}</TableCell>
                       <TableCell>
@@ -185,4 +180,4 @@ export default function AdminOffersPage() {
       </Card>
     </div>
   );
-} 
+}

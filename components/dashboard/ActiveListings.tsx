@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -79,7 +80,7 @@ export default function ActiveListings() {
     };
     
     fetchListings();
-  }, [session]);
+  }, [session, toast]);
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -123,9 +124,11 @@ export default function ActiveListings() {
               <div key={listing.id} className="flex items-center gap-4 rounded-lg border p-3">
                 <div className="h-12 w-12 rounded-lg bg-gray-100 overflow-hidden">
                   {photoUrls[listing.id] ? (
-                    <img 
+                    <Image 
                       src={photoUrls[listing.id]} 
                       alt={listing.title}
+                      width={48}
+                      height={48}
                       className="h-full w-full object-cover"
                     />
                   ) : (

@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { useAuth } from "@/hooks/useAuth";
+// import { useAuth } from "@/hooks/useAuth";
 import RoleProtected from "@/components/RoleProtected";
 import { FileUploader } from "@/components/FileUploader";
 import { useSearchParams } from "next/navigation";
@@ -44,13 +44,17 @@ interface MarketingAssetFormProps {
   };
 }
 
-export function MarketingAssetForm({ params, searchParams }: MarketingAssetFormProps) {
+export function MarketingAssetForm({
+  params,
+  searchParams,
+}: MarketingAssetFormProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useAuth();
   const isEdit = params.assetId !== "new";
   const searchParamsHook = useSearchParams();
-  const assetId = isEdit ? params.assetId : searchParamsHook.get("id") || searchParams.id;
+  const assetId = isEdit
+    ? params.assetId
+    : searchParamsHook.get("id") || searchParams.id;
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -145,21 +149,25 @@ export function MarketingAssetForm({ params, searchParams }: MarketingAssetFormP
   };
 
   // Function to get proper display URL for assets
-  const getDisplayUrl = (url: string, assetId: string, type: string = 'file') => {
-    if (!url) return '';
-    
+  const getDisplayUrl = (
+    url: string,
+    assetId: string,
+    type: string = "file"
+  ) => {
+    if (!url) return "";
+
     // If it's already an API URL, return it as is
-    if (url.startsWith('/api/assets/')) {
+    if (url.startsWith("/api/assets/")) {
       return url;
     }
-    
+
     // If we have an asset ID, return the proxy URL
     if (assetId) {
-      return type === 'thumbnail' 
+      return type === "thumbnail"
         ? `/api/assets/${assetId}/thumbnail`
         : `/api/assets/${assetId}`;
     }
-    
+
     // Otherwise return the original URL
     return url;
   };
@@ -257,7 +265,10 @@ export function MarketingAssetForm({ params, searchParams }: MarketingAssetFormP
                 />
                 {formData.fileUrl && (
                   <p className="text-sm text-muted-foreground">
-                    Current file: {isEdit ? getDisplayUrl(formData.fileUrl, assetId as string) : formData.fileUrl}
+                    Current file:{" "}
+                    {isEdit
+                      ? getDisplayUrl(formData.fileUrl, assetId as string)
+                      : formData.fileUrl}
                   </p>
                 )}
               </div>
@@ -270,18 +281,26 @@ export function MarketingAssetForm({ params, searchParams }: MarketingAssetFormP
                 />
                 {formData.thumbnail && (
                   <p className="text-sm text-muted-foreground">
-                    Current thumbnail: {isEdit ? getDisplayUrl(formData.thumbnail, assetId as string, 'thumbnail') : formData.thumbnail}
+                    Current thumbnail:{" "}
+                    {isEdit
+                      ? getDisplayUrl(
+                          formData.thumbnail,
+                          assetId as string,
+                          "thumbnail"
+                        )
+                      : formData.thumbnail}
                   </p>
                 )}
               </div>
             </div>
 
             <div className="flex gap-4">
-              <Button
-                type="submit"
-                disabled={isLoading}
-              >
-                {isLoading ? "Saving..." : isEdit ? "Update Asset" : "Create Asset"}
+              <Button type="submit" disabled={isLoading}>
+                {isLoading
+                  ? "Saving..."
+                  : isEdit
+                    ? "Update Asset"
+                    : "Create Asset"}
               </Button>
               <Button
                 type="button"
@@ -298,10 +317,12 @@ export function MarketingAssetForm({ params, searchParams }: MarketingAssetFormP
   );
 }
 
-export default function MarketingAssetFormProtectedWrapper(props: MarketingAssetFormProps) {
+export default function MarketingAssetFormProtectedWrapper(
+  props: MarketingAssetFormProps
+) {
   return (
-    <RoleProtected allowedRoles={['admin']}>
+    <RoleProtected allowedRoles={["admin"]}>
       <MarketingAssetForm {...props} />
     </RoleProtected>
   );
-} 
+}

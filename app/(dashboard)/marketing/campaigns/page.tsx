@@ -1,17 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useEffect, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
@@ -24,17 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import RoleProtected from "@/components/RoleProtected";
-import { 
-  Calendar,
-  Edit,
-  Eye,
-  Filter,
-  MoreHorizontal,
-  Plus,
-  Search,
-  Trash2,
-  ArrowUpDown
-} from "lucide-react";
+import { Eye, Filter, MoreHorizontal, Search, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,7 +67,6 @@ interface Campaign {
 }
 
 export function CampaignsPage() {
-  const router = useRouter();
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -85,19 +79,19 @@ export function CampaignsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [campaignToDelete, setCampaignToDelete] = useState<string | null>(null);
 
-  const loadCampaigns = async () => {
+  const loadCampaigns = useCallback(async () => {
     setIsLoading(true);
     try {
       let url = "/api/marketing/campaigns";
       if (statusFilter !== "all") {
         url += `?status=${statusFilter}`;
       }
-      
+
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to load campaigns");
       }
-      
+
       const data = await response.json();
       setCampaigns(data);
     } catch (error) {
@@ -110,29 +104,32 @@ export function CampaignsPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [statusFilter, toast]);
 
   useEffect(() => {
     loadCampaigns();
-  }, [statusFilter]);
+  }, [loadCampaigns]);
 
   const handleDeleteCampaign = async () => {
     if (!campaignToDelete) return;
-    
+
     try {
-      const response = await fetch(`/api/marketing/campaigns?id=${campaignToDelete}`, {
-        method: "DELETE",
-      });
-      
+      const response = await fetch(
+        `/api/marketing/campaigns?id=${campaignToDelete}`,
+        {
+          method: "DELETE",
+        }
+      );
+
       if (!response.ok) {
         throw new Error("Failed to delete campaign");
       }
-      
+
       toast({
         title: "Success",
         description: "Campaign deleted successfully",
       });
-      
+
       // Reload campaigns
       loadCampaigns();
     } catch (error) {
@@ -148,19 +145,18 @@ export function CampaignsPage() {
     }
   };
 
-  const confirmDelete = (id: string) => {
-    setCampaignToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
   const filteredCampaigns = campaigns
-    .filter(campaign => 
-      campaign.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (campaign.description && campaign.description.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(
+      (campaign) =>
+        campaign.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (campaign.description &&
+          campaign.description
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase()))
     )
     .sort((a, b) => {
       if (sortBy === "title") {
-        return sortDirection === "asc" 
+        return sortDirection === "asc"
           ? a.title.localeCompare(b.title)
           : b.title.localeCompare(a.title);
       } else if (sortBy === "status") {
@@ -205,7 +201,9 @@ export function CampaignsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Marketing Campaigns</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Marketing Campaigns
+          </h1>
           <p className="text-muted-foreground">
             Manage and view all marketing campaigns
           </p>
@@ -232,10 +230,7 @@ export function CampaignsPage() {
             </div>
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-muted-foreground" />
-              <Select
-                value={statusFilter}
-                onValueChange={setStatusFilter}
-              >
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[180px]">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
@@ -254,8 +249,8 @@ export function CampaignsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[300px]">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       onClick={() => toggleSort("title")}
                       className="flex items-center"
                     >
@@ -264,8 +259,8 @@ export function CampaignsPage() {
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       onClick={() => toggleSort("status")}
                       className="flex items-center"
                     >
@@ -274,8 +269,8 @@ export function CampaignsPage() {
                     </Button>
                   </TableHead>
                   <TableHead>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       onClick={() => toggleSort("startDate")}
                       className="flex items-center"
                     >
@@ -315,7 +310,7 @@ export function CampaignsPage() {
                       </TableCell>
                       <TableCell>{getStatusBadge(campaign.status)}</TableCell>
                       <TableCell>
-                        {campaign.startDate 
+                        {campaign.startDate
                           ? format(new Date(campaign.startDate), "MMM d, yyyy")
                           : "Not scheduled"}
                       </TableCell>
@@ -330,7 +325,9 @@ export function CampaignsPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/marketing/campaigns/view?id=${campaign.id}`}>
+                              <Link
+                                href={`/marketing/campaigns/view?id=${campaign.id}`}
+                              >
                                 <Eye className="mr-2 h-4 w-4" />
                                 View
                               </Link>
@@ -352,13 +349,13 @@ export function CampaignsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the campaign
-              and remove it from our servers.
+              This action cannot be undone. This will permanently delete the
+              campaign and remove it from our servers.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               onClick={handleDeleteCampaign}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
@@ -377,4 +374,4 @@ export default function CampaignsProtectedWrapper() {
       <CampaignsPage />
     </RoleProtected>
   );
-} 
+}

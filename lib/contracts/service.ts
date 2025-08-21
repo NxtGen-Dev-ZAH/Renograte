@@ -9,7 +9,7 @@ export interface TermSheet {
   partyTwo: string;
   date: string;
   terms: string;
-  data: Record<string, any>;
+  data: Record<string, unknown>;
   documentUrl?: string;
   signatureOne?: string;
   signatureTwo?: string;

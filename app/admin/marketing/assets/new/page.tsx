@@ -6,7 +6,13 @@ import Link from "next/link";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Loader2, Upload, FileCheck, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  Loader2,
+  Upload,
+  FileCheck,
+  AlertCircle,
+} from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -147,7 +153,7 @@ export default function NewAssetPage() {
 
     setIsSubmitting(true);
     setUploadProgress(0);
-    
+
     try {
       // Upload the main file to S3
       const filePrefix = `marketing/${data.type}/`;
@@ -157,7 +163,10 @@ export default function NewAssetPage() {
       // Upload thumbnail if provided
       let thumbnailKey = null;
       if (thumbnailFile) {
-        thumbnailKey = await uploadFileToS3(thumbnailFile, "marketing/thumbnails/");
+        thumbnailKey = await uploadFileToS3(
+          thumbnailFile,
+          "marketing/thumbnails/"
+        );
       }
       setUploadProgress(90);
 
@@ -200,14 +209,17 @@ export default function NewAssetPage() {
         title: "Asset Created",
         description: "Your marketing asset has been created successfully",
       });
-      
+
       router.push("/admin/marketing/assets");
     } catch (error) {
       console.error("Error creating asset:", error);
-      setUploadError(error instanceof Error ? error.message : "Failed to create asset");
+      setUploadError(
+        error instanceof Error ? error.message : "Failed to create asset"
+      );
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to create asset",
+        description:
+          error instanceof Error ? error.message : "Failed to create asset",
         variant: "destructive",
       });
     } finally {
@@ -224,7 +236,10 @@ export default function NewAssetPage() {
     <div className="p-6 mt-8">
       <div className="mb-6">
         <div className="flex items-center gap-2 mb-2">
-          <Link href="/admin/marketing" className="text-gray-500 hover:text-gray-700">
+          <Link
+            href="/admin/marketing"
+            className="text-gray-500 hover:text-gray-700"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Link>
           <h1 className="text-2xl font-bold">Create New Marketing Asset</h1>
@@ -242,7 +257,10 @@ export default function NewAssetPage() {
             </CardHeader>
             <CardContent>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-6"
+                >
                   <FormField
                     control={form.control}
                     name="title"
@@ -330,7 +348,10 @@ export default function NewAssetPage() {
                             </FormControl>
                             <SelectContent>
                               {assetCategories.map((category) => (
-                                <SelectItem key={category.value} value={category.value}>
+                                <SelectItem
+                                  key={category.value}
+                                  value={category.value}
+                                >
                                   {category.label}
                                 </SelectItem>
                               ))}
@@ -354,17 +375,19 @@ export default function NewAssetPage() {
                         maxFiles={1}
                         maxSize={50 * 1024 * 1024} // 50MB
                         className="mt-2"
-                        isUploading={isSubmitting}
                       />
                       <p className="text-xs text-muted-foreground mt-1">
                         Upload the main file for this marketing asset (max 50MB)
                       </p>
                       {uploadError && (
-                        <p className="text-sm text-destructive mt-1">{uploadError}</p>
+                        <p className="text-sm text-destructive mt-1">
+                          {uploadError}
+                        </p>
                       )}
                     </div>
 
-                    {(selectedType === "video" || selectedType === "presentation") && (
+                    {(selectedType === "video" ||
+                      selectedType === "presentation") && (
                       <div>
                         <FormLabel>Thumbnail Image (Optional)</FormLabel>
                         <FileUploader
@@ -373,10 +396,10 @@ export default function NewAssetPage() {
                           maxFiles={1}
                           maxSize={5 * 1024 * 1024} // 5MB
                           className="mt-2"
-                          isUploading={isSubmitting}
                         />
                         <p className="text-xs text-muted-foreground mt-1">
-                          Upload a thumbnail image for this {selectedType} (max 5MB)
+                          Upload a thumbnail image for this {selectedType} (max
+                          5MB)
                         </p>
                       </div>
                     )}
@@ -456,10 +479,12 @@ export default function NewAssetPage() {
 
               <div className="text-sm text-muted-foreground">
                 <p className="mb-2">
-                  Assets will be stored securely in Amazon S3 and can be used in marketing campaigns.
+                  Assets will be stored securely in Amazon S3 and can be used in
+                  marketing campaigns.
                 </p>
                 <p>
-                  Once created, assets can be edited, archived, or deleted from the asset management page.
+                  Once created, assets can be edited, archived, or deleted from
+                  the asset management page.
                 </p>
               </div>
             </CardContent>
@@ -468,4 +493,4 @@ export default function NewAssetPage() {
       </div>
     </div>
   );
-} 
+}

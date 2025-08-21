@@ -25,15 +25,56 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface Contract {
+  id: string;
+  title: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  documentUrl?: string;
+  signatures?: Array<{
+    role: string;
+    signed: boolean;
+    signedAt?: string;
+  }>;
+  sections: Array<{
+    title: string;
+    role: string;
+    pageNumber: number;
+  }>;
+}
+
+interface ContractTemplate {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  downloads: number;
+  previewUrl: string;
+  routePath: string;
+  sections: Array<{
+    title: string;
+    role: string;
+    pageNumber: number;
+  }>;
+}
 
 export default function ContractsPage() {
-  const [contracts, setContracts] = useState<any[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [previewTemplate, setPreviewTemplate] = useState<any>(null);
+  const [selectedTemplate, setSelectedTemplate] =
+    useState<ContractTemplate | null>(null);
+  const [previewTemplate, setPreviewTemplate] =
+    useState<ContractTemplate | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
@@ -45,12 +86,12 @@ export default function ContractsPage() {
   const loadContracts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/contracts');
-      
+      const response = await fetch("/api/contracts");
+
       if (!response.ok) {
-        throw new Error('Failed to fetch contracts');
+        throw new Error("Failed to fetch contracts");
       }
-      
+
       const contractsData = await response.json();
       setContracts(contractsData);
     } catch (error) {
@@ -84,9 +125,9 @@ export default function ContractsPage() {
         { title: "Contractor Signature", role: "CONTRACTOR", pageNumber: 3 },
         { title: "Seller Signature", role: "SELLER", pageNumber: 3 },
         { title: "Buyer Signature", role: "BUYER", pageNumber: 3 },
-      ]
+      ],
     },
-    { 
+    {
       id: 2,
       name: "Renograte Option Contract",
       description: "Option agreement for property renovation",
@@ -103,9 +144,9 @@ export default function ContractsPage() {
         { title: "Seller Signature", role: "SELLER", pageNumber: 3 },
         { title: "Buyer Signature", role: "BUYER", pageNumber: 3 },
         { title: "Agent Signature", role: "AGENT", pageNumber: 3 },
-      ]
+      ],
     },
-   
+
     {
       id: 3,
       name: "Lease Option Agreement",
@@ -121,7 +162,7 @@ export default function ContractsPage() {
         { title: "Option Terms", role: "AGENT", pageNumber: 3 },
         { title: "Tenant Signature", role: "BUYER", pageNumber: 5 },
         { title: "Landlord Signature", role: "SELLER", pageNumber: 5 },
-      ]
+      ],
     },
     {
       id: 4,
@@ -138,14 +179,16 @@ export default function ContractsPage() {
         { title: "Profit Sharing", role: "AGENT", pageNumber: 3 },
         { title: "Partner 1 Signature", role: "BUYER", pageNumber: 6 },
         { title: "Partner 2 Signature", role: "SELLER", pageNumber: 6 },
-      ]
+      ],
     },
   ];
 
-  const filteredContracts = contracts.filter(contract => {
-    const matchesSearch = !searchQuery || 
+  const filteredContracts = contracts.filter((contract) => {
+    const matchesSearch =
+      !searchQuery ||
       contract.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = selectedStatus === "all" || contract.status === selectedStatus;
+    const matchesStatus =
+      selectedStatus === "all" || contract.status === selectedStatus;
     return matchesSearch && matchesStatus;
   });
 
@@ -162,13 +205,18 @@ export default function ContractsPage() {
   };
 
   const formatStatusText = (status: string) => {
-    return status.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+    return status
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  const getSignatureProgress = (contract: any) => {
+  const getSignatureProgress = (contract: Contract) => {
     const totalSections = contract.sections.length;
-    const signedSections = contract.sections.filter((section: any) => section.status === "SIGNED").length;
-    
+    const signedSections = contract.sections.filter(
+      (section: any) => section.status === "SIGNED"
+    ).length;
+
     if (totalSections === 0) return "0%";
     return `${Math.round((signedSections / totalSections) * 100)}%`;
   };
@@ -226,7 +274,7 @@ export default function ContractsPage() {
                 <SelectItem value="FULLY_EXECUTED">Fully Executed</SelectItem>
               </SelectContent>
             </Select>
-            <Button onClick={() => router.push('/my-agreements/create')}>
+            <Button onClick={() => router.push("/my-agreements/create")}>
               <Plus className="mr-2 h-4 w-4" />
               New Contract
             </Button>
@@ -242,13 +290,15 @@ export default function ContractsPage() {
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-10">
                   <FileText className="h-10 w-10 text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium mb-1">No contracts found</h3>
+                  <h3 className="text-lg font-medium mb-1">
+                    No contracts found
+                  </h3>
                   <p className="text-sm text-muted-foreground mb-4">
                     {searchQuery || selectedStatus !== "all"
                       ? "Try adjusting your search or filter"
                       : "Create your first contract to get started"}
                   </p>
-                  <Button onClick={() => router.push('/my-agreements/create')}>
+                  <Button onClick={() => router.push("/my-agreements/create")}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Contract
                   </Button>
@@ -267,19 +317,27 @@ export default function ContractsPage() {
                           <h3 className="font-medium">{contract.title}</h3>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
-                            <span>{new Date(contract.createdAt).toLocaleDateString()}</span>
+                            <span>
+                              {new Date(
+                                contract.createdAt
+                              ).toLocaleDateString()}
+                            </span>
                             <span>•</span>
-                            <span>{getSignatureProgress(contract)} completed</span>
+                            <span>
+                              {getSignatureProgress(contract)} completed
+                            </span>
                           </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(contract.status)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusBadgeClass(contract.status)}`}
+                        >
                           {formatStatusText(contract.status)}
                         </span>
                         <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             size="sm"
                             onClick={() => handleViewContract(contract.id)}
                           >
@@ -306,7 +364,7 @@ export default function ContractsPage() {
                 Start from a pre-made template
               </p>
             </div>
-            <Button onClick={() => router.push('/my-agreements/create')}>
+            <Button onClick={() => router.push("/my-agreements/create")}>
               <Plus className="mr-2 h-4 w-4" />
               Create New Contract
             </Button>
@@ -333,11 +391,15 @@ export default function ContractsPage() {
                     <div className="text-sm mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-muted-foreground">Category:</span>
-                        <span className="font-medium capitalize">{template.category}</span>
+                        <span className="font-medium capitalize">
+                          {template.category}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="text-muted-foreground">Sections:</span>
-                        <span className="font-medium">{template.sections.length}</span>
+                        <span className="font-medium">
+                          {template.sections.length}
+                        </span>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
@@ -345,14 +407,14 @@ export default function ContractsPage() {
                         {template.downloads} downloads
                       </span>
                       <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={() => handlePreviewTemplate(template)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
+                        <Button
                           size="sm"
                           onClick={() => handleCreateFromTemplate(template)}
                         >
@@ -410,13 +472,17 @@ export default function ContractsPage() {
                 <div className="h-[500px] overflow-auto border rounded-md">
                   <div className="flex flex-col items-center justify-center h-full bg-gray-50">
                     <FileText className="h-16 w-16 text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">{previewTemplate.name}</h3>
+                    <h3 className="text-lg font-medium mb-2">
+                      {previewTemplate.name}
+                    </h3>
                     <p className="text-sm text-muted-foreground mb-4">
                       {previewTemplate.description}
                     </p>
-                    <Button 
-                      variant="outline" 
-                      onClick={() => window.open(previewTemplate.previewUrl, '_blank')}
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        window.open(previewTemplate.previewUrl, "_blank")
+                      }
                     >
                       <ExternalLink className="mr-2 h-4 w-4" />
                       Open Document in New Tab
@@ -426,23 +492,32 @@ export default function ContractsPage() {
                 <div className="space-y-4">
                   <h4 className="font-medium">Template Sections</h4>
                   <div className="grid gap-2">
-                    {previewTemplate.sections.map((section: any, index: number) => (
-                      <div key={index} className="flex justify-between items-center p-2 border rounded-md">
-                        <div>
-                          <p className="font-medium">{section.title}</p>
-                          <p className="text-sm text-muted-foreground">Page {section.pageNumber}</p>
+                    {previewTemplate.sections.map(
+                      (section: any, index: number) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center p-2 border rounded-md"
+                        >
+                          <div>
+                            <p className="font-medium">{section.title}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Page {section.pageNumber}
+                            </p>
+                          </div>
+                          <div className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
+                            {section.role}
+                          </div>
                         </div>
-                        <div className="px-2 py-1 bg-gray-100 rounded text-xs font-medium">
-                          {section.role}
-                        </div>
-                      </div>
-                    ))}
+                      )
+                    )}
                   </div>
                   <div className="flex justify-end mt-4">
-                    <Button onClick={() => {
-                      setShowPreview(false);
-                      handleCreateFromTemplate(previewTemplate);
-                    }}>
+                    <Button
+                      onClick={() => {
+                        setShowPreview(false);
+                        handleCreateFromTemplate(previewTemplate);
+                      }}
+                    >
                       <FileEdit className="mr-2 h-4 w-4" />
                       Use This Template
                     </Button>
@@ -455,4 +530,4 @@ export default function ContractsPage() {
       </Dialog>
     </div>
   );
-} 
+}

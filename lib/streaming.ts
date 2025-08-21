@@ -26,7 +26,7 @@ export function createStreamableUI(): StreamingUI {
         controller.close();
       }
     },
-    abort(reason?: any) {
+    abort(reason?: unknown) {
       if (controller) {
         controller.error(reason);
       }

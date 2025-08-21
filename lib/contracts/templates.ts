@@ -2,10 +2,10 @@ export interface ContractTemplate {
   id: string;
   name: string;
   description: string;
-  template: (data: Record<string, any>) => string;
+  template: (data: Record<string, unknown>) => string;
 }
 
-export const serviceProviderAgreementTemplate = (data: any): string => {
+export const serviceProviderAgreementTemplate = (data: Record<string, unknown>): string => {
   return `
     RENOGRATE® SERVICE PROVIDER AGREEMENT
 
@@ -82,7 +82,7 @@ export const serviceProviderAgreementTemplate = (data: any): string => {
   `;
 };
 
-export const optionContractTemplate = (data: any): string => {
+export const optionContractTemplate = (data: Record<string, unknown>): string => {
   return `
     RENOGRATE® OPTION AGREEMENT TO RENOVATE REAL ESTATE BEFORE SALE OF PROPERTY
 
@@ -210,7 +210,7 @@ export const optionContractTemplate = (data: any): string => {
   `;
 };
 
-export const jointVentureAgreementTemplate = (data: any): string => {
+export const jointVentureAgreementTemplate = (data: Record<string, unknown>): string => {
   return `
     JOINT VENTURE AGREEMENT
 
@@ -252,7 +252,7 @@ export const jointVentureAgreementTemplate = (data: any): string => {
   `;
 };
 
-export const leaseOptionAgreementTemplate = (data: any): string => {
+export const leaseOptionAgreementTemplate = (data: Record<string, unknown>): string => {
   return `
     LEASE WITH OPTION TO PURCHASE AGREEMENT
 

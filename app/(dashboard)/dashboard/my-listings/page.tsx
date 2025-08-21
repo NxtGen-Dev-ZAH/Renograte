@@ -2,21 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
+
 import Link from "next/link";
 import { 
   Loader2, 
   Search, 
   Plus, 
-  Filter, 
   Edit, 
   Trash2, 
   Eye, 
   Clock, 
   AlertCircle,
   CheckCircle,
-  XCircle,
-  ExternalLink
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -319,11 +317,11 @@ export default function MyListingsPage() {
           <div className="max-w-md mx-auto">
             <h3 className="text-lg font-medium text-gray-800 mb-2">No listings found</h3>
             {statusFilter !== "all" ? (
-              <p className="text-gray-600 mb-6">You don't have any listings with the selected status. Try changing your filters.</p>
+              <p className="text-gray-600 mb-6">You don&apos;t have any listings with the selected status. Try changing your filters.</p>
             ) : searchTerm ? (
               <p className="text-gray-600 mb-6">No listings match your search. Try a different search term.</p>
             ) : (
-              <p className="text-gray-600 mb-6">You haven't created any property listings yet. Add your first listing now!</p>
+              <p className="text-gray-600 mb-6">You haven&apos;t created any property listings yet. Add your first listing now!</p>
             )}
             
             <div className="flex justify-center gap-4">

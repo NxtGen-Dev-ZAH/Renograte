@@ -23,8 +23,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
-import Image from "next/image";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Image from "next/image"; 
 import { useSearchParams } from "next/navigation";
 
 interface CampaignViewProps {

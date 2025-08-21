@@ -96,7 +96,11 @@ interface AssetWithCampaigns extends MarketingAsset {
   campaigns: AssetCampaign[];
 }
 
-export default function EditAssetPage({ params }: { params: Promise<{ assetId: string }> }) {
+export default function EditAssetPage({
+  params,
+}: {
+  params: Promise<{ assetId: string }>;
+}) {
   const { assetId } = React.use(params);
   const { toast } = useToast();
   const router = useRouter();
@@ -169,7 +173,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
   const getProxyUrl = (fileKey: string) => {
     if (!fileKey) return "";
     // Check if already a full URL or a proxy URL
-    if (fileKey.startsWith('http') || fileKey.startsWith('/api')) {
+    if (fileKey.startsWith("http") || fileKey.startsWith("/api")) {
       return fileKey;
     }
     return `/api/s3-proxy?key=${encodeURIComponent(fileKey)}`;
@@ -180,7 +184,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
     if (!asset) return null;
 
     const proxyUrl = getProxyUrl(asset.fileUrl);
-    
+
     switch (asset.type) {
       case "image":
         return (
@@ -192,19 +196,16 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
         );
       case "video":
         return (
-          <video
-            controls
-            className="w-full h-full"
-          >
+          <video controls className="w-full h-full">
             <source src={proxyUrl} />
             Your browser does not support the video tag.
           </video>
         );
       case "document":
-        if (asset.fileUrl.toLowerCase().endsWith('.pdf')) {
+        if (asset.fileUrl.toLowerCase().endsWith(".pdf")) {
           return (
             <div className="h-full w-full flex items-center justify-center">
-              <PDFViewer url={proxyUrl} fileName={asset.title}  />
+              <PDFViewer url={proxyUrl} fileName={asset.title} />
             </div>
           );
         } else {
@@ -212,7 +213,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
           return (
             <div className="flex flex-col items-center justify-center h-full">
               <FileText className="h-16 w-16 text-amber-500 mb-4" />
-              <p className="text-center mb-4">This document cannot be previewed directly</p>
+              <p className="text-center mb-4">
+                This document cannot be previewed directly
+              </p>
               <Button asChild>
                 <a href={proxyUrl} download>
                   <Download className="h-4 w-4 mr-2" />
@@ -234,12 +237,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
           />
         );
       case "social_post":
-        if (asset.fileUrl.toLowerCase().endsWith('.mp4')) {
+        if (asset.fileUrl.toLowerCase().endsWith(".mp4")) {
           return (
-            <video
-              controls
-              className="w-full h-full"
-            >
+            <video controls className="w-full h-full">
               <source src={proxyUrl} />
               Your browser does not support the video tag.
             </video>
@@ -265,7 +265,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
   // Handle form submission
   const onSubmit = async (data: AssetFormValues) => {
     setIsSaving(true);
-    
+
     try {
       const assetData = {
         id: assetId,
@@ -289,13 +289,14 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
         title: "Asset Updated",
         description: "Your marketing asset has been updated successfully",
       });
-      
+
       router.push("/admin/marketing/assets");
     } catch (error) {
       console.error("Error updating asset:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update asset",
+        description:
+          error instanceof Error ? error.message : "Failed to update asset",
         variant: "destructive",
       });
     } finally {
@@ -313,12 +314,12 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
       if (!response.ok) {
         throw new Error("Failed to delete asset");
       }
-      
+
       toast({
         title: "Asset Deleted",
         description: "The marketing asset has been deleted successfully",
       });
-      
+
       router.push("/admin/marketing/assets");
     } catch (error) {
       console.error("Error deleting asset:", error);
@@ -374,13 +375,14 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
               <CardTitle className="flex items-center justify-between">
                 <span>Asset Preview</span>
                 <div className="flex items-center gap-2">
-                  <Badge variant={asset?.status === "active" ? "default" : "secondary"}>
+                  <Badge
+                    variant={
+                      asset?.status === "active" ? "default" : "secondary"
+                    }
+                  >
                     {asset?.status}
                   </Badge>
-                  <Badge
-                    className="capitalize"
-                    variant="outline"
-                  >
+                  <Badge className="capitalize" variant="outline">
                     {asset?.type?.replace("_", " ")}
                   </Badge>
                 </div>
@@ -389,20 +391,29 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
             <CardContent>
               <div className="space-y-4">
                 {/* Preview based on asset type */}
-                <div className={`relative ${asset?.type === 'document' ? 'min-h-[500px]' : 'aspect-video'} bg-muted rounded-lg overflow-hidden`}>
+                <div
+                  className={`relative ${asset?.type === "document" ? "min-h-[500px]" : "aspect-video"} bg-muted rounded-lg overflow-hidden`}
+                >
                   {renderPreviewContent()}
                 </div>
-                
 
                 {/* Asset metadata */}
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Created</p>
-                    <p>{asset?.createdAt ? format(new Date(asset.createdAt), 'PPP') : 'N/A'}</p>
+                    <p>
+                      {asset?.createdAt
+                        ? format(new Date(asset.createdAt), "PPP")
+                        : "N/A"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Last Updated</p>
-                    <p>{asset?.updatedAt ? format(new Date(asset.updatedAt), 'PPP') : 'N/A'}</p>
+                    <p>
+                      {asset?.updatedAt
+                        ? format(new Date(asset.updatedAt), "PPP")
+                        : "N/A"}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -445,7 +456,10 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Category</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a category" />
@@ -453,7 +467,9 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="branding">Branding</SelectItem>
-                        <SelectItem value="social_media">Social Media</SelectItem>
+                        <SelectItem value="social_media">
+                          Social Media
+                        </SelectItem>
                         <SelectItem value="email">Email</SelectItem>
                         <SelectItem value="print">Print</SelectItem>
                         <SelectItem value="digital">Digital</SelectItem>
@@ -471,7 +487,10 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select a status" />
@@ -522,7 +541,8 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
           <DialogHeader>
             <DialogTitle>Delete Asset</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this asset? This action cannot be undone.
+              Are you sure you want to delete this asset? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -541,7 +561,7 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
               {isDeleting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Deleting...  
+                  Deleting...
                 </>
               ) : (
                 "Delete"
@@ -552,4 +572,4 @@ export default function EditAssetPage({ params }: { params: Promise<{ assetId: s
       </Dialog>
     </div>
   );
-} 
+}

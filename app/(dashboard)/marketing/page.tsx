@@ -1,27 +1,24 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  BarChart, 
-  Users, 
-  Download, 
-  Plus, 
-  LineChart, 
-  TrendingUp, 
+import {
+  Download,
   FileText,
   Image as ImageIcon,
   Video,
   Mail,
   Instagram,
-  Facebook,
-  Calendar,
-  Archive,
-  AlertCircle,
   Folder,
-  ExternalLink
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import RoleProtected from "@/components/RoleProtected";
@@ -64,13 +61,13 @@ interface AssetCounts {
 const getProxyUrl = (fileKey: string) => {
   if (!fileKey) return "";
   // Check if already a full URL or a proxy URL
-  if (fileKey.startsWith('http') || fileKey.startsWith('/api')) {
+  if (fileKey.startsWith("http") || fileKey.startsWith("/api")) {
     return fileKey;
   }
   return `/api/s3-proxy?key=${encodeURIComponent(fileKey)}`;
 };
 export function MarketingPage() {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("assets");
   const [recentCampaigns, setRecentCampaigns] = useState<Campaign[]>([]);
@@ -83,7 +80,7 @@ export function MarketingPage() {
     video: 0,
     email_template: 0,
     social_post: 0,
-    presentation: 0
+    presentation: 0,
   });
 
   useEffect(() => {
@@ -105,16 +102,26 @@ export function MarketingPage() {
         }
         const assetsData = await assetsResponse.json();
         setRecentAssets(assetsData.slice(0, 8));
-        
+
         // Calculate asset counts
         const counts = {
           total: assetsData.length,
-          image: assetsData.filter((a: MarketingAsset) => a.type === "image").length,
-          document: assetsData.filter((a: MarketingAsset) => a.type === "document").length,
-          video: assetsData.filter((a: MarketingAsset) => a.type === "video").length,
-          email_template: assetsData.filter((a: MarketingAsset) => a.type === "email_template").length,
-          social_post: assetsData.filter((a: MarketingAsset) => a.type === "social_post").length,
-          presentation: assetsData.filter((a: MarketingAsset) => a.type === "presentation").length
+          image: assetsData.filter((a: MarketingAsset) => a.type === "image")
+            .length,
+          document: assetsData.filter(
+            (a: MarketingAsset) => a.type === "document"
+          ).length,
+          video: assetsData.filter((a: MarketingAsset) => a.type === "video")
+            .length,
+          email_template: assetsData.filter(
+            (a: MarketingAsset) => a.type === "email_template"
+          ).length,
+          social_post: assetsData.filter(
+            (a: MarketingAsset) => a.type === "social_post"
+          ).length,
+          presentation: assetsData.filter(
+            (a: MarketingAsset) => a.type === "presentation"
+          ).length,
         };
         setAssetCounts(counts);
       } catch (error) {
@@ -173,7 +180,7 @@ export function MarketingPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
+
     // Show toast notification using imported toast function
     showToast.success(`${asset.title} is downloading`);
   };
@@ -189,7 +196,11 @@ export function MarketingPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="assets" className="space-y-4" onValueChange={setActiveTab}>
+      <Tabs
+        defaultValue="assets"
+        className="space-y-4"
+        onValueChange={setActiveTab}
+      >
         <TabsList>
           <TabsTrigger value="assets">Marketing Assets</TabsTrigger>
           <TabsTrigger value="campaigns">Campaigns</TabsTrigger>
@@ -205,7 +216,9 @@ export function MarketingPage() {
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.email_template}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.email_template}
+                </div>
               </CardContent>
             </Card>
             <Card>
@@ -216,7 +229,9 @@ export function MarketingPage() {
                 <Instagram className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.social_post}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.social_post}
+                </div>
               </CardContent>
             </Card>
             <Card>
@@ -227,7 +242,9 @@ export function MarketingPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.document}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.document}
+                </div>
               </CardContent>
             </Card>
             <Card>
@@ -238,7 +255,9 @@ export function MarketingPage() {
                 <Video className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{isLoading ? "..." : assetCounts.video}</div>
+                <div className="text-2xl font-bold">
+                  {isLoading ? "..." : assetCounts.video}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -264,24 +283,37 @@ export function MarketingPage() {
                 ) : (
                   <div className="space-y-4">
                     {recentAssets.map((asset) => (
-                      <div key={asset.id} className="flex items-center justify-between">
+                      <div
+                        key={asset.id}
+                        className="flex items-center justify-between"
+                      >
                         <div className="flex items-center space-x-3">
                           <div className="bg-muted rounded-md p-2">
                             {getAssetTypeIcon(asset.type)}
                           </div>
                           <div>
                             <p className="text-sm font-medium">{asset.title}</p>
-                            <p className="text-xs text-muted-foreground">{asset.category}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {asset.category}
+                            </p>
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <Button variant="ghost" size="sm" asChild>
-                          <Link href={getProxyUrl(asset.fileUrl)} target="_blank" rel="noopener noreferrer">
+                            <Link
+                              href={getProxyUrl(asset.fileUrl)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <ExternalLink className="mr-2 h-4 w-4" />
                               View
                             </Link>
                           </Button>
-                          <Button variant="outline" size="sm" onClick={() => handleDownload(asset)}>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownload(asset)}
+                          >
                             <Download className="h-4 w-4 mr-1" />
                             Download
                           </Button>
@@ -289,10 +321,13 @@ export function MarketingPage() {
                       </div>
                     ))}
                     <div className="pt-2">
-                      <Button variant="outline" size="sm" className="w-full" asChild>
-                        <Link href="/marketing/assets">
-                          View All Assets
-                        </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        asChild
+                      >
+                        <Link href="/marketing/assets">View All Assets</Link>
                       </Button>
                     </div>
                   </div>
@@ -317,7 +352,8 @@ export function MarketingPage() {
                     <div>
                       <p className="text-sm font-medium">Email Templates</p>
                       <p className="text-xs text-muted-foreground">
-                        Personalize subject lines and opening paragraphs for higher open rates.
+                        Personalize subject lines and opening paragraphs for
+                        higher open rates.
                       </p>
                     </div>
                   </div>
@@ -328,7 +364,8 @@ export function MarketingPage() {
                     <div>
                       <p className="text-sm font-medium">Social Media</p>
                       <p className="text-xs text-muted-foreground">
-                        Post consistently and use relevant hashtags to increase visibility.
+                        Post consistently and use relevant hashtags to increase
+                        visibility.
                       </p>
                     </div>
                   </div>
@@ -339,7 +376,8 @@ export function MarketingPage() {
                     <div>
                       <p className="text-sm font-medium">Property Documents</p>
                       <p className="text-xs text-muted-foreground">
-                        Include high-quality images and detailed property specifications.
+                        Include high-quality images and detailed property
+                        specifications.
                       </p>
                     </div>
                   </div>
@@ -375,11 +413,15 @@ export function MarketingPage() {
                 <Card key={campaign.id} className="overflow-hidden">
                   <CardHeader className="pb-2">
                     <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{campaign.title}</CardTitle>
+                      <CardTitle className="text-lg">
+                        {campaign.title}
+                      </CardTitle>
                       {getStatusBadge(campaign.status)}
                     </div>
                     <CardDescription>
-                      {campaign.startDate ? new Date(campaign.startDate).toLocaleDateString() : 'No start date'}
+                      {campaign.startDate
+                        ? new Date(campaign.startDate).toLocaleDateString()
+                        : "No start date"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -389,9 +431,13 @@ export function MarketingPage() {
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {campaign.assets.slice(0, 3).map((assetItem) => (
-                          <Badge key={assetItem.asset.id} variant="outline" className="text-xs">
-                            {assetItem.asset.title.length > 20 
-                              ? `${assetItem.asset.title.substring(0, 20)}...` 
+                          <Badge
+                            key={assetItem.asset.id}
+                            variant="outline"
+                            className="text-xs"
+                          >
+                            {assetItem.asset.title.length > 20
+                              ? `${assetItem.asset.title.substring(0, 20)}...`
                               : assetItem.asset.title}
                           </Badge>
                         ))}
@@ -417,9 +463,7 @@ export function MarketingPage() {
           {!isLoading && recentCampaigns.length > 0 && (
             <div className="flex justify-center">
               <Button variant="outline" asChild>
-                <Link href="/marketing/campaigns">
-                  View All Campaigns
-                </Link>
+                <Link href="/marketing/campaigns">View All Campaigns</Link>
               </Button>
             </div>
           )}
@@ -431,8 +475,8 @@ export function MarketingPage() {
 
 export default function MarketingProtectedWrapper() {
   return (
-    <RoleProtected allowedRoles={['member', 'agent', 'contractor', 'admin']}>
+    <RoleProtected allowedRoles={["member", "agent", "contractor", "admin"]}>
       <MarketingPage />
     </RoleProtected>
   );
-} 
+}
