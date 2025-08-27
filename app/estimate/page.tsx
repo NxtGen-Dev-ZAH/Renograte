@@ -17,8 +17,15 @@ import {
   Users,
   Phone,
   Mail,
+  Info,
 } from "lucide-react";
 import Link from "next/link";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface EstimationResult {
   propertyAddress: string;
@@ -770,9 +777,83 @@ export default function EstimatePage() {
                               )
                             : "$0"}
                         </div>
-                        <p className="text-gray-600">
-                          Estimated renovation allowance for your property
-                        </p>
+                        <div className="flex items-center justify-center gap-2">
+                          <p className="text-gray-600">
+                            Estimated renovation allowance for your property
+                          </p>
+                          <TooltipProvider>
+                            <Tooltip delayDuration={100}>
+                              <TooltipTrigger asChild>
+                                <button className="inline-flex items-center justify-center text-blue-600 rounded-full border-2 border-blue-300 w-8 h-8 transition-colors hover:bg-blue-50 hover:border-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 shadow-sm">
+                                  <Info className="w-4 h-4" />
+                                  <span className="sr-only">
+                                    More information
+                                  </span>
+                                </button>
+                              </TooltipTrigger>
+                              <TooltipContent
+                                className="max-w-md p-4 text-left"
+                                side="right"
+                              >
+                                <div className="space-y-3">
+                                  <p className="text-sm text-gray-700">
+                                    This estimate is based on the difference
+                                    between the home's After Renovated Value
+                                    (ARV) and its Current Home Value (CHV), with
+                                    a standard adjustment for transaction costs
+                                    like commissions, closing fees, and seller
+                                    incentives.
+                                  </p>
+                                  <ul className="space-y-2">
+                                    <li className="flex gap-2 text-sm">
+                                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                      <span>
+                                        <span className="font-semibold">
+                                          For Sellers:
+                                        </span>{" "}
+                                        This means you can list as-is but still
+                                        capture top-of-market pricing at
+                                        closing—without paying out-of-pocket for
+                                        renovations.
+                                      </span>
+                                    </li>
+                                    <li className="flex gap-2 text-sm">
+                                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                      <span>
+                                        <span className="font-semibold">
+                                          For Buyers:
+                                        </span>{" "}
+                                        You get a renovation budget built right
+                                        into the deal, allowing you to customize
+                                        your future home before moving in.
+                                      </span>
+                                    </li>
+                                    <li className="flex gap-2 text-sm">
+                                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                      <span>
+                                        <span className="font-semibold">
+                                          For Agents:
+                                        </span>{" "}
+                                        This creates stronger offers, faster
+                                        closings, and a differentiated advantage
+                                        in today's competitive market.
+                                      </span>
+                                    </li>
+                                  </ul>
+                                  <p className="text-xs text-gray-500 italic mt-2">
+                                    <span className="font-semibold">Note:</span>{" "}
+                                    This figure is an estimate only. Actual
+                                    allowances may vary depending on property
+                                    values, closing costs, contractor bids, and
+                                    negotiated terms. Use the Renograte
+                                    Calculator for a detailed breakdown tailored
+                                    to your property.
+                                  </p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </div>
                       </div>
 
                       {estimationResult && (
