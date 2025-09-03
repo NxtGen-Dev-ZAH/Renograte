@@ -95,12 +95,12 @@ async function getPriceId(plan: string, billingCycle: string): Promise<string | 
   // Define your price IDs in Stripe and map them here
   const priceMap: Record<string, Record<string, string>> = {
     'Agents Monthly': {
-      'monthly': 'price_1RQWnqPQcXidxFd9KtXcZP6y',
-      'annual': 'price_1RRCh7PQcXidxFd9goZZOKYL'
+      'monthly': process.env.STRIPE_AGENTS_MONTHLY_PRICE_ID!,
+      'annual': process.env.STRIPE_AGENTS_ANNUAL_PRICE_ID!
     },
     'Service Providers (Contractors) monthly membership': {
-      'monthly': 'price_1RQWsSPQcXidxFd9tsnmlVAG',
-      'annual': 'price_1RRCiwPQcXidxFd9bGdROkqI'
+      'monthly': process.env.STRIPE_CONTRACTORS_MONTHLY_PRICE_ID!,
+      'annual': process.env.STRIPE_CONTRACTORS_ANNUAL_PRICE_ID!
     }
   };
 

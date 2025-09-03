@@ -376,6 +376,14 @@ const SignUpModal = () => {
                     Privacy Policy
                   </a>
                 </p>
+
+                <div className="text-center text-xs text-gray-600 mt-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+                  <p className="text-blue-800">
+                    <strong>Important:</strong> After creating your account,
+                    you'll receive a verification email. You must verify your
+                    email address before you can sign in.
+                  </p>
+                </div>
               </div>
 
               <div className="text-center pt-4 border-t border-gray-200">

@@ -67,6 +67,11 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid credentials");
         }
 
+        // Check if email is verified
+        if (!user.emailVerified) {
+          throw new Error("Please verify your email address before signing in. Check your email for a verification link.");
+        }
+
         const isPasswordValid = await compare(
           credentials.password,
           user.password
