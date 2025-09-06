@@ -16,9 +16,6 @@ export async function POST(request: Request) {
       );
     }
     
-    /* 
-    // Temporarily commented out for development
-    // Check if user is an agent
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
     });
@@ -29,7 +26,7 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
-    */
+
     
     // Parse the request body
     const data = await request.json();

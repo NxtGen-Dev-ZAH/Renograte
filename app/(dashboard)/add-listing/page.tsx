@@ -622,8 +622,39 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
         <CardContent>
           {currentStep === 1 && (
             <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-blue-600 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800">
+                      Required Fields
+                    </h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Fields marked with{" "}
+                      <span className="text-red-500 font-semibold">*</span> are
+                      required. Please fill in all required information to
+                      proceed to the next step.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="title">Property Title</Label>
+              <Label htmlFor="title" className="flex items-center gap-2">
+                  Property Title
+                  <span className="text-red-500 text-sm">*</span>
+                </Label>
                 <Input 
                   id="title" 
                   placeholder="e.g. Modern Renovation Project"
@@ -634,7 +665,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="address">Street Address</Label>
+                  <Label htmlFor="address" className="flex items-center gap-2">
+                    Street Address
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="address" 
                     placeholder="Enter street address"
@@ -643,7 +677,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city" className="flex items-center gap-2">
+                    City
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="city" 
                     placeholder="Enter city"
@@ -652,7 +689,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="state">State</Label>
+                  <Label htmlFor="state" className="flex items-center gap-2">
+                    State
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="state" 
                     placeholder="Enter state"
@@ -661,7 +701,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="zipCode">Zip Code</Label>
+                  <Label htmlFor="zipCode" className="flex items-center gap-2">
+                    Zip Code
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="zipCode" 
                     placeholder="Enter zip code"
@@ -670,7 +713,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="type">Property Type</Label>
+                  <Label htmlFor="type" className="flex items-center gap-2">
+                    Property Type
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Select onValueChange={handlePropertyTypeChange} value={propertyDetails.propertyType}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select property type" />
@@ -684,7 +730,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bedrooms">Bedrooms</Label>
+                  <Label htmlFor="bedrooms" className="flex items-center gap-2">
+                    Bedrooms
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="bedrooms" 
                     type="number" 
@@ -694,7 +743,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bathrooms">Bathrooms</Label>
+                  <Label htmlFor="bathrooms" className="flex items-center gap-2">
+                    Bathrooms
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="bathrooms" 
                     type="number" 
@@ -705,7 +757,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="squareFootage">Square Footage</Label>
+                  <Label htmlFor="squareFootage" className="flex items-center gap-2">
+                    Square Footage
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Input 
                     id="squareFootage" 
                     type="number" 
@@ -805,7 +860,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="description">Property Description</Label>
+                <Label htmlFor="description" className="flex items-center gap-2">
+                  Property Description
+                  <span className="text-red-500 text-sm">*</span>
+                </Label>
                 <Textarea
                   id="description"
                   placeholder="Describe the property and its renovation potential"
@@ -819,9 +877,40 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
 
           {currentStep === 2 && (
             <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <svg
+                      className="w-5 h-5 text-blue-600 mt-0.5"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-800">
+                      Required Fields
+                    </h4>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Fields marked with{" "}
+                      <span className="text-red-500 font-semibold">*</span> are
+                      required. Please fill in all required information to
+                      proceed to the next step.
+                    </p>
+                  </div>
+                </div>
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="listingPrice">Listing Price</Label>
+                  <Label htmlFor="listingPrice" className="flex items-center gap-2">
+                    Listing Price
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input 
@@ -835,7 +924,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="afterRepairValue">After Renovated Value (ARV)</Label>
+                  <Label htmlFor="afterRepairValue" className="flex items-center gap-2">
+                    After Renovated Value (ARV)
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input 
@@ -849,7 +941,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="renovationCost">Estimated Renovation Cost</Label>
+                  <Label htmlFor="renovationCost" className="flex items-center gap-2">
+                    Estimated Renovation Cost
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                     <Input 
@@ -863,7 +958,10 @@ const quoteFileInputRef = useRef<HTMLInputElement>(null);
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="terms">Terms Available</Label>
+                  <Label htmlFor="terms" className="flex items-center gap-2">
+                    Terms Available
+                    <span className="text-red-500 text-sm">*</span>
+                  </Label>
                   <Select onValueChange={handleTermsAvailableChange} value={pricingTerms.termsAvailable}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select terms" />
