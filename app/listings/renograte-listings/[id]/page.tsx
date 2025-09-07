@@ -1400,9 +1400,11 @@ export function ListingDetailPage() {
                   </div>
                 )}
                 <div className="mt-4">
-                  <Button variant="outline" className="w-full">
-                    Contact Agent
-                  </Button>
+                  <Link href={`/agents`}>
+                    <Button variant="outline" className="w-full">
+                      Contact Agent
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>

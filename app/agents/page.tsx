@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Award, Phone, Mail, Globe } from "lucide-react";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
+import ContactAgentModal from "@/components/ContactAgentModal";
 
 interface Agent {
   id: string;
@@ -32,6 +33,8 @@ export default function AgentsPage() {
   const [filteredAgents, setFilteredAgents] = useState<Agent[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [contactModalOpen, setContactModalOpen] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -88,6 +91,16 @@ export default function AgentsPage() {
       .join("")
       .toUpperCase()
       .substring(0, 2);
+  };
+
+  const handleContactAgent = (agent: Agent) => {
+    setSelectedAgent(agent);
+    setContactModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setContactModalOpen(false);
+    setSelectedAgent(null);
   };
 
   return (
@@ -248,13 +261,13 @@ export default function AgentsPage() {
                     )}
 
                     {agent.email && (
-                      <a
-                        href={`mailto:${agent.email}`}
+                      <button
+                        onClick={() => handleContactAgent(agent)}
                         className="flex items-center gap-3 w-full bg-gray-100 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors"
                       >
                         <Mail className="w-5 h-5" />
                         Email Agent
-                      </a>
+                      </button>
                     )}
 
                     {agent.website && (
@@ -291,6 +304,13 @@ export default function AgentsPage() {
           </Link>
         </div>
       </div>
+
+      {/* Contact Agent Modal */}
+      <ContactAgentModal
+        isOpen={contactModalOpen}
+        onClose={handleCloseModal}
+        agent={selectedAgent}
+      />
     </div>
   );
 }

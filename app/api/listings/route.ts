@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
+import { sendNewListingNotificationEmail } from '../../../utils/email';
 
 // POST /api/listings - Create a new listing
 export async function POST(request: Request) {
@@ -43,6 +44,37 @@ export async function POST(request: Request) {
         isVisible: false,  // Not visible until approved
       },
     });
+
+    // Send email notification to admin about the new listing
+    try {
+      const emailSent = await sendNewListingNotificationEmail(
+        {
+          id: newListing.id,
+          title: newListing.title,
+          address: newListing.address,
+          city: newListing.city,
+          state: newListing.state,
+          zipCode: newListing.zipCode,
+          listingPrice: newListing.listingPrice,
+          bedrooms: newListing.bedrooms,
+          bathrooms: newListing.bathrooms,
+          squareFootage: newListing.squareFootage,
+          propertyType: newListing.propertyType,
+          description: newListing.description,
+          createdAt: newListing.createdAt.toISOString(),
+        },
+        user.name || 'Unknown Agent'
+      );
+
+      if (emailSent) {
+        console.log(`✅ Admin notification email sent for listing: ${newListing.title}`);
+      } else {
+        console.warn(`⚠️ Failed to send admin notification email for listing: ${newListing.title}`);
+      }
+    } catch (emailError) {
+      // Don't fail the listing creation if email fails
+      console.error('Error sending admin notification email:', emailError);
+    }
     
     return NextResponse.json({ 
       success: true, 

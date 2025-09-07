@@ -1,155 +1,148 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { transporter } from '@/utils/email';
-
-type ContactFormData = {
-  name: string;
-  email: string;
-  phone: string;
-  message: string;
-  propertyId: string;
-  requestDate: string;
-  consent: boolean;
-};
+import { NextRequest, NextResponse } from "next/server";
+import { sendEmail } from "@/utils/email";
 
 export async function POST(request: NextRequest) {
   try {
-    // Get form data from request
-    const data: ContactFormData = await request.json();
-    
+    const body = await request.json();
+    const { agentId, agentEmail, agentName, name, email, phone, message } = body;
+
     // Validate required fields
-    if (!data.name || !data.email || !data.phone || !data.message || !data.propertyId || !data.consent) {
+    if (!agentEmail || !name || !email || !message) {
       return NextResponse.json(
-        { success: false, message: 'Missing required fields' },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    // Format the date
-    const formattedDate = new Date(data.requestDate).toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email) || !emailRegex.test(agentEmail)) {
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 }
+      );
+    }
 
-    // Create property link
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.renograte.com';
-    const propertyLink = `${baseUrl}/listings/property/${data.propertyId}`;
+    // Create email content for the agent
+    const agentEmailSubject = `New Inquiry from ${name} - Renograte`;
     
-    // Property information section with link
-    const propertyDetails = `
-      <div style="margin-top: 20px; margin-bottom: 20px; padding: 15px; border: 1px solid #e2e8f0; border-radius: 8px; background-color: #f8fafc;">
-        <h3 style="margin-top: 0; color: #1e40af;">Property Information</h3>
-        <p><strong>Property ID:</strong> ${data.propertyId}</p>
-        <p><strong>Property Link:</strong> <a href="${propertyLink}" style="color: #0369a1; text-decoration: underline;">${propertyLink}</a></p>
-        <p style="margin-top: 15px;"><a href="${propertyLink}" style="background-color: #0369a1; color: white; padding: 10px 15px; text-decoration: none; border-radius: 5px; display: inline-block;">View Property Details</a></p>
+    const agentEmailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
+        <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #0C71C3; margin: 0; font-size: 24px;">New Client Inquiry</h1>
+            <p style="color: #666; margin: 10px 0 0 0; font-size: 16px;">You have received a new inquiry through Renograte</p>
+          </div>
+
+          <div style="background-color: #f8f9fa; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #333; margin: 0 0 20px 0; font-size: 20px;">Client Information</h2>
+            
+            <div style="margin-bottom: 15px;">
+              <p style="margin: 5px 0; color: #333;"><strong>Name:</strong> ${name}</p>
+              <p style="margin: 5px 0; color: #333;"><strong>Email:</strong> <a href="mailto:${email}" style="color: #0C71C3;">${email}</a></p>
+              ${phone ? `<p style="margin: 5px 0; color: #333;"><strong>Phone:</strong> <a href="tel:${phone}" style="color: #0C71C3;">${phone}</a></p>` : ''}
+            </div>
+          </div>
+
+          <div style="margin-bottom: 25px;">
+            <h2 style="color: #333; margin: 0 0 15px 0; font-size: 20px;">Message</h2>
+            <div style="background-color: white; border-left: 4px solid #0C71C3; padding: 15px; border-radius: 4px;">
+              <p style="margin: 0; color: #333; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+            </div>
+          </div>
+
+          <div style="background-color: #e3f2fd; border-radius: 6px; padding: 15px; margin-bottom: 25px;">
+            <h3 style="color: #1976d2; margin: 0 0 10px 0; font-size: 16px;">💡 Quick Actions</h3>
+            <p style="color: #1976d2; margin: 0; font-size: 14px;">
+              Reply directly to this email to respond to ${name}, or contact them at 
+              <a href="mailto:${email}" style="color: #0C71C3; font-weight: bold;">${email}</a>
+              ${phone ? ` or <a href="tel:${phone}" style="color: #0C71C3; font-weight: bold;">${phone}</a>` : ''}.
+            </p>
+          </div>
+
+          <div style="border-top: 1px solid #e9ecef; padding-top: 20px; margin-top: 30px;">
+            <p style="color: #666; font-size: 14px; margin: 0; text-align: center;">
+              This inquiry was sent through the Renograte platform.<br>
+              Please respond promptly to maintain good client relationships.
+            </p>
+          </div>
+        </div>
       </div>
     `;
 
-    // Send email to Renograte team
-    await transporter.sendMail({
-      from: '"Renograte Contact System" <info@renograte.com>',
-      to: 'info@renograte.com',
-      subject: `New Property Inquiry: Property ID ${data.propertyId}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-          <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${baseUrl}/logo.png" alt="Renograte Logo" style="max-height: 60px;">
-          </div>
-          
-          <div style="background-color: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 15px; margin-bottom: 25px;">
-            <h2 style="margin-top: 0; color: #0369a1;">New Property Inquiry</h2>
-            <p style="margin-bottom: 0;">A new customer has submitted an inquiry about property #${data.propertyId}</p>
-          </div>
-          
-          <div style="margin-bottom: 25px;">
-            <h3 style="color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Customer Information</h3>
-            <p><strong>Name:</strong> ${data.name}</p>
-            <p><strong>Email:</strong> ${data.email}</p>
-            <p><strong>Phone:</strong> ${data.phone}</p>
-            <p><strong>Submitted:</strong> ${formattedDate}</p>
-          </div>
-          
-          <div style="margin-bottom: 25px;">
-            <h3 style="color: #0369a1; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">Customer Message</h3>
-            <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; line-height: 1.5;">
-              ${data.message.replace(/\n/g, '<br>')}
-            </div>
-          </div>
-          
-          ${propertyDetails}
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 14px; color: #64748b;">
-            <p>This is an automated message from the Renograte Contact System.</p>
-            <p>Please respond to this inquiry as soon as possible.</p>
-          </div>
-        </div>
-      `,
+    // Send email to the agent
+    const emailSent = await sendEmail({
+      to: agentEmail,
+      subject: agentEmailSubject,
+      html: agentEmailHtml,
     });
 
-    // Send confirmation email to the customer
-    await transporter.sendMail({
-      from: '"Renograte" <info@renograte.com>',
-      to: data.email,
-      subject: 'Thank You for Your Property Inquiry',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: "Failed to send email" },
+        { status: 500 }
+      );
+    }
+
+    // Send confirmation email to the client
+    const clientEmailSubject = `Message sent to ${agentName} - Renograte`;
+    
+    const clientEmailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
+        <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
           <div style="text-align: center; margin-bottom: 30px;">
-            <img src="${baseUrl}/logo.png" alt="Renograte Logo" style="max-height: 60px;">
+            <h1 style="color: #0C71C3; margin: 0; font-size: 24px;">Message Sent Successfully!</h1>
+            <p style="color: #666; margin: 10px 0 0 0; font-size: 16px;">Your message has been delivered to ${agentName}</p>
           </div>
-          
-          <div style="margin-bottom: 25px;">
-            <h2 style="color: #0369a1;">Thank You for Your Inquiry</h2>
-            <p>Hello ${data.name},</p>
-            <p>Thank you for contacting Renograte about Property ID #${data.propertyId}. We have received your inquiry and a member of our team will be in touch with you shortly.</p>
+
+          <div style="background-color: #d4edda; border: 1px solid #c3e6cb; border-radius: 6px; padding: 15px; margin-bottom: 25px;">
+            <h3 style="color: #155724; margin: 0 0 10px 0; font-size: 16px;">✅ Confirmation</h3>
+            <p style="color: #155724; margin: 0; font-size: 14px;">
+              Your inquiry has been sent to <strong>${agentName}</strong> and they will get back to you soon.
+            </p>
           </div>
-          
-          <div style="background-color: #f0f9ff; border-radius: 8px; padding: 15px; margin-bottom: 25px;">
-            <h3 style="margin-top: 0; color: #0369a1;">Your Inquiry Details</h3>
-            <p><strong>Property ID:</strong> ${data.propertyId}</p>
-            <p><strong>Property Link:</strong> <a href="${propertyLink}" style="color: #0369a1; text-decoration: underline;">View Property</a></p>
-            <p><strong>Message:</strong></p>
-            <div style="background-color: #f9fafb; padding: 15px; border-radius: 6px; margin-top: 10px; line-height: 1.5;">
-              ${data.message.replace(/\n/g, '<br>')}
-            </div>
-          </div>
-          
-          <div style="margin-bottom: 25px;">
-            <h3 style="color: #0369a1;">What Happens Next?</h3>
-            <p>Our team will:</p>
-            <ul style="line-height: 1.6;">
-              <li>Review your inquiry</li>
-              <li>Connect you with the listing agent</li>
-              <li>Provide additional information about renovation options</li>
-              <li>Answer any questions you may have</li>
+
+          <div style="background-color: #f8f9fa; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #333; margin: 0 0 15px 0; font-size: 18px;">What's Next?</h2>
+            <ul style="color: #333; margin: 0; padding-left: 20px;">
+              <li style="margin-bottom: 8px;">${agentName} will review your message and respond within 24-48 hours</li>
+              <li style="margin-bottom: 8px;">Check your email regularly for their response</li>
+              <li style="margin-bottom: 8px;">If you don't hear back, feel free to contact them directly</li>
             </ul>
           </div>
-          
-          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; font-size: 14px; color: #64748b; text-align: center;">
-            <p>If you have any immediate questions, please contact us at <a href="mailto:info@renograte.com" style="color: #0369a1;">info@renograte.com</a> or call us at (123) 456-7890.</p>
-            <p>© ${new Date().getFullYear()} Renograte. All rights reserved.</p>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="https://www.renograte.com/agents" 
+               style="background-color: #0C71C3; color: white; padding: 12px 24px; 
+                      text-decoration: none; border-radius: 6px; display: inline-block; 
+                      font-weight: bold;">
+              Browse More Agents
+            </a>
+          </div>
+
+          <div style="border-top: 1px solid #e9ecef; padding-top: 20px; margin-top: 30px;">
+            <p style="color: #666; font-size: 14px; margin: 0; text-align: center;">
+              Thank you for using Renograte!<br>
+              We're here to help you find the perfect renovation-ready property.
+            </p>
           </div>
         </div>
-      `,
+      </div>
+    `;
+
+    // Send confirmation email to client
+    await sendEmail({
+      to: email,
+      subject: clientEmailSubject,
+      html: clientEmailHtml,
     });
 
-    // Return success response
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: 'Inquiry submitted successfully. Renograte will contact you shortly.' 
-      },
-      { status: 200 }
-    );
-    
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error processing contact form submission:', error);
-    
+    console.error("Error in contact-agent API:", error);
     return NextResponse.json(
-      { success: false, message: 'Failed to process your request' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
-} 
+}

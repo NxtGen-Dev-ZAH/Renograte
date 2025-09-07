@@ -206,4 +206,149 @@ export const sendEmail = async (options: {
     console.error('Error sending email:', error);
     return false;
   }
+};
+
+/**
+ * Send email notification to admin when a new listing is submitted for review
+ * @param listingData The listing data that was submitted
+ * @param agentName The name of the agent who submitted the listing
+ */
+export const sendNewListingNotificationEmail = async (
+  listingData: {
+    id: string;
+    title: string;
+    address: string;
+    city: string;
+    state: string;
+    zipCode: string;
+    listingPrice: number;
+    bedrooms: number;
+    bathrooms: number;
+    squareFootage: number;
+    propertyType: string;
+    description: string;
+    createdAt: string;
+  },
+  agentName: string
+): Promise<boolean> => {
+  try {
+    // Use a dynamic base URL based on environment
+    const baseUrl = process.env.NODE_ENV === 'production' 
+      ? process.env.NEXT_PUBLIC_APP_URL || 'https://www.renograte.com'
+      : 'http://localhost:3000';
+    
+    const adminReviewUrl = `${baseUrl}/admin/listings?tab=pending`;
+
+    // Format currency for display
+    const formatCurrency = (amount: number) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+
+    // Format date for display
+    const formatDate = (dateString: string) => {
+      return new Date(dateString).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    };
+
+    const subject = `New Property Listing Submitted for Review - ${listingData.title}`;
+    
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
+        <div style="background-color: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #0C71C3; margin: 0; font-size: 28px;">New Listing Review Required</h1>
+            <p style="color: #666; margin: 10px 0 0 0; font-size: 16px;">A new property listing has been submitted and requires your review</p>
+          </div>
+
+          <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 6px; padding: 15px; margin-bottom: 25px;">
+            <h3 style="color: #856404; margin: 0 0 10px 0; font-size: 18px;">⚠️ Action Required</h3>
+            <p style="color: #856404; margin: 0; font-size: 14px;">Please review this listing in the admin panel to approve or reject it.</p>
+          </div>
+
+          <div style="background-color: #f8f9fa; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+            <h2 style="color: #333; margin: 0 0 20px 0; font-size: 22px;">Property Details</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+              <div>
+                <h3 style="color: #0C71C3; margin: 0 0 10px 0; font-size: 16px;">Basic Information</h3>
+                <p style="margin: 5px 0; color: #333;"><strong>Title:</strong> ${listingData.title}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Address:</strong> ${listingData.address}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Location:</strong> ${listingData.city}, ${listingData.state} ${listingData.zipCode}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Property Type:</strong> ${listingData.propertyType}</p>
+              </div>
+              
+              <div>
+                <h3 style="color: #0C71C3; margin: 0 0 10px 0; font-size: 16px;">Property Specs</h3>
+                <p style="margin: 5px 0; color: #333;"><strong>Price:</strong> <span style="color: #28a745; font-weight: bold;">${formatCurrency(listingData.listingPrice)}</span></p>
+                <p style="margin: 5px 0; color: #333;"><strong>Bedrooms:</strong> ${listingData.bedrooms}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Bathrooms:</strong> ${listingData.bathrooms}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Square Footage:</strong> ${listingData.squareFootage.toLocaleString()} sqft</p>
+              </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+              <h3 style="color: #0C71C3; margin: 0 0 10px 0; font-size: 16px;">Description</h3>
+              <p style="margin: 0; color: #333; line-height: 1.6; background-color: white; padding: 15px; border-radius: 4px; border-left: 4px solid #0C71C3;">${listingData.description}</p>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+              <div>
+                <h3 style="color: #0C71C3; margin: 0 0 10px 0; font-size: 16px;">Submission Details</h3>
+                <p style="margin: 5px 0; color: #333;"><strong>Submitted by:</strong> ${agentName}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Submitted on:</strong> ${formatDate(listingData.createdAt)}</p>
+                <p style="margin: 5px 0; color: #333;"><strong>Status:</strong> <span style="background-color: #fff3cd; color: #856404; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold;">PENDING REVIEW</span></p>
+              </div>
+              
+              <div>
+                <h3 style="color: #0C71C3; margin: 0 0 10px 0; font-size: 16px;">Quick Actions</h3>
+                <p style="margin: 5px 0; color: #666; font-size: 14px;">Click the button below to review this listing in the admin panel.</p>
+              </div>
+            </div>
+          </div>
+
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${adminReviewUrl}" 
+               style="background-color: #0C71C3; color: white; padding: 15px 30px; 
+                      text-decoration: none; border-radius: 6px; display: inline-block; 
+                      font-weight: bold; font-size: 16px; box-shadow: 0 2px 4px rgba(12, 113, 195, 0.3);">
+              Review Listing in Admin Panel
+            </a>
+          </div>
+
+          <div style="border-top: 1px solid #e9ecef; padding-top: 20px; margin-top: 30px;">
+            <p style="color: #666; font-size: 14px; margin: 0; text-align: center;">
+              This is an automated notification from the Renograte platform.<br>
+              Please review the listing promptly to ensure timely processing.
+            </p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const success = await sendEmail({
+      to: 'info@renograte.com',
+      subject: subject,
+      html: htmlContent,
+    });
+
+    if (success) {
+      console.log(`✅ New listing notification email sent successfully for listing: ${listingData.title}`);
+    } else {
+      console.error(`❌ Failed to send new listing notification email for listing: ${listingData.title}`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error('Error sending new listing notification email:', error);
+    return false;
+  }
 }; 

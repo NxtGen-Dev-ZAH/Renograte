@@ -306,7 +306,7 @@ export function ContactAgentPage() {
                         I consent to Renograte processing my personal
                         information in accordance with the{" "}
                         <Link
-                          href="/privacy-policy"
+                          href="/privacy"
                           className="text-blue-600 hover:underline font-medium"
                         >
                           Privacy Policy
