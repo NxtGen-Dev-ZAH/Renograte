@@ -1,300 +1,291 @@
-import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import Stripe from 'stripe';
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-05-28.basil',
+  apiVersion: "2025-05-28.basil",
 });
 
-// This is your Stripe webhook secret for testing your endpoint locally.
+// This is your Stripe webhook secret for testing locally
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
-  const body = await req.text();
-  const signature = (await headers()).get('stripe-signature');
-
-  if (!signature) {
-    return NextResponse.json({ error: 'Missing stripe-signature header' }, { status: 400 });
-  }
-
-  let event: Stripe.Event;
-
   try {
-    event = stripe.webhooks.constructEvent(
-      body,
-      signature,
-      endpointSecret
-    );
-  } catch (err) {
-    const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-    console.error(`Webhook signature verification failed: ${errorMessage}`);
-    return NextResponse.json({ error: `Webhook Error: ${errorMessage}` }, { status: 400 });
-  }
+    // Get the raw body as text
+    const body = await req.text();
+    const signature = req.headers.get("stripe-signature");
 
-  // Handle the event
-  try {
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log(`PaymentIntent ${paymentIntent.id} was successful!`);
-        // Update your database here
-        await handlePaymentIntentSucceeded(paymentIntent);
-        break;
-        
-      case 'payment_intent.payment_failed':
-        const failedPaymentIntent = event.data.object as Stripe.PaymentIntent;
-        console.log(`Payment failed: ${failedPaymentIntent.id}, ${failedPaymentIntent.last_payment_error?.message}`);
-        await handlePaymentIntentFailed(failedPaymentIntent);
-        break;
+    console.log("🔍 Webhook Debug Info:");
+    console.log("- Body length:", body.length);
+    console.log("- Signature present:", !!signature);
+    console.log("- Endpoint secret present:", !!endpointSecret);
+    console.log("- Endpoint secret starts with:", endpointSecret?.substring(0, 10));
 
-      case 'customer.subscription.created':
-        const subscription = event.data.object as Stripe.Subscription;
-        console.log(`Subscription created: ${subscription.id}`);
-        await handleSubscriptionCreated(subscription);
-        break;
-
-      case 'customer.subscription.updated':
-        const updatedSubscription = event.data.object as Stripe.Subscription;
-        console.log(`Subscription updated: ${updatedSubscription.id}`);
-        await handleSubscriptionUpdated(updatedSubscription);
-        break;
-
-      case 'customer.subscription.deleted':
-        const deletedSubscription = event.data.object as Stripe.Subscription;
-        console.log(`Subscription cancelled: ${deletedSubscription.id}`);
-        await handleSubscriptionDeleted(deletedSubscription);
-        break;
-        
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
+    if (!signature) {
+      console.error("❌ Missing stripe-signature header");
+      return NextResponse.json(
+        { error: "Missing stripe-signature header" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ received: true });
+    if (!endpointSecret) {
+      console.error("❌ Missing webhook secret in environment variables");
+      return NextResponse.json(
+        { error: "Webhook secret not configured" },
+        { status: 500 }
+      );
+    }
+
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, endpointSecret);
+      console.log("✅ Webhook signature verified successfully");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error(`❌ Webhook signature verification failed: ${errorMessage}`);
+      console.error("- Signature received:", signature);
+      console.error("- Body preview:", body.substring(0, 200));
+      return NextResponse.json(
+        { error: `Webhook Error: ${errorMessage}` },
+        { status: 400 }
+      );
+    }
+
+    console.log("✅ Webhook received:", event.type);
+
+    try {
+      switch (event.type) {
+        case "payment_intent.succeeded":
+          await handlePaymentIntentSucceeded(
+            event.data.object as Stripe.PaymentIntent
+          );
+          break;
+
+        case "payment_intent.payment_failed":
+          await handlePaymentIntentFailed(
+            event.data.object as Stripe.PaymentIntent
+          );
+          break;
+
+        case "customer.subscription.created":
+          await handleSubscriptionCreated(event.data.object as Stripe.Subscription);
+          break;
+
+        case "customer.subscription.updated":
+          await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+          break;
+
+        case "customer.subscription.deleted":
+          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+          break;
+
+        default:
+          console.log(`⚠️ Unhandled event type: ${event.type}`);
+      }
+
+      return NextResponse.json({ received: true });
+    } catch (error) {
+      console.error("❌ Error processing webhook:", error);
+      return NextResponse.json(
+        { error: "Error processing webhook" },
+        { status: 500 }
+      );
+    }
   } catch (error) {
-    console.error('Error processing webhook:', error);
+    console.error("❌ Error in webhook handler:", error);
     return NextResponse.json(
-      { error: 'Error processing webhook' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
-// Implementation of webhook handlers
+// -----------------------------
+// Handlers
+// -----------------------------
 async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent) {
-  // Extract user ID from metadata
   const userId = paymentIntent.metadata?.userId;
   const planType = paymentIntent.metadata?.plan;
   const billingCycle = paymentIntent.metadata?.billingCycle;
-  
+
   if (!userId) {
-    console.error('Payment succeeded but no userId in metadata');
+    console.error("Payment succeeded but no userId in metadata");
     return;
   }
 
   try {
-    // Update user role to member
     await prisma.user.update({
       where: { id: userId },
-      data: { role: "member" }
+      data: { role: "member" },
     });
 
-    // Update member profile status to active
     await prisma.memberProfile.update({
       where: { userId },
-      data: { 
+      data: {
         status: "active",
-        // Update plan details if they were passed in metadata
         ...(planType && { plan: planType }),
-        ...(billingCycle && { billingCycle })
-      }
+        ...(billingCycle && { billingCycle }),
+      },
     });
 
-    console.log(`User ${userId} successfully upgraded to member status`);
+    console.log(`✅ User ${userId} upgraded to member status`);
   } catch (error) {
-    console.error(`Error updating user status for payment ${paymentIntent.id}:`, error);
+    console.error(`❌ Error updating user status for payment ${paymentIntent.id}:`, error);
   }
 }
 
 async function handlePaymentIntentFailed(paymentIntent: Stripe.PaymentIntent) {
   const userId = paymentIntent.metadata?.userId;
-  
+
   if (!userId) {
-    console.error('Payment failed but no userId in metadata');
+    console.error("Payment failed but no userId in metadata");
     return;
   }
 
   try {
-    // Update member profile status to failed
     await prisma.memberProfile.update({
       where: { userId },
-      data: { status: "payment_failed" }
+      data: { status: "payment_failed" },
     });
 
-    console.log(`Payment failed for user ${userId}`);
+    console.log(`❌ Payment failed for user ${userId}`);
   } catch (error) {
-    console.error(`Error updating user status for failed payment ${paymentIntent.id}:`, error);
+    console.error(`❌ Error updating user status for failed payment ${paymentIntent.id}:`, error);
   }
 }
 
 async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
-  // Extract customer ID
   const customerId = subscription.customer as string;
-  
+
   try {
-    // Find customer metadata to get user ID
     const customer = await stripe.customers.retrieve(customerId);
-    
-    if (!customer || customer.deleted) {
-      console.error('Customer not found or deleted');
-      return;
-    }
-    
-    const userId = (customer.metadata?.userId as string);
+    if (!customer || customer.deleted) return;
+
+    // Try to get userId from subscription metadata first, then customer metadata
+    const userId = (subscription.metadata?.userId as string) || 
+                   (customer.metadata?.userId as string) || null;
     
     if (!userId) {
-      console.error('No userId found in customer metadata');
+      console.error("No userId found in subscription or customer metadata");
+      console.error("Subscription metadata:", subscription.metadata);
+      console.error("Customer metadata:", customer.metadata);
       return;
     }
-    
-    // Extract plan details from subscription
+
     const planItem = subscription.items.data[0];
     const planId = planItem?.price.product as string;
-    
-    // Get plan details if needed
     const product = await stripe.products.retrieve(planId);
     const planName = product.name;
-    
-    // Update membership in database
+
     await prisma.user.update({
       where: { id: userId },
-      data: { role: "member" }
+      data: { role: "member" },
     });
-    
-    // Find or create member profile
+
     const existingProfile = await prisma.memberProfile.findUnique({
-      where: { userId }
+      where: { userId },
     });
-    
+
     if (existingProfile) {
       await prisma.memberProfile.update({
         where: { userId },
         data: {
           status: "active",
           plan: planName,
-          billingCycle: subscription.items.data[0]?.price.recurring?.interval || "unknown"
-        }
+          billingCycle:
+            subscription.items.data[0]?.price.recurring?.interval || "unknown",
+        },
       });
     } else {
-      // This case should be rare as profile is normally created during registration
       await prisma.memberProfile.create({
         data: {
           userId,
           status: "active",
           plan: planName,
-          billingCycle: subscription.items.data[0]?.price.recurring?.interval || "unknown",
-          // Set default values for required fields
+          billingCycle:
+            subscription.items.data[0]?.price.recurring?.interval || "unknown",
           phone: "",
-          businessType: "Other"
-        }
+          businessType: "Other",
+        },
       });
     }
-    
-    console.log(`Subscription created and activated for user ${userId}`);
+
+    console.log(`✅ Subscription created for user ${userId}`);
   } catch (error) {
-    console.error(`Error processing subscription created ${subscription.id}:`, error);
+    console.error(`❌ Error processing subscription created ${subscription.id}:`, error);
   }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-  // Extract customer ID
   const customerId = subscription.customer as string;
-  
+
   try {
-    // Find customer metadata to get user ID
     const customer = await stripe.customers.retrieve(customerId);
-    
-    if (!customer || customer.deleted) {
-      console.error('Customer not found or deleted');
-      return;
-    }
-    
-    const userId = (customer.metadata?.userId as string);
+    if (!customer || customer.deleted) return;
+
+    // Try to get userId from subscription metadata first, then customer metadata
+    const userId = (subscription.metadata?.userId as string) || 
+                   (customer.metadata?.userId as string) || null;
     
     if (!userId) {
-      console.error('No userId found in customer metadata');
+      console.error("No userId found in subscription or customer metadata for update");
       return;
     }
-    
-    // Update membership status based on subscription status
+
     let memberStatus: string;
-    
     switch (subscription.status) {
-      case 'active':
-        memberStatus = 'active';
+      case "active":
+        memberStatus = "active";
         break;
-      case 'past_due':
-        memberStatus = 'past_due';
+      case "past_due":
+        memberStatus = "past_due";
         break;
-      case 'unpaid':
-        memberStatus = 'unpaid';
+      case "unpaid":
+        memberStatus = "unpaid";
         break;
-      case 'canceled':
-        memberStatus = 'canceled';
+      case "canceled":
+        memberStatus = "canceled";
         break;
       default:
         memberStatus = subscription.status;
     }
-    
-    // Update member profile
+
     await prisma.memberProfile.update({
       where: { userId },
-      data: { status: memberStatus }
+      data: { status: memberStatus },
     });
-    
-    console.log(`Subscription updated for user ${userId} to status: ${memberStatus}`);
+
+    console.log(`✅ Subscription updated for user ${userId} to ${memberStatus}`);
   } catch (error) {
-    console.error(`Error processing subscription update ${subscription.id}:`, error);
+    console.error(`❌ Error processing subscription update ${subscription.id}:`, error);
   }
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  // Extract customer ID
   const customerId = subscription.customer as string;
-  
+
   try {
-    // Find customer metadata to get user ID
     const customer = await stripe.customers.retrieve(customerId);
-    
-    if (!customer || customer.deleted) {
-      console.error('Customer not found or deleted');
-      return;
-    }
-    
-    const userId = (customer.metadata?.userId as string);
+    if (!customer || customer.deleted) return;
+
+    // Try to get userId from subscription metadata first, then customer metadata
+    const userId = (subscription.metadata?.userId as string) || 
+                   (customer.metadata?.userId as string) || null;
     
     if (!userId) {
-      console.error('No userId found in customer metadata');
+      console.error("No userId found in subscription or customer metadata for deletion");
       return;
     }
-    
-    // Update membership status
+
     await prisma.memberProfile.update({
       where: { userId },
-      data: { status: 'canceled' }
+      data: { status: "canceled" },
     });
-    
-    // Optionally revert user role to "user" if membership is fully canceled
-    // Uncomment if you want to downgrade their role
-    /*
-    await prisma.user.update({
-      where: { id: userId },
-      data: { role: "user" }
-    });
-    */
-    
-    console.log(`Subscription canceled for user ${userId}`);
+
+    console.log(`✅ Subscription canceled for user ${userId}`);
   } catch (error) {
-    console.error(`Error processing subscription deletion ${subscription.id}:`, error);
+    console.error(`❌ Error processing subscription deletion ${subscription.id}:`, error);
   }
-} 
+}

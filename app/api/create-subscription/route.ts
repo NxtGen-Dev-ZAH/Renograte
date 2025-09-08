@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { formatAmountForStripe } from '@/lib/stripe';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2025-05-28.basil',
@@ -8,6 +10,16 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 export async function POST(req: Request) {
   try {
+    // Get the current user session
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { error: 'Unauthorized - Please log in to create a subscription' },
+        { status: 401 }
+      );
+    }
+
     const { 
       name,
       email,
@@ -34,6 +46,19 @@ export async function POST(req: Request) {
     const existingCustomers = await stripe.customers.list({ email, limit: 1 });
     if (existingCustomers.data.length > 0) {
       customer = existingCustomers.data[0];
+      // Update existing customer with userId if not present
+      if (!customer.metadata?.userId) {
+        customer = await stripe.customers.update(customer.id, {
+          metadata: {
+            ...customer.metadata,
+            userId: session.user.id,
+            company,
+            role,
+            licenseNumber,
+            businessType
+          }
+        });
+      }
     } else {
       // Create a new customer if not found
       customer = await stripe.customers.create({
@@ -41,6 +66,7 @@ export async function POST(req: Request) {
         email,
         phone,
         metadata: {
+          userId: session.user.id,  // 👈 critical - add userId to metadata
           company,
           role,
           licenseNumber,
@@ -63,6 +89,7 @@ export async function POST(req: Request) {
       payment_settings: { save_default_payment_method: 'on_subscription' },
       expand: ['latest_invoice.payment_intent'],
       metadata: {
+        userId: session.user.id,  // 👈 critical - add userId to subscription metadata
         plan,
         billingCycle
       }
@@ -71,10 +98,13 @@ export async function POST(req: Request) {
     // Get the payment intent from the subscription
     const paymentIntent = (subscription.latest_invoice as any).payment_intent;
 
-    // Update the payment intent with the subscription ID
+    // Update the payment intent with the subscription ID and userId
     await stripe.paymentIntents.update(paymentIntent.id, {
       metadata: {
-        subscriptionId: subscription.id
+        userId: session.user.id,  // 👈 critical - add userId to payment intent metadata
+        subscriptionId: subscription.id,
+        plan,
+        billingCycle
       }
     });
 
