@@ -24,7 +24,14 @@ export async function POST(req: Request) {
       },
     };
 
-    const paymentIntent = await stripe.paymentIntents.create(params);
+    // Generate idempotency key to prevent duplicate charges
+    const idempotencyKey = userId 
+      ? `${userId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+      : `payment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    const paymentIntent = await stripe.paymentIntents.create(params, {
+      idempotencyKey,
+    });
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,

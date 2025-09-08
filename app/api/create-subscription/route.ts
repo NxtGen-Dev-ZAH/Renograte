@@ -81,6 +81,9 @@ export async function POST(req: Request) {
       throw new Error('Invalid plan or billing cycle');
     }
 
+    // Generate idempotency key to prevent duplicate subscriptions
+    const subscriptionIdempotencyKey = `sub-${session.user.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
     // Create the subscription
     const subscription = await stripe.subscriptions.create({
       customer: customer.id,
@@ -93,10 +96,15 @@ export async function POST(req: Request) {
         plan,
         billingCycle
       }
+    }, {
+      idempotencyKey: subscriptionIdempotencyKey,
     });
 
     // Get the payment intent from the subscription
     const paymentIntent = (subscription.latest_invoice as any).payment_intent;
+
+    // Generate idempotency key for payment intent update
+    const paymentIntentIdempotencyKey = `pi-update-${session.user.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
     // Update the payment intent with the subscription ID and userId
     await stripe.paymentIntents.update(paymentIntent.id, {
@@ -106,6 +114,8 @@ export async function POST(req: Request) {
         plan,
         billingCycle
       }
+    }, {
+      idempotencyKey: paymentIntentIdempotencyKey,
     });
 
     return NextResponse.json({
