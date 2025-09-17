@@ -45,16 +45,16 @@ export async function GET(request: NextRequest) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Google Places API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorText,
-      });
+      // console.error('Google Places API error:', {
+      //   status: response.status,
+      //   statusText: response.statusText,
+      //   errorText,
+      // });
       throw new Error(`Google Places API failed: ${response.status} ${response.statusText}`);
     }
 
     const data = await response.json();
-    console.log('Google API Response Data:', JSON.stringify(data, null, 2));
+    // console.log('Google API Response Data:', JSON.stringify(data, null, 2));
 
     const transformedPredictions = data.suggestions?.map((suggestion: any) => {
       if (suggestion.placePrediction) {

@@ -14,8 +14,14 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { FaCalculator } from "react-icons/fa";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RenograteCalculator() {
+  const { data: session } = useSession();
+  const { toast } = useToast();
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
   const [values, setValues] = useState({
     currentHomeValue: "850000.00",
     afterRenovatedValue: "1000000.00",
@@ -58,18 +64,31 @@ export default function RenograteCalculator() {
 
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
+  // Check if user has member role
+  const isMember =
+    session?.user?.role &&
+    ["admin", "contractor", "agent"].includes(session.user.role);
+
+  const handleCalculatorClick = () => {
+    setIsDialogOpen(true);
+  };
+
   const handleInputChange = (field: string, value: string) => {
     // Remove all non-numeric characters except decimal point
     let processedValue = value.replace(/[^\d.]/g, "");
-    
+
     // Handle percentage fields
-    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
+    if (
+      ["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+        field
+      )
+    ) {
       processedValue = parseFloat(processedValue || "0").toFixed(2);
-      
+
       // Apply constraints for percentage fields
       const numValue = parseFloat(processedValue);
       if (field === "agentCommission" && (numValue < 0 || numValue > 10)) {
-        processedValue = numValue < 0 ? "0.00" : "10.00"; 
+        processedValue = numValue < 0 ? "0.00" : "10.00";
       } else if (field === "closingFee" && (numValue < 0 || numValue > 10)) {
         processedValue = numValue < 0 ? "0.00" : "10.00";
       } else if (field === "sellerFee" && (numValue < 0 || numValue > 10)) {
@@ -77,7 +96,7 @@ export default function RenograteCalculator() {
       } else if (field === "otherFees" && (numValue < 0 || numValue > 1)) {
         processedValue = numValue < 0 ? "0.00" : "1.00";
       }
-      
+
       // Administration fee is now a static value
       if (field === "administrationFee") {
         processedValue = "499";
@@ -97,7 +116,7 @@ export default function RenograteCalculator() {
   const handlePercentageChange = (field: string, increment: boolean) => {
     const currentValue = parseFloat(values[field as keyof typeof values]) || 0;
     const newValue = increment ? currentValue + 0.5 : currentValue - 0.5;
-    
+
     // Apply field-specific limits
     let finalValue = newValue;
     if (field === "agentCommission") {
@@ -119,13 +138,17 @@ export default function RenograteCalculator() {
     if (field === "administrationFee") {
       return "499";
     }
-    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
+    if (
+      ["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+        field
+      )
+    ) {
       return value;
     }
     const numValue = parseFloat(value) || 0;
-    return numValue.toLocaleString('en-US', {
+    return numValue.toLocaleString("en-US", {
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     });
   };
 
@@ -133,7 +156,11 @@ export default function RenograteCalculator() {
     if (field === "administrationFee") {
       return "499";
     }
-    if (["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)) {
+    if (
+      ["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+        field
+      )
+    ) {
       return "0.00";
     }
     return "0";
@@ -160,18 +187,22 @@ export default function RenograteCalculator() {
     // Parse all values as numbers, removing any formatting
     const chv = parseFloat(values.currentHomeValue) || 0;
     const arv = parseFloat(values.afterRenovatedValue) || 0;
-    
+
     // Fixed percentages
-    const agentCommissionPercent = parseFloat(values.agentCommission) / 100 || 0;
+    const agentCommissionPercent =
+      parseFloat(values.agentCommission) / 100 || 0;
     const closingFeePercent = parseFloat(values.closingFee) / 100 || 0;
     const sellerFeePercent = parseFloat(values.sellerFee) / 100 || 0;
     const adminFee = 499; // Static $499 fee
     const otherFeesPercent = parseFloat(values.otherFees) / 100 || 0;
 
     // Calculate TARR (should be between 85% to 90% of ARV)
-    const totalPercentages = agentCommissionPercent + closingFeePercent + 
-                           sellerFeePercent + otherFeesPercent;
-    const tarrPercent = Math.min(Math.max(0.85, 1 - totalPercentages), 0.90);
+    const totalPercentages =
+      agentCommissionPercent +
+      closingFeePercent +
+      sellerFeePercent +
+      otherFeesPercent;
+    const tarrPercent = Math.min(Math.max(0.85, 1 - totalPercentages), 0.9);
 
     // Calculate TARA
     const totalAcquisitionRenovationAllowance = arv * tarrPercent;
@@ -182,11 +213,16 @@ export default function RenograteCalculator() {
     const sellerPayback = parseFloat(values.sellerPayback) || 0;
     const sellerIncentives = parseFloat(values.sellerIncentives) || 0;
     const otherPayoffs = parseFloat(values.otherPayoffs) || 0;
-    const totalLiens = secondMortgage + thirdMortgage + sellerPayback + 
-                      sellerIncentives + otherPayoffs;
+    const totalLiens =
+      secondMortgage +
+      thirdMortgage +
+      sellerPayback +
+      sellerIncentives +
+      otherPayoffs;
 
     // Calculate Total Renovation Allowance
-    const totalRenovationAllowance = totalAcquisitionRenovationAllowance - chv - totalLiens;
+    const totalRenovationAllowance =
+      totalAcquisitionRenovationAllowance - chv - totalLiens;
 
     // Calculate Term Sheet Values
     const agentCommissionAmount = arv * agentCommissionPercent;
@@ -202,7 +238,8 @@ export default function RenograteCalculator() {
       totalRenovationAllowance,
       termSheet: {
         afterRenovatedValue: arv,
-        totalRenovationAllowanceBuyer: totalRenovationAllowance > 0 ? totalRenovationAllowance : 0,
+        totalRenovationAllowanceBuyer:
+          totalRenovationAllowance > 0 ? totalRenovationAllowance : 0,
         agentCommissionAmount,
         closingFeeAmount,
         sellerFeeAmount,
@@ -212,10 +249,12 @@ export default function RenograteCalculator() {
         otherFeesAmount,
       },
       renograteSummary: {
-        totalAdditionalSellerProfit: sellerFeeAmount + sellerIncentives + otherPayoffs,
+        totalAdditionalSellerProfit:
+          sellerFeeAmount + sellerIncentives + otherPayoffs,
         renograteAdminFee,
         otherFees: otherFeesAmount,
-        totalRenovationAllowanceBuyer: totalRenovationAllowance > 0 ? totalRenovationAllowance : 0,
+        totalRenovationAllowanceBuyer:
+          totalRenovationAllowance > 0 ? totalRenovationAllowance : 0,
       },
     });
   }, [values]);
@@ -233,7 +272,10 @@ export default function RenograteCalculator() {
         <Input
           id={field}
           type="text"
-          value={formatDisplayValue(field, values[field as keyof typeof values])}
+          value={formatDisplayValue(
+            field,
+            values[field as keyof typeof values]
+          )}
           onChange={(e) => handleInputChange(field, e.target.value)}
           onFocus={() => handleInputFocus(field)}
           onBlur={() => handleInputBlur(field)}
@@ -241,11 +283,15 @@ export default function RenograteCalculator() {
           className="pl-6"
         />
         <span className="absolute left-2 top-1/2 transform -translate-y-1/2">
-          {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field)
+          {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+            field
+          )
             ? "%"
             : "$"}
         </span>
-        {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(field) && (
+        {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+          field
+        ) && (
           <div className="absolute right-2 flex flex-col">
             <button
               onClick={() => handlePercentageChange(field, true)}
@@ -272,6 +318,74 @@ export default function RenograteCalculator() {
     </div>
   );
 
+  const renderSkeletonInput = (
+    field: string,
+    label: string,
+    min: string,
+    max: string,
+    hint: string
+  ) => (
+    <div className="space-y-2">
+      <Label htmlFor={field} className="text-gray-500">
+        {label}
+      </Label>
+      <div className="relative flex items-center">
+        <Input
+          id={field}
+          type="text"
+          value=""
+          className="pl-6 bg-gray-100 cursor-not-allowed text-gray-400"
+          placeholder="Member access required"
+          disabled={true}
+        />
+        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-400">
+          {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+            field
+          )
+            ? "%"
+            : "$"}
+        </span>
+        {["agentCommission", "closingFee", "sellerFee", "otherFees"].includes(
+          field
+        ) && (
+          <div className="absolute right-2 flex flex-col">
+            <button
+              className="p-1 text-gray-300 cursor-not-allowed"
+              type="button"
+              disabled={true}
+            >
+              <ChevronUp size={16} />
+            </button>
+            <button
+              className="p-1 text-gray-300 cursor-not-allowed"
+              type="button"
+              disabled={true}
+            >
+              <ChevronDown size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+      <p className="text-sm text-gray-400">
+        Min: {min} - Max: {max}
+        <br />
+        {hint}
+      </p>
+    </div>
+  );
+
+  const renderConditionalInput = (
+    field: string,
+    label: string,
+    min: string,
+    max: string,
+    hint: string
+  ): JSX.Element => {
+    return isMember
+      ? renderInput(field, label, min, max, hint)
+      : renderSkeletonInput(field, label, min, max, hint);
+  };
+
   const renderSummaryRow = (
     label: string,
     value: number,
@@ -280,11 +394,11 @@ export default function RenograteCalculator() {
     <div className="flex justify-between py-1 border-b border-gray-100">
       <span className="text-sm">{label}</span>
       <span className="text-sm font-medium">
-        {isPercentage 
-          ? `${value.toFixed(2)}%` 
-          : `$${value.toLocaleString('en-US', {
+        {isPercentage
+          ? `${value.toFixed(2)}%`
+          : `$${value.toLocaleString("en-US", {
               minimumFractionDigits: 2,
-              maximumFractionDigits: 2
+              maximumFractionDigits: 2,
             })}`}
       </span>
     </div>
@@ -292,11 +406,12 @@ export default function RenograteCalculator() {
 
   return (
     <div className="fixed top-24 right-4 z-50">
-      <Dialog>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogTrigger asChild>
           <Button
             variant="outline"
             className="bg-gradient-to-r from-cyan-600 via-blue-700 to-cyan-600 text-white hover:text-white hover:shadow-xl hover:scale-105 hover:bg-gradient-to-l border-none shadow-lg transition-all duration-300"
+            onClick={handleCalculatorClick}
           >
             <FaCalculator size={24} className="mr-2" />
             Calculator
@@ -307,13 +422,42 @@ export default function RenograteCalculator() {
             <DialogTitle className="text-[#0C71C3] text-3xl font-bold text-center mb-6">
               Renograte Calculator
             </DialogTitle>
+            {!isMember && (
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-4 mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="text-amber-600">
+                    <svg
+                      className="w-6 h-6"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-amber-800">
+                      Member Access Required
+                    </h3>
+                    <p className="text-sm text-amber-700">
+                      This calculator is available to members only (Agents,
+                      Contractors). Upgrade your account to access the full
+                      functionality and calculate renovation allowances.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </DialogHeader>
 
           <div className="mt-6 space-y-8">
             <div className="grid grid-cols-2 gap-8">
               {/* First Row */}
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "currentHomeValue",
                   "Current Home Value (CHV)",
                   "$ 0.00",
@@ -322,7 +466,7 @@ export default function RenograteCalculator() {
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "afterRenovatedValue",
                   "After Renovated Value (ARV)*",
                   "$ 0.00",
@@ -333,7 +477,7 @@ export default function RenograteCalculator() {
 
               {/* Second Row */}
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "agentCommission",
                   "Agent Commission %",
                   "% 0.00",
@@ -342,7 +486,7 @@ export default function RenograteCalculator() {
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "closingFee",
                   "Closing Fee %",
                   "% 0.00",
@@ -353,7 +497,7 @@ export default function RenograteCalculator() {
 
               {/* Third Row */}
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "sellerFee",
                   "Seller Fee % (Additional Profit)",
                   "% 0.00",
@@ -362,7 +506,7 @@ export default function RenograteCalculator() {
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "administrationFee",
                   "Renograte Admin Fee",
                   "$ 499",
@@ -373,7 +517,7 @@ export default function RenograteCalculator() {
 
               {/* Fourth Row */}
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "otherFees",
                   "Other Fees % (Miscellaneous)",
                   "% 0.00",
@@ -382,7 +526,7 @@ export default function RenograteCalculator() {
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "secondMortgage",
                   "2nd Mortgage",
                   "$ 0.00",
@@ -393,7 +537,7 @@ export default function RenograteCalculator() {
 
               {/* Fifth Row */}
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "thirdMortgage",
                   "3rd Mortgage",
                   "$ 0.00",
@@ -402,7 +546,7 @@ export default function RenograteCalculator() {
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "sellerPayback",
                   "Seller Payback Programs",
                   "$ 0.00",
@@ -413,7 +557,7 @@ export default function RenograteCalculator() {
 
               {/* Sixth Row */}
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "sellerIncentives",
                   "Seller Incentives",
                   "$ 0.00",
@@ -422,7 +566,7 @@ export default function RenograteCalculator() {
                 )}
               </div>
               <div className="bg-white p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                {renderInput(
+                {renderConditionalInput(
                   "otherPayoffs",
                   "Other Payoffs",
                   "$ 0.00",
@@ -432,51 +576,98 @@ export default function RenograteCalculator() {
               </div>
             </div>
 
-            <Card className="bg-white/95 backdrop-blur-sm border-none shadow-lg">
-              <CardHeader
-                className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-xl"
-                onClick={() => setIsSummaryOpen(!isSummaryOpen)}
-              >
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl text-[#0C71C3] font-bold">Renograte Calculator Summary</CardTitle>
-                  {isSummaryOpen ? (
-                    <ChevronUp size={24} className="text-[#0C71C3]" />
-                  ) : (
-                    <ChevronDown size={24} className="text-[#0C71C3]" />
-                  )}
-                </div>
-              </CardHeader>
-              {isSummaryOpen && (
-                <CardContent className="space-y-6 p-6">
-                  {/* Term Sheet */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
-                    <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Calculations</h3>
-                    <div className="space-y-2">
-                      {renderSummaryRow("After Renovated Value (ARV)", summary.termSheet.afterRenovatedValue)}
-                      {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.termSheet.totalRenovationAllowanceBuyer)}
-                      {renderSummaryRow("Agent Commission Amount", summary.termSheet.agentCommissionAmount)}
-                      {renderSummaryRow("Closing Fee Amount", summary.termSheet.closingFeeAmount)}
-                      {renderSummaryRow("Seller Fee Amount", summary.termSheet.sellerFeeAmount)}
-                      {renderSummaryRow("Renograte Admin Fee", summary.termSheet.renograteAdminFee)}
-                      {renderSummaryRow("Other Fees Amount", summary.termSheet.otherFeesAmount)}
-                      {renderSummaryRow("Seller Incentives", summary.termSheet.sellerIncentives)}
-                      {renderSummaryRow("Other Payoffs", summary.termSheet.otherPayoffs)}
-                    </div>
+            {isMember && (
+              <Card className="bg-white/95 backdrop-blur-sm border-none shadow-lg">
+                <CardHeader
+                  className="cursor-pointer hover:bg-gray-50 transition-colors rounded-t-xl"
+                  onClick={() => setIsSummaryOpen(!isSummaryOpen)}
+                >
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-2xl text-[#0C71C3] font-bold">
+                      Renograte Calculator Summary
+                    </CardTitle>
+                    {isSummaryOpen ? (
+                      <ChevronUp size={24} className="text-[#0C71C3]" />
+                    ) : (
+                      <ChevronDown size={24} className="text-[#0C71C3]" />
+                    )}
                   </div>
+                </CardHeader>
+                {isSummaryOpen && (
+                  <CardContent className="space-y-6 p-6">
+                    {/* Term Sheet */}
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
+                      <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">
+                        Renograte Calculations
+                      </h3>
+                      <div className="space-y-2">
+                        {renderSummaryRow(
+                          "After Renovated Value (ARV)",
+                          summary.termSheet.afterRenovatedValue
+                        )}
+                        {renderSummaryRow(
+                          "Total Renovation Allowance (Buyer)",
+                          summary.termSheet.totalRenovationAllowanceBuyer
+                        )}
+                        {renderSummaryRow(
+                          "Agent Commission Amount",
+                          summary.termSheet.agentCommissionAmount
+                        )}
+                        {renderSummaryRow(
+                          "Closing Fee Amount",
+                          summary.termSheet.closingFeeAmount
+                        )}
+                        {renderSummaryRow(
+                          "Seller Fee Amount",
+                          summary.termSheet.sellerFeeAmount
+                        )}
+                        {renderSummaryRow(
+                          "Renograte Admin Fee",
+                          summary.termSheet.renograteAdminFee
+                        )}
+                        {renderSummaryRow(
+                          "Other Fees Amount",
+                          summary.termSheet.otherFeesAmount
+                        )}
+                        {renderSummaryRow(
+                          "Seller Incentives",
+                          summary.termSheet.sellerIncentives
+                        )}
+                        {renderSummaryRow(
+                          "Other Payoffs",
+                          summary.termSheet.otherPayoffs
+                        )}
+                      </div>
+                    </div>
 
-                  {/* Renograte Summary */}
-                  <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
-                    <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">Renograte Summary</h3>
-                    <div className="space-y-2">
-                      {renderSummaryRow("Total Additional Seller Profit", summary.renograteSummary.totalAdditionalSellerProfit)}
-                      {renderSummaryRow("Renograte Admin Fee", summary.renograteSummary.renograteAdminFee)}
-                      {renderSummaryRow("Other Fees", summary.renograteSummary.otherFees)}
-                      {renderSummaryRow("Total Renovation Allowance (Buyer)", summary.renograteSummary.totalRenovationAllowanceBuyer)}
+                    {/* Renograte Summary */}
+                    <div className="bg-gradient-to-br from-gray-50 to-white p-6 rounded-xl shadow-sm">
+                      <h3 className="text-xl font-semibold text-[#0C71C3] mb-4">
+                        Renograte Summary
+                      </h3>
+                      <div className="space-y-2">
+                        {renderSummaryRow(
+                          "Total Additional Seller Profit",
+                          summary.renograteSummary.totalAdditionalSellerProfit
+                        )}
+                        {renderSummaryRow(
+                          "Renograte Admin Fee",
+                          summary.renograteSummary.renograteAdminFee
+                        )}
+                        {renderSummaryRow(
+                          "Other Fees",
+                          summary.renograteSummary.otherFees
+                        )}
+                        {renderSummaryRow(
+                          "Total Renovation Allowance (Buyer)",
+                          summary.renograteSummary.totalRenovationAllowanceBuyer
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                  </CardContent>
+                )}
+              </Card>
+            )}
           </div>
         </DialogContent>
       </Dialog>

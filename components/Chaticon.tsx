@@ -11,16 +11,16 @@ import {
   Bot,
   FileText,
 } from "lucide-react";
-import {
-  ChatMessage,
-  ChatApiError,
-  fetchWithRetry
-} from '../lib/chat-config';
-import { faqData } from './FAQData';
+import { ChatMessage, ChatApiError, fetchWithRetry } from "../lib/chat-config";
+import { faqData } from "./FAQData";
+import { useSession } from "next-auth/react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function ProfessionalChatbot() {
+  const { data: session } = useSession();
+  const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("chat");
+  const [activeSection, setActiveSection] = useState("faq");
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       text: "Welcome to Renograte support! How can I help you with your property renovation journey today?",
@@ -32,9 +32,43 @@ export default function ProfessionalChatbot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
+  // Check if user has member role
+  const isMember =
+    session?.user?.role &&
+    ["admin", "contractor", "agent"].includes(session.user.role);
+
+  const handleChatClick = () => {
+    setIsOpen(true);
+  };
+
+  const handleSectionChange = (section: string) => {
+    if (section === "chat" && !isMember) {
+      toast({
+        title: "Member Access Required",
+        description:
+          "The AI Chat feature is only available to members (Agents, Contractors). Please upgrade your account to access this feature.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setActiveSection(section);
+  };
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  // Set initial section based on membership status
+  useEffect(() => {
+    if (session?.user?.role) {
+      const isMember = ["admin", "contractor", "agent"].includes(
+        session.user.role
+      );
+      if (isMember && activeSection === "faq") {
+        setActiveSection("chat");
+      }
+    }
+  }, [session, activeSection]);
 
   useEffect(() => {
     scrollToBottom();
@@ -66,24 +100,21 @@ export default function ProfessionalChatbot() {
 
     const userMessage = inputText.trim();
     setInputText("");
-    setMessages(prev => [...prev, { text: userMessage, sender: "user" }]);
+    setMessages((prev) => [...prev, { text: userMessage, sender: "user" }]);
     setIsLoading(true);
 
     // Create new abort controller for this request
     abortControllerRef.current = new AbortController();
 
     try {
-      const response = await fetchWithRetry(
-        `/api/chat`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ query: userMessage }),
-          signal: abortControllerRef.current.signal,
-        }
-      );
+      const response = await fetchWithRetry(`/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ query: userMessage }),
+        signal: abortControllerRef.current.signal,
+      });
 
       if (!response.body) {
         throw new ChatApiError("Response body is null");
@@ -93,7 +124,7 @@ export default function ProfessionalChatbot() {
       const decoder = new TextDecoder();
 
       // Add empty bot message that will be updated with streaming content
-      setMessages(prev => [...prev, { text: "", sender: "bot" }]);
+      setMessages((prev) => [...prev, { text: "", sender: "bot" }]);
 
       let fullText = "";
       while (true) {
@@ -104,7 +135,7 @@ export default function ProfessionalChatbot() {
         fullText += chunk;
 
         // Update the last bot message with accumulated text
-        setMessages(prev => {
+        setMessages((prev) => {
           const newMessages = [...prev];
           newMessages[newMessages.length - 1].text = fullText;
           return newMessages;
@@ -112,13 +143,14 @@ export default function ProfessionalChatbot() {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      const errorMessage = error instanceof ChatApiError
-        ? `Error: ${error.message}`
-        : error instanceof Error && error.name === 'AbortError'
-          ? "Message sending was cancelled"
-          : "Sorry, I encountered an error. Please try again later.";
+      const errorMessage =
+        error instanceof ChatApiError
+          ? `Error: ${error.message}`
+          : error instanceof Error && error.name === "AbortError"
+            ? "Message sending was cancelled"
+            : "Sorry, I encountered an error. Please try again later.";
 
-      setMessages(prev => [...prev, { text: errorMessage, sender: "bot" }]);
+      setMessages((prev) => [...prev, { text: errorMessage, sender: "bot" }]);
     } finally {
       setIsLoading(false);
       abortControllerRef.current = null;
@@ -186,18 +218,19 @@ export default function ProfessionalChatbot() {
 
   const renderFAQSection = () => (
     <div className="h-[50vh] sm:h-96 overflow-y-auto p-3 sm:p-4 space-y-4 custom-scrollbar">
-      <h3 className="font-semibold text-base sm:text-lg mb-4 text-[#0C71C3] sticky top-0 bg-white/80 backdrop-blur-sm py-2">
+      <h3 className="font-semibold text-base text-center rounded-lg sm:text-lg mb-4 text-[#0C71C3] sticky top-0 bg-white/80 backdrop-blur-sm py-2">
         Frequently Asked Questions
       </h3>
       <div className="space-y-4">
         {faqData.map((faq, index) => (
-          <div key={index} className="bg-gray-100 p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors">
+          <div
+            key={index}
+            className="bg-gray-100 p-3 sm:p-4 rounded-lg hover:bg-gray-50 transition-colors"
+          >
             <h4 className="font-semibold mb-2 text-[#0C71C3] text-sm sm:text-base">
               {faq.question}
             </h4>
-            <p className="text-xs sm:text-sm text-gray-600">
-              {faq.answer}
-            </p>
+            <p className="text-xs sm:text-sm text-gray-600">{faq.answer}</p>
           </div>
         ))}
       </div>
@@ -206,7 +239,7 @@ export default function ProfessionalChatbot() {
 
   const renderKnowledgeBaseSection = () => (
     <div className="h-96 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-      <h3 className="font-semibold text-lg mb-2 text-[#0C71C3]">
+      <h3 className="font-semibold text-base text-center rounded-lg sm:text-lg mb-4 text-[#0C71C3] sticky top-0 bg-white/80 backdrop-blur-sm py-2">
         Knowledge Base
       </h3>
       <div className="space-y-4">
@@ -221,6 +254,22 @@ export default function ProfessionalChatbot() {
             </p>
           </div>
         </div>
+        <a
+          href="/directory"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="bg-gray-100 p-4 rounded-lg flex items-center space-x-4 hover:bg-gray-50 transition-all duration-300 cursor-pointer shadow-md hover:shadow-lg transform hover:scale-105"
+        >
+          <FileText size={24} className="text-[#0C71C3]" />
+          <div>
+            <h4 className="font-semibold text-[#0C71C3]">
+              Renograte Directory
+            </h4>
+            <p className="text-sm text-gray-600">
+              Browse our network of agents and contractors
+            </p>
+          </div>
+        </a>
         <div className="bg-gray-100 p-4 rounded-lg flex items-center space-x-4">
           <FileText size={24} className="text-[#0C71C3]" />
           <div>
@@ -272,7 +321,7 @@ export default function ProfessionalChatbot() {
 
   const renderContactSection = () => (
     <div className="h-96 overflow-y-auto p-4 space-y-4 custom-scrollbar ">
-      <h3 className="font-semibold text-lg mb-2 text-[#0C71C3]">
+      <h3 className="font-semibold text-base text-center rounded-lg sm:text-lg mb-4 text-[#0C71C3] sticky top-0 bg-white/80 backdrop-blur-sm py-2">
         Contact Information
       </h3>
       <div className="space-y-4">
@@ -324,7 +373,7 @@ export default function ProfessionalChatbot() {
       <div className="fixed bottom-6 right-6 z-50">
         {!isOpen ? (
           <button
-            onClick={() => setIsOpen(true)}
+            onClick={handleChatClick}
             className="bg-gradient-to-r from-cyan-600 via-blue-700 to-cyan-600 backdrop-blur-sm text-white p-2 sm:p-4 rounded-full shadow-lg hover:shadow-xl hover:scale-105 hover:bg-gradient-to-l transition-all duration-300"
           >
             <Bot size={24} className="sm:w-8 sm:h-8" />
@@ -332,7 +381,9 @@ export default function ProfessionalChatbot() {
         ) : (
           <div className="bg-white/80 backdrop-blur-sm rounded-lg shadow-xl w-[90vw] sm:w-80 md:w-96 overflow-hidden border border-[#0C71C3]/20">
             <div className="bg-cyan-600 backdrop-blur-sm text-white p-2 flex justify-between items-center">
-              <h2 className="text-base sm:text-xl font-semibold">Renograte Support</h2>
+              <h2 className="text-base sm:text-xl font-semibold">
+                Renograte Support
+              </h2>
               <div className="flex space-x-2">
                 <button
                   onClick={() => setIsOpen(false)}
@@ -350,15 +401,15 @@ export default function ProfessionalChatbot() {
             </div>
             <div className="flex border-b text-xs sm:text-sm overflow-x-auto">
               <button
-                onClick={() => setActiveSection("chat")}
+                onClick={() => handleSectionChange("chat")}
                 className={`flex-1 py-2 px-2 sm:px-4 text-center whitespace-nowrap text-black ${
                   activeSection === "chat" ? "bg-gray-100 font-semibold" : ""
-                }`}
+                } ${!isMember ? "opacity-60" : ""}`}
               >
-                Chat
+                Chat {!isMember && "🔒"}
               </button>
               <button
-                onClick={() => setActiveSection("faq")}
+                onClick={() => handleSectionChange("faq")}
                 className={`flex-1 py-2 px-4 text-center text-black ${
                   activeSection === "faq" ? "bg-gray-100 font-semibold" : ""
                 }`}
@@ -366,7 +417,7 @@ export default function ProfessionalChatbot() {
                 FAQ
               </button>
               <button
-                onClick={() => setActiveSection("kb")}
+                onClick={() => handleSectionChange("kb")}
                 className={`flex-1 py-2 px-4 text-center text-black  ${
                   activeSection === "kb" ? "bg-gray-100 font-semibold" : ""
                 }`}
@@ -374,7 +425,7 @@ export default function ProfessionalChatbot() {
                 Knowledge Base
               </button>
               <button
-                onClick={() => setActiveSection("contact")}
+                onClick={() => handleSectionChange("contact")}
                 className={`flex-1 py-2 px-4 text-center text-black ${
                   activeSection === "contact" ? "bg-gray-100 font-semibold" : ""
                 }`}

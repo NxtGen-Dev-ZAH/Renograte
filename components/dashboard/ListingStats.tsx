@@ -1,79 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { Building } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-interface ListingStats {
-  total: number;
-  approved: number;
-  pending: number;
-  rejected: number;
-}
+import { useListingStats } from "@/lib/dashboard-context";
 
 export default function ListingStats() {
-  const { data: session } = useSession();
   const { toast } = useToast();
-  const [stats, setStats] = useState<ListingStats>({
-    total: 0,
-    approved: 0,
-    pending: 0,
-    rejected: 0,
-  });
-  const [loading, setLoading] = useState(true);
+  const { stats, loading, error } = useListingStats();
 
-  // Fetch listing stats
-  useEffect(() => {
-    const fetchListingStats = async () => {
-      if (!session?.user) return;
-
-      setLoading(true);
-      try {
-        // Fetch all user listings to calculate stats
-        const response = await fetch(
-          `/api/listings?agentId=${session.user.id}`
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch listings");
-        }
-
-        const data = await response.json();
-        const listings = data.listings || [];
-
-        // Calculate stats
-        const approved = listings.filter(
-          (listing: Record<string, unknown>) => listing.status === "approved"
-        ).length;
-        const pending = listings.filter(
-          (listing: Record<string, unknown>) => listing.status === "pending"
-        ).length;
-        const rejected = listings.filter(
-          (listing: Record<string, unknown>) => listing.status === "rejected"
-        ).length;
-
-        setStats({
-          total: listings.length,
-          approved,
-          pending,
-          rejected,
-        });
-      } catch (error) {
-        console.error("Error fetching listing stats:", error);
-        toast({
-          title: "Error",
-          description: "Failed to load listing statistics",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchListingStats();
-  }, [session, toast]);
+  // Show error if there's one
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to load listing statistics",
+      variant: "destructive",
+    });
+  }
 
   return (
     <Card>

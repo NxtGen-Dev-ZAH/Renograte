@@ -7,7 +7,7 @@ import { RootLayoutContent } from "@/components/RootLayoutContent";
 
 const inter = Inter({
   subsets: ["latin"],
-  display: "swap", 
+  display: "swap",
 });
 
 export default function RootLayout({
@@ -19,9 +19,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Renograte - Revolutionizing Real Estate Renovation</title>
-        <meta name="description" content="Renograte - Revolutionizing Real Estate Renovation" />
+        <meta
+          name="description"
+          content="Renograte - Revolutionizing Real Estate Renovation"
+        />
       </head>
-      <body className={`${inter.className} text-black bg-white overflow-x-hidden`}>
+      <body
+        className={`${inter.className} text-black bg-white overflow-x-hidden`}
+      >
         <Providers>
           <RootLayoutContent>{children}</RootLayoutContent>
         </Providers>

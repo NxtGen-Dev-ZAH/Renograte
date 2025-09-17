@@ -7,9 +7,12 @@ import { z } from "zod";
 // GET /api/agreements/[id] - Get a single agreement by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     // Get the authenticated user session
     const session = await getServerSession(authOptions);
     
@@ -20,8 +23,6 @@ export async function GET(
         { status: 401 }
       );
     }
-    
-    const id = params.id;
     
     // Find the agreement by ID
     const agreement = await prisma.agreement.findUnique({
@@ -60,9 +61,12 @@ export async function GET(
 // PATCH /api/agreements/[id] - Update an agreement by ID
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     // Get the authenticated user session
     const session = await getServerSession(authOptions);
     
@@ -73,8 +77,6 @@ export async function PATCH(
         { status: 401 }
       );
     }
-    
-    const id = params.id;
     const body = await request.json();
     
     // Find the agreement by ID
@@ -145,9 +147,12 @@ export async function PATCH(
 // DELETE /api/agreements/[id] - Delete an agreement by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     // Get the authenticated user session
     const session = await getServerSession(authOptions);
     
@@ -158,8 +163,6 @@ export async function DELETE(
         { status: 401 }
       );
     }
-    
-    const id = params.id;
     
     // Find the agreement by ID
     const existingAgreement = await prisma.agreement.findUnique({

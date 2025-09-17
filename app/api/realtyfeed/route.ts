@@ -149,12 +149,12 @@ export async function GET(request: NextRequest) {
     // Only log minimal info in production
     if (process.env.NODE_ENV !== 'production') {
       const data = response.data as Record<string, unknown>;
-      console.log('RealtyFeed API Response:', {
-        status: response.status,
-        count: data['@odata.count'],
-        itemCount: Array.isArray(data.value) ? data.value.length : 0,
-        timestamp: new Date().toISOString()
-      });
+      // console.log('RealtyFeed API Response:', {
+      //   status: response.status,
+      //   count: data['@odata.count'],
+      //   itemCount: Array.isArray(data.value) ? data.value.length : 0,
+      //   timestamp: new Date().toISOString()
+      // });
     }
 
     // Return response with no-cache headers for our API endpoint

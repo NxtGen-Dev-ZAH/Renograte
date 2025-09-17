@@ -6,18 +6,19 @@ import { prisma } from '../../../../lib/prisma';
 // GET /api/listings/[id] - Get a single listing by ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Ensure params.id exists
-    if (!params || await !params.id) {
+    // Await params first
+    const { id } = await params;
+    
+    // Ensure id exists
+    if (!id) {
       return NextResponse.json(
         { error: 'Listing ID is required' },
         { status: 400 }
       );
     }
-    
-    const id = (await params).id;
     
     // Using any type for prisma until proper setup
     const prismaAny = prisma as any;
@@ -59,18 +60,19 @@ export async function GET(
 // DELETE /api/listings/[id] - Delete a listing
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Ensure params.id exists
-    if (!params || !params.id) {
+    // Await params first
+    const { id } = await params;
+    
+    // Ensure id exists
+    if (!id) {
       return NextResponse.json(
         { error: 'Listing ID is required' },
         { status: 400 }
       );
     }
-    
-    const id = params.id;
     
     // Check authentication
     const session = await getServerSession(authOptions);

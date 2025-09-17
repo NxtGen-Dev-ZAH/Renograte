@@ -4,11 +4,14 @@ import { prisma } from "@/lib/prisma";
 // GET /api/leads/[id] - Get a specific lead
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     const lead = await prisma.lead.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!lead) {
@@ -17,7 +20,7 @@ export async function GET(
 
     return NextResponse.json({ lead });
   } catch (error) {
-    console.error(`Error retrieving lead ${params.id}:`, error);
+    console.error(`Error retrieving lead:`, error);
     return NextResponse.json(
       { error: "Failed to retrieve lead" },
       { status: 500 }
@@ -28,14 +31,17 @@ export async function GET(
 // PATCH /api/leads/[id] - Update a lead
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     const body = await request.json();
     const { name, email, phone, roles, status, notes, address } = body;
 
     const updatedLead = await prisma.lead.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(name && { name }),
         ...(email && { email }),
@@ -49,7 +55,7 @@ export async function PATCH(
 
     return NextResponse.json({ lead: updatedLead });
   } catch (error) {
-    console.error(`Error updating lead ${params.id}:`, error);
+    console.error(`Error updating lead:`, error);
     return NextResponse.json(
       { error: "Failed to update lead" },
       { status: 500 }
@@ -60,16 +66,19 @@ export async function PATCH(
 // DELETE /api/leads/[id] - Delete a lead
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     await prisma.lead.delete({
-      where: { id: params.id },
+      where: { id },
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(`Error deleting lead ${params.id}:`, error);
+    console.error(`Error deleting lead:`, error);
     return NextResponse.json(
       { error: "Failed to delete lead" },
       { status: 500 }

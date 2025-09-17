@@ -12,7 +12,6 @@ import {
   Megaphone,
   Users,
   Gift,
-
   AlertTriangle,
   FileCheck,
   Plus,
@@ -33,7 +32,7 @@ const navigation = [
   { name: "Create Term Sheet", href: "/create-termsheet", icon: FileText },
   { name: "Agreements", href: "/agreements", icon: FileText },
   { name: "Calculator", href: "/calculator", icon: Calculator },
-  { name: "University", href: "/university", icon: Video }, 
+  { name: "University", href: "/university", icon: Video },
   { name: "Marketing", href: "/marketing", icon: Megaphone },
   { name: "Directories", href: "/directories", icon: Users },
   { name: "Property Perks", href: "/perks", icon: Gift },
@@ -46,7 +45,7 @@ export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
 
   return (
     <>
-      <div 
+      <div
         className={cn(
           "fixed inset-y-0 z-50 flex flex-col transition-all duration-300",
           isExpanded ? "w-72" : "w-20"
@@ -82,6 +81,7 @@ export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
                       <li key={item.name}>
                         <Link
                           href={item.href}
+                          prefetch={false}
                           className={cn(
                             "group flex items-center gap-x-3 rounded-md p-2 text-sm leading-6",
                             isActive
@@ -93,7 +93,9 @@ export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
                           <item.icon
                             className={cn(
                               "h-6 w-6 shrink-0",
-                              isActive ? "text-[#0C71C3]" : "text-gray-400 group-hover:text-[#0C71C3]"
+                              isActive
+                                ? "text-[#0C71C3]"
+                                : "text-gray-400 group-hover:text-[#0C71C3]"
                             )}
                             aria-hidden="true"
                           />
@@ -112,8 +114,8 @@ export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
         onClick={() => onExpandedChange(!isExpanded)}
         className={cn(
           "fixed z-50 p-2 rounded-full bg-white shadow-lg border border-gray-200 hover:bg-gray-50 transition-all duration-300",
-          isExpanded 
-            ? "left-[17rem] top-[1.5rem]" 
+          isExpanded
+            ? "left-[17rem] top-[1.5rem]"
             : "left-[4.5rem] top-[1.5rem]"
         )}
       >
@@ -125,4 +127,4 @@ export function Sidebar({ isExpanded, onExpandedChange }: SidebarProps) {
       </button>
     </>
   );
-} 
+}

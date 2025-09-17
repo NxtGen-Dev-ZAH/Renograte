@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
 import { sendNewListingNotificationEmail } from '../../../utils/email';
+import { getCachedData, setCachedData, getListingsCacheKey, invalidateCache } from '../../../lib/redis-cache';
 
 // POST /api/listings - Create a new listing
 export async function POST(request: Request) {
@@ -75,6 +76,9 @@ export async function POST(request: Request) {
       // Don't fail the listing creation if email fails
       console.error('Error sending admin notification email:', emailError);
     }
+
+    // Invalidate cache for this agent's listings
+    await invalidateCache(`listings:agentId:${session.user.id}*`);
     
     return NextResponse.json({ 
       success: true, 
@@ -107,6 +111,15 @@ export async function GET(request: Request) {
     const page = searchParams.get('page') ? parseInt(searchParams.get('page') as string, 10) : 1;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit') as string, 10) : 9;
     const skip = (page - 1) * limit;
+
+    // Create cache key
+    const cacheKey = getListingsCacheKey(agentId || 'all', status || undefined, limit);
+    
+    // Check cache first
+    const cached = await getCachedData(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
     
     // Sorting
     const sortBy = searchParams.get('sortBy') || 'newest';
@@ -199,8 +212,8 @@ export async function GET(request: Request) {
       skip,
       take: limit,
     });
-    
-    return NextResponse.json({ 
+
+    const responseData = { 
       listings,
       pagination: {
         total,
@@ -208,7 +221,12 @@ export async function GET(request: Request) {
         limit,
         totalPages
       }
-    });
+    };
+
+    // Cache the response for 5 minutes
+    await setCachedData(cacheKey, responseData, 300);
+    
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Error fetching listings:', error);
     return NextResponse.json({ error: 'Failed to fetch listings' }, { status: 500 });

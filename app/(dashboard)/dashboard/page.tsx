@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { subDays } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -17,12 +23,13 @@ import {
   Calendar,
   BarChart3,
 } from "lucide-react";
-import RoleProtected from '@/components/RoleProtected';
-import ListingStats from '@/components/dashboard/ListingStats';
-import TaskStats from '@/components/dashboard/TaskStats';
-import TaskList from '@/components/dashboard/TaskList';
-import RecentActivity from '@/components/dashboard/RecentActivity';
-import ActiveListings from '@/components/dashboard/ActiveListings';
+import RoleProtected from "@/components/RoleProtected";
+import { DashboardProvider } from "@/lib/dashboard-context";
+import ListingStats from "@/components/dashboard/ListingStats";
+import TaskStats from "@/components/dashboard/TaskStats";
+import TaskList from "@/components/dashboard/TaskList";
+import RecentActivity from "@/components/dashboard/RecentActivity";
+import ActiveListings from "@/components/dashboard/ActiveListings";
 
 // Define a simple DateRange interface
 interface DateRange {
@@ -99,10 +106,10 @@ function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <SimpleDateRangePicker 
-            dateRange={dateRange} 
+          <SimpleDateRangePicker
+            dateRange={dateRange}
             onDateRangeChange={setDateRange}
-            className="hidden md:block" 
+            className="hidden md:block"
           />
           <Button asChild>
             <Link href="/reports">
@@ -124,7 +131,7 @@ function DashboardPage() {
         <div className="md:col-span-4">
           <TaskList />
         </div>
-        
+
         <div className="md:col-span-3">
           <Card>
             <CardHeader>
@@ -132,19 +139,33 @@ function DashboardPage() {
               <CardDescription>Create new items quickly</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button variant="outline" className="w-full justify-start" asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                asChild
+              >
                 <Link href="/add-listing">
                   <Home className="mr-2 h-4 w-4" />
                   New Listing
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start" asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                asChild
+              >
                 <Link href="/agreements">
                   <FileText className="mr-2 h-4 w-4" />
                   New Agreement
                 </Link>
               </Button>
-              <Button variant="outline" className="w-full justify-start" onClick={() => document.getElementById('add-task-button')?.click()}>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                onClick={() =>
+                  document.getElementById("add-task-button")?.click()
+                }
+              >
                 <span className="flex items-center">
                   <Calendar className="mr-2 h-4 w-4" />
                   New Task
@@ -160,7 +181,10 @@ function DashboardPage() {
         <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {quickActions.map((action) => (
-            <Card key={action.title} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={action.title}
+              className="hover:shadow-lg transition-shadow"
+            >
               <Link href={action.href}>
                 <CardHeader className="flex flex-row items-center gap-4 space-y-0 pb-2">
                   <div className={cn("p-2 rounded-lg", action.bgColor)}>
@@ -186,7 +210,7 @@ function DashboardPage() {
         <RecentActivity />
         <ActiveListings />
       </div>
-      
+
       {/* Hidden button for task creation */}
       <button id="add-task-button" className="hidden" />
     </div>
@@ -195,8 +219,10 @@ function DashboardPage() {
 
 export default function DashboardProtectedWrapper() {
   return (
-    <RoleProtected allowedRoles={['member', 'agent', 'contractor', 'admin']}>
-      <DashboardPage />
+    <RoleProtected allowedRoles={["member", "agent", "contractor", "admin"]}>
+      <DashboardProvider>
+        <DashboardPage />
+      </DashboardProvider>
     </RoleProtected>
   );
-} 
+}

@@ -6,11 +6,11 @@ import { prisma } from "@/lib/prisma";
 // GET /api/contracts/[id] - Get a specific contract
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Corrected: params.id is directly accessible, no need to await
-    const id = (await params).id; 
+    // Await params first
+    const { id } = await params; 
     
     // Check authentication
     const session = await getServerSession(authOptions);
@@ -59,11 +59,11 @@ export async function GET(
 // POST /api/contracts/[id] - Sign a contract section
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // Corrected: params.id is directly accessible, no need to await
-    const id = params.id;
+    // Await params first
+    const { id } = await params;
     const body = await request.json();
     const { sectionId, signatureData, signerName, signerEmail, signerRole } = body;
     

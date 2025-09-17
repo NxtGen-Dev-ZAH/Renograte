@@ -6,9 +6,12 @@ import { prisma } from '../../../../lib/prisma';
 // GET /api/tasks/[id] - Get a single task by ID
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     const session = await getServerSession(authOptions);
     
     // Check if user is authenticated
@@ -19,15 +22,13 @@ export async function GET(
       );
     }
     
-    // Ensure params.id exists
-    if (!params || !params.id) {
+    // Ensure id exists
+    if (!id) {
       return NextResponse.json(
         { error: 'Task ID is required' },
         { status: 400 }
       );
     }
-    
-    const id = params.id;
     
     // Find the task with the given ID
     const task = await prisma.task.findUnique({
@@ -62,9 +63,12 @@ export async function GET(
 // PUT /api/tasks/[id] - Update a task
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     const session = await getServerSession(authOptions);
     
     // Check if user is authenticated
@@ -75,15 +79,13 @@ export async function PUT(
       );
     }
     
-    // Ensure params.id exists
-    if (!params || !params.id) {
+    // Ensure id exists
+    if (!id) {
       return NextResponse.json(
         { error: 'Task ID is required' },
         { status: 400 }
       );
     }
-    
-    const id = params.id;
     
     // Find the task with the given ID
     const existingTask = await prisma.task.findUnique({
@@ -131,9 +133,12 @@ export async function PUT(
 // DELETE /api/tasks/[id] - Delete a task
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Await params first
+    const { id } = await params;
+    
     const session = await getServerSession(authOptions);
     
     // Check if user is authenticated
@@ -144,15 +149,13 @@ export async function DELETE(
       );
     }
     
-    // Ensure params.id exists
-    if (!params || !params.id) {
+    // Ensure id exists
+    if (!id) {
       return NextResponse.json(
         { error: 'Task ID is required' },
         { status: 400 }
       );
     }
-    
-    const id = params.id;
     
     // Find the task with the given ID
     const existingTask = await prisma.task.findUnique({

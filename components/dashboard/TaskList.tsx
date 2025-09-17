@@ -4,24 +4,24 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { 
-  CheckCircle2, 
-  Circle, 
-  Clock, 
-  Plus, 
-  Trash2, 
+import {
+  CheckCircle2,
+  Circle,
+  Clock,
+  Plus,
+  Trash2,
   AlertCircle,
-  ArrowUpCircle
+  ArrowUpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useTasks } from "@/lib/dashboard-context";
 
 interface Task {
   id: string;
@@ -47,43 +48,27 @@ interface Task {
 export default function TaskList() {
   const { data: session } = useSession();
   const { toast } = useToast();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [loading, setLoading] = useState(true);
+  const {
+    tasks,
+    loading,
+    error,
+    refreshData,
+    updateTask,
+    addTask,
+    removeTask,
+  } = useTasks();
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<Partial<Task> | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // Fetch tasks
-  const fetchTasks = async () => {
-    if (!session?.user) return;
-    
-    setLoading(true);
-    try {
-      const response = await fetch('/api/tasks');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
-      }
-      
-      const data = await response.json();
-      setTasks(data.tasks || []);
-    } catch (error) {
-      console.error('Error fetching tasks:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load tasks",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Initial fetch
-  useEffect(() => {
-    if (session?.user) {
-      fetchTasks();
-    }
-  }, [session]);
+  // Show error if there's one
+  if (error) {
+    toast({
+      title: "Error",
+      description: "Failed to load tasks",
+      variant: "destructive",
+    });
+  }
 
   // Handle task creation/update
   const handleSaveTask = async () => {
@@ -101,46 +86,58 @@ export default function TaskList() {
       const taskData = {
         ...currentTask,
         // Convert string date to a Date object if it exists, otherwise keep it undefined
-        dueDate: currentTask.dueDate ? new Date(currentTask.dueDate) : undefined
+        dueDate: currentTask.dueDate
+          ? new Date(currentTask.dueDate)
+          : undefined,
       };
-      
+
       let response;
-      
+
       if (isEditing && currentTask.id) {
+        // Optimistic update for existing task
+        updateTask(currentTask.id, taskData);
+
         // Update existing task
         response = await fetch(`/api/tasks/${currentTask.id}`, {
-          method: 'PUT',
+          method: "PUT",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(taskData),
         });
       } else {
         // Create new task
-        response = await fetch('/api/tasks', {
-          method: 'POST',
+        response = await fetch("/api/tasks", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify(taskData),
         });
+
+        if (response.ok) {
+          const newTask = await response.json();
+          addTask(newTask.task);
+        }
       }
 
       if (!response.ok) {
-        throw new Error('Failed to save task');
+        throw new Error("Failed to save task");
       }
 
-      // Refresh tasks
-      fetchTasks();
       setTaskDialogOpen(false);
       setCurrentTask(null);
-      
+
       toast({
         title: "Success",
-        description: isEditing ? "Task updated successfully" : "Task created successfully",
+        description: isEditing
+          ? "Task updated successfully"
+          : "Task created successfully",
       });
     } catch (error) {
-      console.error('Error saving task:', error);
+      console.error("Error saving task:", error);
+      // Refresh data to revert optimistic update
+      refreshData();
       toast({
         title: "Error",
         description: "Failed to save task",
@@ -156,23 +153,25 @@ export default function TaskList() {
     }
 
     try {
+      // Optimistic update - remove task from UI immediately
+      removeTask(id);
+
       const response = await fetch(`/api/tasks/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
 
       if (!response.ok) {
-        throw new Error('Failed to delete task');
+        throw new Error("Failed to delete task");
       }
 
-      // Refresh tasks
-      fetchTasks();
-      
       toast({
         title: "Success",
         description: "Task deleted successfully",
       });
     } catch (error) {
-      console.error('Error deleting task:', error);
+      console.error("Error deleting task:", error);
+      // Refresh data to revert optimistic update
+      refreshData();
       toast({
         title: "Error",
         description: "Failed to delete task",
@@ -183,13 +182,16 @@ export default function TaskList() {
 
   // Handle task status toggle
   const handleToggleStatus = async (task: Task) => {
-    const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-    
+    const newStatus = task.status === "completed" ? "pending" : "completed";
+
     try {
+      // Optimistic update - update UI immediately
+      updateTask(task.id, { status: newStatus });
+
       const response = await fetch(`/api/tasks/${task.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           ...task,
@@ -198,13 +200,12 @@ export default function TaskList() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update task status');
+        throw new Error("Failed to update task status");
       }
-
-      // Refresh tasks
-      fetchTasks();
     } catch (error) {
-      console.error('Error updating task status:', error);
+      console.error("Error updating task status:", error);
+      // Refresh data to revert optimistic update
+      refreshData();
       toast({
         title: "Error",
         description: "Failed to update task status",
@@ -216,10 +217,10 @@ export default function TaskList() {
   // Create new task
   const handleNewTask = () => {
     setCurrentTask({
-      title: '',
-      description: '',
-      priority: 'medium',
-      status: 'pending',
+      title: "",
+      description: "",
+      priority: "medium",
+      status: "pending",
     });
     setIsEditing(false);
     setTaskDialogOpen(true);
@@ -235,11 +236,11 @@ export default function TaskList() {
   // Get priority badge color
   const getPriorityBadge = (priority: string) => {
     switch (priority) {
-      case 'high':
+      case "high":
         return <Badge className="bg-red-500">{priority}</Badge>;
-      case 'medium':
+      case "medium":
         return <Badge className="bg-yellow-500">{priority}</Badge>;
-      case 'low':
+      case "low":
         return <Badge className="bg-green-500">{priority}</Badge>;
       default:
         return <Badge>{priority}</Badge>;
@@ -247,17 +248,15 @@ export default function TaskList() {
   };
 
   // Count pending tasks
-  const pendingTasksCount = tasks.filter(task => task.status !== 'completed').length;
+  const pendingTasksCount = tasks.filter(
+    (task) => task.status !== "completed"
+  ).length;
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
         <CardTitle className="text-lg font-medium">My Tasks</CardTitle>
-        <Button 
-          size="sm" 
-          onClick={handleNewTask}
-          className="h-8 gap-1"
-        >
+        <Button size="sm" onClick={handleNewTask} className="h-8 gap-1">
           <Plus className="h-4 w-4" />
           Add Task
         </Button>
@@ -274,48 +273,52 @@ export default function TaskList() {
         ) : (
           <div className="space-y-2">
             {tasks.map((task) => (
-              <div 
+              <div
                 key={task.id}
                 className="flex items-start gap-2 p-2 rounded-md border hover:bg-muted/50 transition-colors"
               >
-                <button 
+                <button
                   onClick={() => handleToggleStatus(task)}
                   className="mt-1 flex-shrink-0"
                 >
-                  {task.status === 'completed' ? (
+                  {task.status === "completed" ? (
                     <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
                     <Circle className="h-5 w-5 text-gray-400" />
                   )}
                 </button>
-                
-                <div 
+
+                <div
                   className="flex-1 cursor-pointer"
                   onClick={() => handleEditTask(task)}
                 >
                   <div className="flex items-center gap-2">
-                    <p className={`font-medium ${task.status === 'completed' ? 'line-through text-muted-foreground' : ''}`}>
+                    <p
+                      className={`font-medium ${task.status === "completed" ? "line-through text-muted-foreground" : ""}`}
+                    >
                       {task.title}
                     </p>
                     {getPriorityBadge(task.priority)}
                   </div>
-                  
+
                   {task.description && (
                     <p className="text-sm text-muted-foreground line-clamp-1">
                       {task.description}
                     </p>
                   )}
-                  
+
                   {task.dueDate && (
                     <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
                       <Clock className="h-3 w-3" />
-                      <span>Due: {format(new Date(task.dueDate), 'MMM d, yyyy')}</span>
+                      <span>
+                        Due: {format(new Date(task.dueDate), "MMM d, yyyy")}
+                      </span>
                     </div>
                   )}
                 </div>
-                
-                <Button 
-                  variant="ghost" 
+
+                <Button
+                  variant="ghost"
                   size="icon"
                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                   onClick={() => handleDeleteTask(task.id)}
@@ -332,47 +335,72 @@ export default function TaskList() {
       <Dialog open={taskDialogOpen} onOpenChange={setTaskDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Edit Task' : 'New Task'}</DialogTitle>
+            <DialogTitle>{isEditing ? "Edit Task" : "New Task"}</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label htmlFor="title" className="text-sm font-medium">Title</label>
+              <label htmlFor="title" className="text-sm font-medium">
+                Title
+              </label>
               <Input
                 id="title"
-                value={currentTask?.title || ''}
-                onChange={(e) => setCurrentTask({ ...currentTask!, title: e.target.value })}
+                value={currentTask?.title || ""}
+                onChange={(e) =>
+                  setCurrentTask({ ...currentTask!, title: e.target.value })
+                }
                 placeholder="Task title"
               />
             </div>
-            
+
             <div className="space-y-2">
-              <label htmlFor="description" className="text-sm font-medium">Description</label>
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
               <Textarea
                 id="description"
-                value={currentTask?.description || ''}
-                onChange={(e) => setCurrentTask({ ...currentTask!, description: e.target.value })}
+                value={currentTask?.description || ""}
+                onChange={(e) =>
+                  setCurrentTask({
+                    ...currentTask!,
+                    description: e.target.value,
+                  })
+                }
                 placeholder="Task description (optional)"
                 rows={3}
               />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label htmlFor="dueDate" className="text-sm font-medium">Due Date (Optional)</label>
+                <label htmlFor="dueDate" className="text-sm font-medium">
+                  Due Date (Optional)
+                </label>
                 <Input
                   id="dueDate"
                   type="date"
-                  value={currentTask?.dueDate ? new Date(currentTask.dueDate).toISOString().split('T')[0] : ''}
-                  onChange={(e) => setCurrentTask({ ...currentTask!, dueDate: e.target.value })}
+                  value={
+                    currentTask?.dueDate
+                      ? new Date(currentTask.dueDate)
+                          .toISOString()
+                          .split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) =>
+                    setCurrentTask({ ...currentTask!, dueDate: e.target.value })
+                  }
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <label htmlFor="priority" className="text-sm font-medium">Priority</label>
+                <label htmlFor="priority" className="text-sm font-medium">
+                  Priority
+                </label>
                 <Select
-                  value={currentTask?.priority || 'medium'}
-                  onValueChange={(value) => setCurrentTask({ ...currentTask!, priority: value })}
+                  value={currentTask?.priority || "medium"}
+                  onValueChange={(value) =>
+                    setCurrentTask({ ...currentTask!, priority: value })
+                  }
                 >
                   <SelectTrigger id="priority">
                     <SelectValue placeholder="Select priority" />
@@ -386,17 +414,17 @@ export default function TaskList() {
               </div>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setTaskDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleSaveTask}>
-              {isEditing ? 'Update' : 'Create'} Task
+              {isEditing ? "Update" : "Create"} Task
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
   );
-} 
+}

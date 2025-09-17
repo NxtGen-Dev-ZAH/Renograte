@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '../../../lib/auth';
 import { prisma } from '../../../lib/prisma';
+import { getCachedData, setCachedData, getTasksCacheKey, invalidateCache } from '../../../lib/redis-cache';
 
 // GET /api/tasks - Get all tasks for the current user
 export async function GET(request: Request) {
@@ -26,6 +27,15 @@ export async function GET(request: Request) {
     const page = searchParams.get('page') ? parseInt(searchParams.get('page') as string, 10) : 1;
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit') as string, 10) : 10;
     const skip = (page - 1) * limit;
+
+    // Create cache key
+    const cacheKey = getTasksCacheKey(session.user.id, status || undefined, priority || undefined);
+    
+    // Check cache first
+    const cached = await getCachedData(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
     
     // Build filter conditions
     const where: any = {
@@ -53,8 +63,8 @@ export async function GET(request: Request) {
       skip,
       take: limit,
     });
-    
-    return NextResponse.json({ 
+
+    const responseData = { 
       tasks,
       pagination: {
         total,
@@ -62,7 +72,12 @@ export async function GET(request: Request) {
         limit,
         totalPages
       }
-    });
+    };
+
+    // Cache the response for 5 minutes
+    await setCachedData(cacheKey, responseData, 300);
+    
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('Error fetching tasks:', error);
     return NextResponse.json(
@@ -95,6 +110,9 @@ export async function POST(request: Request) {
         userId: session.user.id,
       },
     });
+
+    // Invalidate cache for this user's tasks
+    await invalidateCache(`tasks:userId:${session.user.id}*`);
     
     return NextResponse.json({ 
       success: true, 

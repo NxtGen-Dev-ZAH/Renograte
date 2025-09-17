@@ -5,11 +5,11 @@ import { getContractBySigningToken } from "@/lib/contracts/contractService";
 // GET /api/contracts/token/[token] - Get contract data from a token
 export async function GET(
   request: Request,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    // Get token from params
-    const token = await params.token;
+    // Await params first
+    const { token } = await params;
     
     // URL decode the token first
     const decodedToken = decodeURIComponent(token);

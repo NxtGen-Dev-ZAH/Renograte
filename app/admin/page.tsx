@@ -2,7 +2,45 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, BarChart3, Settings, Home, ListFilter, Clock, FileText, BookOpen, Megaphone } from "lucide-react";
+import {
+  Users,
+  BarChart3,
+  Settings,
+  Home,
+  ListFilter,
+  Clock,
+  FileText,
+  BookOpen,
+  Megaphone,
+  Star,
+} from "lucide-react";
+
+// Types for dashboard stats
+interface DashboardStats {
+  leads: {
+    total: number;
+  };
+  listings: {
+    pending: number;
+    approved: number;
+    rejected: number;
+  };
+  earlyAccess: {
+    pending: number;
+    quotas: Array<{
+      role: string;
+      currentCount: number;
+      maxCount: number;
+      available: number;
+      percentage: number;
+    }>;
+  };
+  marketing: {
+    campaigns: number;
+    assets: number;
+  };
+  timestamp: string;
+}
 
 export default function AdminDashboard() {
   const [leadCount, setLeadCount] = useState<number | null>(null);
@@ -12,36 +50,81 @@ export default function AdminDashboard() {
     rejected: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch data for dashboard stats
+    // Fetch consolidated dashboard stats
     const fetchStats = async () => {
       try {
-        // Fetch leads count
-        const leadsResponse = await fetch("/api/leads");
-        if (leadsResponse.ok) {
-          const leadsData = await leadsResponse.json();
-          setLeadCount(leadsData.leads?.length || 0);
-        }
-        
-        // Fetch listings counts
-        const pendingResponse = await fetch("/api/listings?status=pending");
-        const approvedResponse = await fetch("/api/listings?status=approved");
-        const rejectedResponse = await fetch("/api/listings?status=rejected");
-        
-        if (pendingResponse.ok && approvedResponse.ok && rejectedResponse.ok) {
-          const pendingData = await pendingResponse.json();
-          const approvedData = await approvedResponse.json();
-          const rejectedData = await rejectedResponse.json();
-          
-          setListingCounts({
-            pending: pendingData.listings?.length || 0,
-            approved: approvedData.listings?.length || 0,
-            rejected: rejectedData.listings?.length || 0,
-          });
+        setError(null);
+        const response = await fetch("/api/admin/dashboard-stats");
+
+        if (response.ok) {
+          const data: DashboardStats = await response.json();
+
+          // Update state with consolidated data
+          setLeadCount(data.leads.total);
+          setListingCounts(data.listings);
+
+          // Log performance improvement
+          console.log(
+            `✅ Dashboard stats loaded in single request at ${data.timestamp}`
+          );
+        } else {
+          throw new Error(
+            `Failed to fetch dashboard stats: ${response.status}`
+          );
         }
       } catch (error) {
-        console.error("Error fetching stats:", error);
+        console.error("Error fetching dashboard stats:", error);
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to load dashboard stats"
+        );
+
+        // Fallback to individual API calls if the consolidated endpoint fails
+        console.log("🔄 Falling back to individual API calls...");
+        try {
+          const [
+            leadsResponse,
+            pendingResponse,
+            approvedResponse,
+            rejectedResponse,
+          ] = await Promise.all([
+            fetch("/api/leads"),
+            fetch("/api/listings?status=pending"),
+            fetch("/api/listings?status=approved"),
+            fetch("/api/listings?status=rejected"),
+          ]);
+
+          if (leadsResponse.ok) {
+            const leadsData = await leadsResponse.json();
+            setLeadCount(leadsData.leads?.length || 0);
+          }
+
+          if (
+            pendingResponse.ok &&
+            approvedResponse.ok &&
+            rejectedResponse.ok
+          ) {
+            const [pendingData, approvedData, rejectedData] = await Promise.all(
+              [
+                pendingResponse.json(),
+                approvedResponse.json(),
+                rejectedResponse.json(),
+              ]
+            );
+
+            setListingCounts({
+              pending: pendingData.listings?.length || 0,
+              approved: approvedData.listings?.length || 0,
+              rejected: rejectedData.listings?.length || 0,
+            });
+          }
+        } catch (fallbackError) {
+          console.error("Fallback API calls also failed:", fallbackError);
+        }
       } finally {
         setLoading(false);
       }
@@ -55,10 +138,21 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-gray-600 mt-1">Manage your renovation leads and website settings</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Manage your renovation leads and website settings
+            </p>
+            {error && (
+              <div className="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800">
+                  ⚠️ {error} - Using fallback data loading
+                </p>
+              </div>
+            )}
           </div>
-          <Link 
+          <Link
             href="/"
             className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
@@ -68,7 +162,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Stats overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -82,19 +176,21 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="mt-4">
-              <Link 
-                href="/admin/leads" 
+              <Link
+                href="/admin/leads"
                 className="text-sm text-blue-600 hover:text-blue-800"
               >
                 View all leads →
               </Link>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Listings</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Pending Listings
+                </p>
                 <h3 className="text-3xl font-bold text-gray-900 mt-2">
                   {loading ? "..." : listingCounts.pending}
                 </h3>
@@ -104,43 +200,71 @@ export default function AdminDashboard() {
               </div>
             </div>
             <div className="mt-4">
-              <Link 
-                href="/admin/listings" 
+              <Link
+                href="/admin/listings"
                 className="text-sm text-yellow-600 hover:text-yellow-800"
               >
                 Review listings →
               </Link>
             </div>
           </div>
-          
+
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Marketing</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-2">Campaigns</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mt-2">
+                  Campaigns
+                </h3>
               </div>
               <div className="bg-purple-50 p-3 rounded-full">
                 <Megaphone className="w-6 h-6 text-purple-600" />
               </div>
             </div>
             <div className="mt-4">
-              <Link 
-                href="/admin/marketing" 
+              <Link
+                href="/admin/marketing"
                 className="text-sm text-purple-600 hover:text-purple-800"
               >
                 Manage marketing →
               </Link>
             </div>
           </div>
-          
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">
+                  Early Access
+                </p>
+                <h3 className="text-2xl font-bold text-gray-900 mt-2">
+                  Free Trial
+                </h3>
+              </div>
+              <div className="bg-green-50 p-3 rounded-full">
+                <Star className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
+            <div className="mt-4">
+              <Link
+                href="/admin/early-access"
+                className="text-sm text-green-600 hover:text-green-800"
+              >
+                Manage applications →
+              </Link>
+            </div>
+          </div>
+
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Reports</p>
-                <h3 className="text-3xl font-bold text-gray-900 mt-2">Analytics</h3>
+                <h3 className="text-2xl font-bold text-gray-900 mt-2">
+                  Analytics
+                </h3>
               </div>
-              <div className="bg-green-50 p-3 rounded-full">
-                <BarChart3 className="w-6 h-6 text-green-600" />
+              <div className="bg-blue-50 p-3 rounded-full">
+                <BarChart3 className="w-6 h-6 text-blue-600" />
               </div>
             </div>
             <div className="mt-4">
@@ -150,13 +274,15 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Quick actions */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           <div className="p-6">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">Quick Actions</h2>
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">
+              Quick Actions
+            </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <Link 
+              <Link
                 href="/admin/leads"
                 className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors"
               >
@@ -165,11 +291,13 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Manage Leads</h3>
-                  <p className="text-sm text-gray-500">View and manage customer leads</p>
+                  <p className="text-sm text-gray-500">
+                    View and manage customer leads
+                  </p>
                 </div>
               </Link>
-              
-              <Link 
+
+              <Link
                 href="/admin/listings"
                 className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-yellow-50 hover:border-yellow-200 transition-colors"
               >
@@ -177,12 +305,16 @@ export default function AdminDashboard() {
                   <ListFilter className="w-5 h-5 text-yellow-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">Property Listings</h3>
-                  <p className="text-sm text-gray-500">Review and manage listings</p>
+                  <h3 className="font-medium text-gray-900">
+                    Property Listings
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Review and manage listings
+                  </p>
                 </div>
               </Link>
-              
-              <Link 
+
+              <Link
                 href="/admin/offers"
                 className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-200 transition-colors"
               >
@@ -191,11 +323,13 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Offers</h3>
-                  <p className="text-sm text-gray-500">Manage property offers</p>
+                  <p className="text-sm text-gray-500">
+                    Manage property offers
+                  </p>
                 </div>
               </Link>
-              
-              <Link 
+
+              <Link
                 href="/admin/courses"
                 className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 transition-colors"
               >
@@ -203,12 +337,16 @@ export default function AdminDashboard() {
                   <BookOpen className="w-5 h-5 text-blue-600" />
                 </div>
                 <div>
-                  <h3 className="font-medium text-gray-900">University Courses</h3>
-                  <p className="text-sm text-gray-500">Manage educational content</p>
+                  <h3 className="font-medium text-gray-900">
+                    University Courses
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    Manage educational content
+                  </p>
                 </div>
               </Link>
 
-              <Link 
+              <Link
                 href="/admin/marketing"
                 className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-purple-50 hover:border-purple-200 transition-colors"
               >
@@ -217,10 +355,27 @@ export default function AdminDashboard() {
                 </div>
                 <div>
                   <h3 className="font-medium text-gray-900">Marketing</h3>
-                  <p className="text-sm text-gray-500">Manage campaigns and assets</p>
+                  <p className="text-sm text-gray-500">
+                    Manage campaigns and assets
+                  </p>
                 </div>
               </Link>
-              
+
+              <Link
+                href="/admin/early-access"
+                className="flex items-center p-4 border border-gray-200 rounded-lg hover:bg-green-50 hover:border-green-200 transition-colors"
+              >
+                <div className="rounded-full bg-green-100 p-3 mr-4">
+                  <Star className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-gray-900">Early Access</h3>
+                  <p className="text-sm text-gray-500">
+                    Manage free trial applications
+                  </p>
+                </div>
+              </Link>
+
               <div className="flex items-center p-4 border border-gray-200 rounded-lg bg-gray-50 cursor-not-allowed">
                 <div className="rounded-full bg-gray-200 p-3 mr-4">
                   <Settings className="w-5 h-5 text-gray-500" />
@@ -233,20 +388,22 @@ export default function AdminDashboard() {
             </div>
           </div>
         </div>
-        
+
         {/* Listings overview */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden mb-8">
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Property Listings</h2>
-              <Link 
+              <h2 className="text-xl font-semibold text-gray-800">
+                Property Listings
+              </h2>
+              <Link
                 href="/admin/listings"
                 className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200"
               >
                 View All
               </Link>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -255,15 +412,17 @@ export default function AdminDashboard() {
                     {loading ? "..." : listingCounts.pending}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Listings awaiting your approval</p>
-                <Link 
+                <p className="text-sm text-gray-500 mb-4">
+                  Listings awaiting your approval
+                </p>
+                <Link
                   href="/admin/listings?tab=pending"
                   className="text-sm text-yellow-600 hover:text-yellow-800"
                 >
                   Review pending listings →
                 </Link>
               </div>
-              
+
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium text-gray-900">Approved</h3>
@@ -271,15 +430,17 @@ export default function AdminDashboard() {
                     {loading ? "..." : listingCounts.approved}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Active property listings</p>
-                <Link 
+                <p className="text-sm text-gray-500 mb-4">
+                  Active property listings
+                </p>
+                <Link
                   href="/admin/listings?tab=approved"
                   className="text-sm text-green-600 hover:text-green-800"
                 >
                   View approved listings →
                 </Link>
               </div>
-              
+
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium text-gray-900">Rejected</h3>
@@ -287,8 +448,10 @@ export default function AdminDashboard() {
                     {loading ? "..." : listingCounts.rejected}
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Listings that were rejected</p>
-                <Link 
+                <p className="text-sm text-gray-500 mb-4">
+                  Listings that were rejected
+                </p>
+                <Link
                   href="/admin/listings?tab=rejected"
                   className="text-sm text-red-600 hover:text-red-800"
                 >
@@ -304,14 +467,14 @@ export default function AdminDashboard() {
           <div className="p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-800">Marketing</h2>
-              <Link 
+              <Link
                 href="/admin/marketing"
                 className="px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-200"
               >
                 View All
               </Link>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
@@ -320,15 +483,17 @@ export default function AdminDashboard() {
                     Manage
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Create and manage marketing campaigns</p>
-                <Link 
+                <p className="text-sm text-gray-500 mb-4">
+                  Create and manage marketing campaigns
+                </p>
+                <Link
                   href="/admin/marketing/campaigns"
                   className="text-sm text-purple-600 hover:text-purple-800"
                 >
                   View campaigns →
                 </Link>
               </div>
-              
+
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium text-gray-900">Assets</h3>
@@ -336,15 +501,17 @@ export default function AdminDashboard() {
                     Manage
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Upload and manage marketing assets</p>
-                <Link 
+                <p className="text-sm text-gray-500 mb-4">
+                  Upload and manage marketing assets
+                </p>
+                <Link
                   href="/admin/marketing/assets"
                   className="text-sm text-blue-600 hover:text-blue-800"
                 >
                   View assets →
                 </Link>
               </div>
-              
+
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-medium text-gray-900">Analytics</h3>
@@ -352,7 +519,9 @@ export default function AdminDashboard() {
                     Coming Soon
                   </span>
                 </div>
-                <p className="text-sm text-gray-500 mb-4">Track marketing performance</p>
+                <p className="text-sm text-gray-500 mb-4">
+                  Track marketing performance
+                </p>
                 <span className="text-sm text-gray-400">
                   Analytics coming soon →
                 </span>
@@ -363,4 +532,4 @@ export default function AdminDashboard() {
       </div>
     </main>
   );
-} 
+}

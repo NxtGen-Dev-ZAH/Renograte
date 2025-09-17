@@ -9,6 +9,8 @@ import { Document } from '@langchain/core/documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { LRUCache } from 'lru-cache';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '../../../lib/auth';
 
 // Rate limiting implementation
 interface RateLimitInfo {
@@ -270,6 +272,26 @@ initializeRetriever().catch(console.error);
 
 export async function POST(req: NextRequest) {
   try {
+    // Check authentication first
+    const session = await getServerSession(authOptions);
+    
+    // Check if user is authenticated and has member role
+    if (!session || !session.user || !session.user.role) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    
+    // Check if user has member role (admin, contractor, agent)
+    const allowedRoles = ['admin', 'contractor', 'agent'];
+    if (!allowedRoles.includes(session.user.role)) {
+      return NextResponse.json(
+        { error: 'Access denied. Member role required.' },
+        { status: 403 }
+      );
+    }
+    
     // Get client IP for rate limiting
     const forwardedFor = req.headers.get('x-forwarded-for');
     const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : 'unknown';

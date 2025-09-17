@@ -454,13 +454,39 @@ export default function BecomeMember() {
       <div className="max-w-7xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 bg-green-100 text-green-800 text-sm font-medium px-3 py-1 rounded-full mb-4">
+            <StarIcon className="h-4 w-4" />
+            Limited Time Early Access Available
+          </div>
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
             Join the Renograte Community
           </h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto mb-6">
             Select the plan that best fits your needs and start transforming
             your real estate business with renovation-ready properties
           </p>
+
+          {/* Early Access Banner */}
+          <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-lg p-6 max-w-4xl mx-auto">
+            <h2 className="text-xl font-bold text-gray-900 mb-2">
+              🎉 Get 1 Year Free with Early Access!
+            </h2>
+            <p className="text-gray-700 mb-4">
+              Be among the first <strong>500 agents</strong> and{" "}
+              <strong>50 contractors</strong> to join Renograte with full access
+              for an entire year - completely free!
+            </p>
+            <Button
+              onClick={() => router.push("/early-access")}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              Claim Your Free Early Access Spot
+            </Button>
+            <p className="text-sm text-gray-600 mt-2">
+              Limited spots available • No payment required • Full access for 1
+              year
+            </p>
+          </div>
         </div>
 
         {/* Pricing Section */}

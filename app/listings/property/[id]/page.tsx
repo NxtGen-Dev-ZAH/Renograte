@@ -35,14 +35,8 @@ interface PropertyResponse {
   value: Property[];
 }
 
-export default function PropertyDetailProtectedWrapper() {
-  return (
-    <RoleProtected
-      allowedRoles={["user", "member", "agent", "contractor", "admin"]}
-    >
-      <PropertyDetailPage />
-    </RoleProtected>
-  );
+export default function PropertyDetailPageWrapper() {
+  return <PropertyDetailPage />;
 }
 
 export function PropertyDetailPage() {

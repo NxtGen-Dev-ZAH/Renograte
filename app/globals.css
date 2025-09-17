@@ -48,6 +48,27 @@
 
 body {
   font-family: Arial, Helvetica, sans-serif;
+  font-size: clamp(14px, 1.5vw, 16px);
+  line-height: 1.6;
+}
+
+/* Responsive base styles */
+html {
+  font-size: clamp(14px, 1.5vw, 16px);
+}
+
+/* Ensure smooth scaling */
+* {
+  box-sizing: border-box;
+}
+
+/* Responsive container */
+.container {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  padding-left: clamp(1rem, 4vw, 2rem);
+  padding-right: clamp(1rem, 4vw, 2rem);
 }
 
 /* Autocomplete Dropdown Styles */
@@ -148,4 +169,51 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Shimmer effect: inner glow moving right → left */
+.shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  left: 150%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(100deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.35) 50%, rgba(255,255,255,0) 100%);
+  transform: skewX(-15deg);
+  pointer-events: none;
+  animation: shimmer-move 2.25s ease-in-out infinite;
+}
+
+@keyframes shimmer-move {
+  0% { left: 150%; }
+  100% { left: -150%; }
+}
+
+/* Animated shimmer border ring */
+.shimmer-border {
+  position: relative;
+}
+
+.shimmer-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px; /* border thickness */
+  background: conic-gradient(from 0deg, rgba(34,211,238,0.2), rgba(8,145,178,0.5), rgba(34,211,238,0.2));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  animation: shimmer-rotate 2.25s linear infinite;
+}
+
+@keyframes shimmer-rotate {
+  to { transform: rotate(1turn); }
 }

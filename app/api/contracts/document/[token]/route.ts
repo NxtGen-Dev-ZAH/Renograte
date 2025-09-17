@@ -5,11 +5,11 @@ import { getContractBySigningToken } from '@/lib/contracts/contractService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    // Get token from params and await it
-    const token = params.token;
+    // Await params first
+    const { token } = await params;
     console.log(`Document access request for token: ${token}`);
     
     // URL decode the token first

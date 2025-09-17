@@ -15,8 +15,8 @@ export default function Header() {
   const [isMobileListingsOpen, setIsMobileListingsOpen] = useState(false);
   const { isAuthenticated, logout, user } = useAuth();
   const router = useRouter();
-  
-  const isAdmin = user?.role === 'admin';
+
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,7 +40,9 @@ export default function Header() {
   return (
     <motion.header
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
-        isScrolled ? "bg-white/80 backdrop-blur-sm shadow-md" : "bg-white"
+        isScrolled
+          ? "bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-100"
+          : "bg-white/95 backdrop-blur-sm"
       }`}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
@@ -48,18 +50,18 @@ export default function Header() {
     >
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-center">
-        {isAdmin && (
-                  <Link href="/admin">
-                    <motion.button
-                      className="btn-primary px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <ShieldAlert className="mr-2 h-4 w-4" />
-                      Admin
-                    </motion.button>
-                  </Link>
-                )}
+          {isAdmin && (
+            <Link href="/admin">
+              <motion.button
+                className="btn-primary px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <ShieldAlert className="mr-2 h-4 w-4" />
+                Admin
+              </motion.button>
+            </Link>
+          )}
           {/* Logo - centered on mobile, left-aligned on desktop */}
           <div className="flex md:hidden items-center justify-center flex-1">
             <Link href="/" className="flex items-center">
@@ -75,7 +77,7 @@ export default function Header() {
           </div>
 
           {/* Mobile menu button */}
-          <button 
+          <button
             className="md:hidden flex items-center text-gray-800"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             aria-label="Toggle mobile menu"
@@ -84,9 +86,9 @@ export default function Header() {
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex flex-1 items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+          <nav className="hidden md:flex flex-1 items-center justify-center mr-4 absolute left-1/2 transform -translate-x-1/2">
             {/* Navigation Items - Left Side */}
-            <ul className="flex items-center space-x-8 ">
+            <ul className="flex items-center space-x-6 ">
               <li
                 className="relative group"
                 onMouseEnter={() => setIsListingsOpen(true)}
@@ -99,27 +101,27 @@ export default function Header() {
                 </div>
                 {isListingsOpen && (
                   <div
-                  className="absolute left-0 mt-0 w-max bg-white shadow-lg rounded-md py-2 z-50 border border-gray-100 flex flex-col" // Added 'fle x' here
-                >
-                  <Link
-                    href="/properties"
-                    className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
+                    className="absolute left-0 mt-0 w-max bg-white shadow-lg rounded-md py-2 z-50 border border-gray-100 flex flex-col" // Added 'fle x' here
                   >
-                    Estimated Renovation Allowance Listings
-                  </Link>
-                  <Link
-                    href="/listings/renograte-listings"
-                    className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
-                  >
-                    Verified Renograte Listings
-                  </Link>
-                  <Link
-                    href="/listings/distressed-homes"
-                    className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
-                  >
-                    Distressed Homes
-                  </Link>
-                </div>
+                    <Link
+                      href="/properties"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
+                    >
+                      Estimated Renovation Allowance Listings
+                    </Link>
+                    <Link
+                      href="/listings/renograte-listings"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
+                    >
+                      Verified Renograte Listings
+                    </Link>
+                    <Link
+                      href="/listings/distressed-homes"
+                      className="block px-4 py-2 text-base text-gray-600 hover:text-cyan-500 transition-colors duration-300 whitespace-nowrap" // Added 'whitespace-nowrap'
+                    >
+                      Distressed Homes
+                    </Link>
+                  </div>
                 )}
               </li>
               <li>
@@ -137,7 +139,7 @@ export default function Header() {
                 <Image
                   src="/logo.png"
                   alt="Renograte Logo"
-                  width={300}
+                  width={400}
                   height={50}
                   className="h-10 w-auto transform group-hover:scale-105 transition-transform duration-300"
                   quality={100}
@@ -177,7 +179,7 @@ export default function Header() {
                   >
                     Dashboard
                   </motion.button>
-                </Link>     
+                </Link>
                 <motion.button
                   className="text-black hover:text-[#0C71C3]"
                   whileHover={{ scale: 1.1 }}
@@ -189,6 +191,19 @@ export default function Header() {
               </>
             ) : (
               <>
+                <Link href="/early-access">
+                  <motion.button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      router.push("/early-access");
+                    }}
+                    className="shimmer shimmer-border btn-primary px-4 py-2 bg-gradient-to-r from-slate-600 via-cyan-700 to-slate-600 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Free 1 Year
+                  </motion.button>
+                </Link>
                 <Link href="/signup">
                   <motion.button
                     onClick={(e) => {
@@ -222,7 +237,7 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <motion.div 
+          <motion.div
             className="md:hidden mt-4 bg-white rounded-lg shadow-lg overflow-hidden"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -232,12 +247,16 @@ export default function Header() {
             <nav className="py-2">
               <ul className="flex flex-col space-y-2">
                 <li className="px-4">
-                  <div 
+                  <div
                     className="flex items-center justify-between py-2 text-gray-800"
-                    onClick={() => setIsMobileListingsOpen(!isMobileListingsOpen)}
+                    onClick={() =>
+                      setIsMobileListingsOpen(!isMobileListingsOpen)
+                    }
                   >
                     <span>Listings</span>
-                    <ChevronDownIcon className={`h-4 w-4 transition-transform ${isMobileListingsOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDownIcon
+                      className={`h-4 w-4 transition-transform ${isMobileListingsOpen ? "rotate-180" : ""}`}
+                    />
                   </div>
                   {isMobileListingsOpen && (
                     <div className="pl-4 py-2 space-y-2 border-l-2 border-gray-200 ml-2">
@@ -302,13 +321,19 @@ export default function Header() {
                 <li className="px-4 py-2 border-t border-gray-100 mt-2 pt-4">
                   {isAuthenticated ? (
                     <div className="flex flex-col space-y-2">
-                      <Link href="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
+                      <Link
+                        href="/dashboard"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
                         <button className="w-full px-4 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors">
                           Dashboard
                         </button>
                       </Link>
                       {isAdmin && (
-                        <Link href="/admin" onClick={() => setIsMobileMenuOpen(false)}>
+                        <Link
+                          href="/admin"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
                           <button className="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center">
                             <ShieldAlert className="mr-2 h-4 w-4" />
                             Admin Dashboard
@@ -327,20 +352,38 @@ export default function Header() {
                     </div>
                   ) : (
                     <div className="flex flex-col space-y-2">
-                      <Link href="/signup" onClick={(e) => {
-                        e.preventDefault();
-                        setIsMobileMenuOpen(false);
-                        router.push("/signup");
-                      }}>
-                        <button className="w-full px-4 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-colors">
+                      <Link
+                        href="/early-access"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsMobileMenuOpen(false);
+                          router.push("/early-access");
+                        }}
+                      >
+                        <button className="shimmer shimmer-border w-full px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold shadow-md">
+                          Free 1 Year Access
+                        </button>
+                      </Link>
+                      <Link
+                        href="/signup"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsMobileMenuOpen(false);
+                          router.push("/signup");
+                        }}
+                      >
+                        <button className="w-full px-4 py-2 bg-[#0C71C3] text-white rounded-lg hover:bg-[#0C71C3]/90 transition-all duration-300 font-semibold shadow-md">
                           Sign Up
                         </button>
                       </Link>
-                      <Link href="/login" onClick={(e) => {
-                        e.preventDefault();
-                        setIsMobileMenuOpen(false);
-                        router.push("/login");
-                      }}>
+                      <Link
+                        href="/login"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setIsMobileMenuOpen(false);
+                          router.push("/login");
+                        }}
+                      >
                         <button className="w-full px-4 py-2 text-black hover:text-[#0C71C3] text-center">
                           Log In
                         </button>

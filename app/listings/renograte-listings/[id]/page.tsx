@@ -1438,12 +1438,6 @@ export function ListingDetailPage() {
   );
 }
 
-export default function ListingDetailProtectedWrapper() {
-  return (
-    <RoleProtected
-      allowedRoles={["user", "member", "agent", "contractor", "admin"]}
-    >
-      <ListingDetailPage />
-    </RoleProtected>
-  );
+export default function ListingDetailPageWrapper() {
+  return <ListingDetailPage />;
 }
