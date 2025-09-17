@@ -7,9 +7,11 @@ import { ChevronDown, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AutocompleteInput from "./AutocompleteInput";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Hero() {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
   const { scrollY } = useScroll();
   const y = useTransform(scrollY, [0, 500], [0, 200]);
   const scale = useTransform(scrollY, [0, 500], [1, 1.1]);
@@ -77,33 +79,36 @@ export default function Hero() {
               Pre-Closing Buyer Renovations!
               <div className="w-full h-1 bg-gradient-to-r from-blue-600 to-cyan-600 mt-2 mb-6 md:mb-8"></div>
             </h1>
-            <motion.div
-              className="shimmer shimmer-border bg-gradient-to-r from-slate-700 via-cyan-700 to-slate-700 text-white sm:px-4 md:px-6 sm:py-4 md:py-6 lg:py-8 rounded-xl mb-4 sm:mb-6 md:mb-8 shadow-xl border border-cyan-500/20"
-              variants={fadeInUpVariants}
-            >
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                    <div className="w-[clamp(0.25rem,0.5vw,0.5rem)] h-[clamp(0.25rem,0.5vw,0.5rem)] bg-white rounded-full animate-pulse"></div>
-                    <h3 className="font-bold text-base sm:text-lg">
-                      Limited Time: Free 1 Year Access
-                    </h3>
+            {/* Early Access Banner - Only show for unauthenticated users */}
+            {!isAuthenticated && (
+              <motion.div
+                className="shimmer shimmer-border bg-gradient-to-r from-slate-700 via-cyan-700 to-slate-700 text-white sm:px-4 md:px-6 sm:py-4 md:py-6 lg:py-8 rounded-xl mb-4 sm:mb-6 md:mb-8 shadow-xl"
+                variants={fadeInUpVariants}
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                      <div className="w-[clamp(0.25rem,0.5vw,0.5rem)] h-[clamp(0.25rem,0.5vw,0.5rem)] bg-white rounded-full animate-pulse"></div>
+                      <h3 className="font-bold text-base sm:text-lg">
+                        Limited Time: Free 1 Year Access
+                      </h3>
+                    </div>
+                    <p className="text-sm sm:text-base opacity-90 leading-relaxed">
+                      Join the first 500 agents & 50 contractors with full
+                      platform access - completely free for one year!
+                    </p>
                   </div>
-                  <p className="text-sm sm:text-base opacity-90 leading-relaxed">
-                    Join the first 500 agents & 50 contractors with full
-                    platform access - completely free for one year!
-                  </p>
+                  <motion.button
+                    onClick={() => router.push("/early-access")}
+                    className="bg-white text-cyan-800 px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 whitespace-nowrap shadow-md hover:shadow-lg border border-cyan-200"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    Claim Your Spot
+                  </motion.button>
                 </div>
-                <motion.button
-                  onClick={() => router.push("/early-access")}
-                  className="bg-white text-cyan-800 px-4 sm:px-6 md:px-8 lg:px-10 py-2 sm:py-3 md:py-4 rounded-lg font-semibold hover:bg-gray-50 transition-all duration-300 whitespace-nowrap shadow-md hover:shadow-lg border border-cyan-200"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Claim Your Spot
-                </motion.button>
-              </div>
-            </motion.div>
+              </motion.div>
+            )}
           </motion.div>
 
           <motion.p

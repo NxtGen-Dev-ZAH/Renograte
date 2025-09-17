@@ -197,7 +197,7 @@ export default function Header() {
                       e.preventDefault();
                       router.push("/early-access");
                     }}
-                    className="shimmer shimmer-border btn-primary px-4 py-2 bg-gradient-to-r from-slate-600 via-cyan-700 to-slate-600 text-white rounded-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
+                    className="shimmer btn-primary px-4 py-2 bg-gradient-to-r from-slate-600 via-cyan-700 to-slate-600 text-white rounded-lg hover:from-cyan-700 hover:to-cyan-800 transition-all duration-300 font-semibold shadow-md hover:shadow-lg"
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >

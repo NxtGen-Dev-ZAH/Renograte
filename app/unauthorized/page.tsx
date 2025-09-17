@@ -9,7 +9,7 @@ export default function UnauthorizedPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8 text-center">
         <div className="flex justify-center mb-6">
           <ShieldAlert className="h-16 w-16 text-orange-500" />
         </div>
@@ -20,6 +20,9 @@ export default function UnauthorizedPage() {
         
         <p className="text-gray-600 mb-6">
           This area is restricted to members only. Please upgrade your account to access all features and benefits.
+        </p>
+        <p className="text-gray-600 mb-6 bg-slate-300 p-4 rounded-lg">
+          If you have registered as an early access user, please wait for your account to be verified by Renograte Admin.
         </p>
         
         <div className="space-y-4">

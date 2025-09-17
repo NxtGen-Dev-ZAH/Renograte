@@ -308,7 +308,7 @@ export default function EarlyAccessPage() {
                     <Input
                       id="name"
                       {...form.register("name")}
-                      className="focus-visible:ring-[#0C71C3]"
+                      className="border-2 border-gray-300 focus-visible:ring-[#0C71C3]"
                     />
                     {form.formState.errors.name && (
                       <p className="text-sm text-red-500">
@@ -324,7 +324,7 @@ export default function EarlyAccessPage() {
                       id="email"
                       type="email"
                       {...form.register("email")}
-                      className="focus-visible:ring-[#0C71C3]"
+                      className="border-2 border-gray-300 focus-visible:ring-[#0C71C3]"
                     />
                     {form.formState.errors.email && (
                       <p className="text-sm text-red-500">
@@ -340,7 +340,7 @@ export default function EarlyAccessPage() {
                       id="password"
                       type="password"
                       {...form.register("password")}
-                      className="focus-visible:ring-[#0C71C3]"
+                      className="border-2 border-gray-300 focus-visible:ring-[#0C71C3]"
                       placeholder="Create a secure password"
                     />
                     {form.formState.errors.password && (
@@ -356,7 +356,7 @@ export default function EarlyAccessPage() {
                     <Input
                       id="company"
                       {...form.register("company")}
-                      className="focus-visible:ring-[#0C71C3]"
+                      className="border-2 border-gray-300 focus-visible:ring-[#0C71C3]"
                     />
                   </div>
                   <div className="space-y-2">
@@ -367,7 +367,7 @@ export default function EarlyAccessPage() {
                       id="phone"
                       type="tel"
                       {...form.register("phone")}
-                      className="focus-visible:ring-[#0C71C3]"
+                      className="border-2 border-gray-300 focus-visible:ring-[#0C71C3]"
                     />
                     {form.formState.errors.phone && (
                       <p className="text-sm text-red-500">
@@ -385,7 +385,7 @@ export default function EarlyAccessPage() {
                         form.setValue("role", value as "agent" | "contractor")
                       }
                     >
-                      <SelectTrigger className="focus:ring-[#0C71C3]">
+                      <SelectTrigger className="border-2 border-gray-300 focus:ring-[#0C71C3]">
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -412,7 +412,7 @@ export default function EarlyAccessPage() {
                         form.setValue("businessType", value)
                       }
                     >
-                      <SelectTrigger className="focus:ring-[#0C71C3]">
+                      <SelectTrigger className="border-2 border-gray-300 focus:ring-[#0C71C3]">
                         <SelectValue placeholder="Select your business type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -439,14 +439,14 @@ export default function EarlyAccessPage() {
                     <Input
                       id="licenseNumber"
                       {...form.register("licenseNumber")}
-                      className="focus-visible:ring-[#0C71C3]"
+                      className="border-2 border-gray-300 focus-visible:ring-[#0C71C3]"
                     />
                   </div>
                 </div>
 
                 <Button
                   type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700 text-white"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
                   disabled={isLoading}
                 >
                   {isLoading

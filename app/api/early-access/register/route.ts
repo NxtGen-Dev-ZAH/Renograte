@@ -64,13 +64,13 @@ export async function POST(request: Request) {
     // Hash the user-provided password
     const hashedPassword = await hash(password, 12);
 
-    // Create user with appropriate role
+    // Create user with basic role (will be updated upon approval)
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
-        role: role, // Set role directly (agent or contractor)
+        role: 'user', // Start with basic user role, will be updated to agent/contractor upon approval
       }
     });
 
@@ -127,13 +127,8 @@ export async function POST(request: Request) {
       }
     });
 
-    // Increment quota count
-    await prisma.earlyAccessQuota.update({
-      where: { role },
-      data: {
-        currentCount: quota.currentCount + 1
-      }
-    });
+    // Note: Quota count will be incremented only upon admin approval
+    // This ensures the counter reflects only approved users
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user;
@@ -147,9 +142,9 @@ export async function POST(request: Request) {
       },
       quota: {
         role,
-        currentCount: quota.currentCount + 1,
+        currentCount: quota.currentCount, // No increment until approval
         maxCount: quota.maxCount,
-        remaining: quota.maxCount - quota.currentCount - 1
+        remaining: quota.maxCount - quota.currentCount
       }
     }, { status: 201 });
 

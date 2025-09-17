@@ -34,11 +34,12 @@ export async function GET() {
       return NextResponse.json(cached);
     }
 
-    // Get all early access users with pending status
+    // Get all early access users with pending status only
+    // Rejected users will disappear from the admin dashboard
     const earlyAccessUsers = await prisma.memberProfile.findMany({
       where: {
         isEarlyAccess: true,
-        status: "pending"
+        status: "pending" // Only show pending applications
       },
       include: {
         user: {
@@ -154,48 +155,22 @@ export async function POST(request: Request) {
     }
 
     if (action === 'approve') {
+      // Determine role from the plan name
+      let targetRole = 'agent'; // default
+      if (memberProfile.plan?.toLowerCase().includes('contractor')) {
+        targetRole = 'contractor';
+      } else if (memberProfile.plan?.toLowerCase().includes('agent')) {
+        targetRole = 'agent';
+      }
+
       // Use transaction to ensure data consistency
       await prisma.$transaction(async (tx) => {
-        // Update member profile
-        await tx.memberProfile.update({
-          where: { userId },
-          data: {
-            status: "active"
-          }
-        });
-
-        // Update user role if needed (keep the role from registration)
-        if (memberProfile.user.role === 'user') {
-          await tx.user.update({
-            where: { id: userId },
-            data: { role: memberProfile.user.role } // This should be agent/contractor from registration
-          });
-        }
-      });
-
-      console.log(`✅ User ${userId} approved by admin ${session.user.id}`);
-      
-      // Invalidate caches after approval
-      await invalidateCache("early-access:*");
-      await invalidateCache("admin-dashboard-stats:*");
-      
-      return NextResponse.json({
-        message: "User approved successfully",
-        status: "approved"
-      });
-
-    } else if (action === 'reject') {
-      // Reject the user and free up quota
-      const userRole = memberProfile.user.role;
-      
-      // Use transaction to ensure data consistency
-      await prisma.$transaction(async (tx) => {
-        // Decrement quota count
+        // Increment quota count for the approved role
         await tx.earlyAccessQuota.update({
-          where: { role: userRole },
+          where: { role: targetRole },
           data: {
             currentCount: {
-              decrement: 1
+              increment: 1
             }
           }
         });
@@ -204,7 +179,74 @@ export async function POST(request: Request) {
         await tx.memberProfile.update({
           where: { userId },
           data: {
-            status: "rejected"
+            status: "active",
+            adminFeedback: feedback || "Application approved by admin"
+          }
+        });
+
+        // Update user role to the appropriate role (agent or contractor)
+        await tx.user.update({
+          where: { id: userId },
+          data: { role: targetRole }
+        });
+      });
+
+      console.log(`✅ User ${userId} approved by admin ${session.user.id} - role updated to ${targetRole}, quota incremented`);
+      
+      // Invalidate caches after approval
+      await invalidateCache("early-access:*");
+      await invalidateCache("admin-dashboard-stats:*");
+      
+      return NextResponse.json({
+        message: "User approved successfully and access granted",
+        status: "approved"
+      });
+
+    } else if (action === 'reject') {
+      // Reject the user and clean up their account
+      // Determine the original role from the plan name (not user's current role)
+      let originalRole = 'agent'; // default
+      if (memberProfile.plan?.toLowerCase().includes('contractor')) {
+        originalRole = 'contractor';
+      } else if (memberProfile.plan?.toLowerCase().includes('agent')) {
+        originalRole = 'agent';
+      }
+      
+      // Use transaction to ensure data consistency
+      await prisma.$transaction(async (tx) => {
+        // Decrement quota count for the original role
+        // First check if the quota record exists
+        const quotaRecord = await tx.earlyAccessQuota.findUnique({
+          where: { role: originalRole }
+        });
+        
+        if (quotaRecord && quotaRecord.currentCount > 0) {
+          await tx.earlyAccessQuota.update({
+            where: { role: originalRole },
+            data: {
+              currentCount: {
+                decrement: 1
+              }
+            }
+          });
+        } else {
+          console.warn(`⚠️ Quota record not found or already at 0 for role: ${originalRole}`);
+        }
+
+        // Update member profile with rejection status and feedback
+        await tx.memberProfile.update({
+          where: { userId },
+          data: {
+            status: "rejected",
+            adminFeedback: feedback || "Application rejected by admin"
+          }
+        });
+
+        // Reset user role to 'user' to remove dashboard access
+        await tx.user.update({
+          where: { id: userId },
+          data: { 
+            role: 'user' // Reset to basic user role
           }
         });
       });
@@ -220,14 +262,14 @@ export async function POST(request: Request) {
         }
       }
 
-      console.log(`✅ User ${userId} rejected by admin ${session.user.id}`);
+      console.log(`✅ User ${userId} rejected by admin ${session.user.id} - role reset to 'user', quota decremented for ${originalRole}`);
       
       // Invalidate caches after rejection
       await invalidateCache("early-access:*");
       await invalidateCache("admin-dashboard-stats:*");
       
       return NextResponse.json({
-        message: "User rejected successfully",
+        message: "User rejected successfully and access revoked",
         status: "rejected"
       });
     }

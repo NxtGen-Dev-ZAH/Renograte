@@ -195,25 +195,36 @@ html {
   100% { left: -150%; }
 }
 
-/* Animated shimmer border ring */
+/* Border shimmer effect: animated border moving around perimeter */
 .shimmer-border {
   position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .shimmer-border::before {
   content: "";
   position: absolute;
-  inset: 0;
+  inset: -2px;
   border-radius: inherit;
-  padding: 2px; /* border thickness */
-  background: conic-gradient(from 0deg, rgba(34,211,238,0.2), rgba(8,145,178,0.5), rgba(34,211,238,0.2));
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(242, 8, 8, 0.3) 45deg,
+    rgba(255, 255, 255, 0.6) 90deg,
+    rgba(255, 255, 255, 0.3) 135deg,
+    transparent 180deg,
+    transparent 360deg
+  );
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: xor;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
-  mask-composite: exclude;
+  animation: border-shimmer 3s linear infinite;
   pointer-events: none;
-  animation: shimmer-rotate 2.25s linear infinite;
 }
 
-@keyframes shimmer-rotate {
-  to { transform: rotate(1turn); }
+@keyframes border-shimmer {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
